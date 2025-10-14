@@ -1,14 +1,14 @@
-# main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers.search import router as search_router
 from .routers.scraping import router as scraping_router
+from .routers.pdf import router as pdf_router
 from datetime import datetime
 import uvicorn
 
 app = FastAPI(
     title="LLM-based CRM Pipeline API",
-    description="API forLLM-based CRM pipeline: generate personas, outreach sequences, and more from company data",
+    description="API for LLM-based CRM pipeline: generate personas, outreach sequences, and more from company data",
     version="1.0.0"
 )
 
@@ -23,6 +23,8 @@ app.add_middleware(
 # Register routers
 app.include_router(search_router, prefix="/api/v1", tags=["Search"])
 app.include_router(scraping_router, prefix="/api/v1", tags=["Data Scraping"])
+app.include_router(search_router, prefix="/api/v1", tags=["Search"])
+app.include_router(pdf_router, prefix="/api/v1", tags=["PDF Processing"])
 
 @app.get("/")
 def root():
@@ -37,4 +39,4 @@ def health():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
