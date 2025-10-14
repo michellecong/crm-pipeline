@@ -1,0 +1,42 @@
+# schemas/scraping.py
+"""
+Pydantic schemas for scraping operations
+"""
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict
+
+
+class ScrapeRequest(BaseModel):
+    """Request to scrape company data"""
+    company_name: str = Field(..., description="Target company name")
+    include_news: bool = Field(default=True, description="Include news articles")
+    include_case_studies: bool = Field(default=True, description="Include case studies")
+    max_urls: int = Field(default=10, description="Maximum URLs to scrape")
+    save_to_file: bool = Field(default=False, description="Save scraped data to local file")
+
+
+class ScrapedContent(BaseModel):
+    """Scraped content from a single URL"""
+    url: str
+    title: Optional[str] = None
+    markdown: str = Field(..., description="Content in markdown format")
+    html: Optional[str] = None
+    metadata: Dict = Field(default={})
+    content_type: str = Field(..., description="website, news, or case_study")
+    success: bool
+    error: Optional[str] = None
+    scraped_at: str
+
+
+class ScrapeResponse(BaseModel):
+    """Response with all scraped data"""
+    company_name: str
+    official_website: Optional[str] = None
+    total_urls_found: int
+    total_urls_scraped: int
+    successful_scrapes: int
+    scraped_content: List[ScrapedContent]
+    search_results_summary: Dict
+    scraping_timestamp: str
+    saved_filepath: Optional[str] = None
+
