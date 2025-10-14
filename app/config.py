@@ -26,6 +26,15 @@ class Settings:
     MAX_URLS_TO_CRAWL = 20
     MAX_CONCURRENT_SCRAPES = 10  # Concurrent scrape count for better performance
 
+    # OpenAI configuration
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")
+    OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.0"))
+    OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "2000"))
+    OPENAI_TOP_P = float(os.getenv("OPENAI_TOP_P", "1.0"))
+    OPENAI_FREQUENCY_PENALTY = float(os.getenv("OPENAI_FREQUENCY_PENALTY", "0.0"))
+    OPENAI_PRESENCE_PENALTY = float(os.getenv("OPENAI_PRESENCE_PENALTY", "0.0"))
+
 
 # Create global settings instance
 settings = Settings()
