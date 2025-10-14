@@ -4,13 +4,31 @@ Data collection API for scraping company information from the web.
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Create Virtual Environment 
+
+Before installing dependencies, create and activate a virtual environment:
+
+**Mac/Linux:**
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv venv
+venv\Scripts\activate
+```
+
+### 2. Install Dependencies
 
 ```bash
 pip3 install -r requirements.txt
 ```
 
-### 2. Configure API Keys
+### 3. Configure API Keys
 
 Create a `.env` file:
 
@@ -34,13 +52,13 @@ OPENAI_API_KEY=your_openai_key_here
 - Firecrawl: https://www.firecrawl.dev/ (Free: 500 credits/month)
 - OpenAI: https://platform.openai.com/api-keys
 
-### 3. Run Server
+### 4. Run Server
 
 ```bash
 python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 4. Use API
+### 5. Use API
 
 ```bash
 # Scrape company data
