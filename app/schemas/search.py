@@ -1,12 +1,17 @@
-# models/schemas.py
+# schemas/search.py
+"""
+Pydantic schemas for search operations
+"""
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
+
 
 class SearchRequest(BaseModel):
     company_name: str = Field(..., description="Company name to search for", example="Salesforce")
     include_news: bool = Field(default=True, description="Include news articles in search")
     include_case_studies: bool = Field(default=True, description="Include case studies in search")
+
 
 class SearchResultItem(BaseModel):
     title: str
@@ -14,6 +19,7 @@ class SearchResultItem(BaseModel):
     snippet: str
     display_link: Optional[str] = None
     type: str  # 'news', 'case_study', 'official', 'other'
+
 
 class SearchResponse(BaseModel):
     company_name: str
@@ -28,12 +34,3 @@ class SearchResponse(BaseModel):
             datetime: lambda v: v.isoformat()
         }
 
-class ErrorResponse(BaseModel):
-    error: str
-    detail: str
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
-
-class HealthResponse(BaseModel):
-    status: str
-    message: str
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())

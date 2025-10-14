@@ -1,7 +1,8 @@
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers.search import router
+from .routers.search import router as search_router
+from .routers.scraping import router as scraping_router
 from datetime import datetime
 import uvicorn
 
@@ -19,7 +20,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router, prefix="/api/v1", tags=["Search"])
+# Register routers
+app.include_router(search_router, prefix="/api/v1", tags=["Search"])
+app.include_router(scraping_router, prefix="/api/v1", tags=["Data Scraping"])
 
 @app.get("/")
 def root():

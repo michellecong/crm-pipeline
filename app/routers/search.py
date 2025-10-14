@@ -1,6 +1,6 @@
 # api/search.py
 from fastapi import APIRouter, HTTPException, status
-from ..schemas.schema import SearchRequest, SearchResponse, SearchResultItem, HealthResponse
+from ..schemas import SearchRequest, SearchResponse, SearchResultItem, HealthResponse
 from ..services.search_service import search_company_async
 from datetime import datetime
 import logging
