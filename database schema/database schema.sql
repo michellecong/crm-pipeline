@@ -206,8 +206,10 @@ CREATE TABLE personas (
     job_title VARCHAR(200), -- Job title
     
     -- Contact information (optional, if available from data sources)
+    industry VARCHAR(100), -- Industry
     department VARCHAR(100), -- Department/function
     location VARCHAR(255), -- Geographic location
+    size INTEGER, -- Personas' size
     email VARCHAR(255), -- Email address
     phone VARCHAR(50), -- Phone number
     linkedin_url TEXT, -- LinkedIn profile URL
