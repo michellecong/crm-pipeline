@@ -28,8 +28,6 @@ def test_search_company_success(client, monkeypatch, payload):
                     "title": "News A",
                     "url": "https://news.example.com/a",
                     "snippet": "Snippet A",
-                    "display_link": "news.example.com",
-                    "type": "news",
                 }
             ] if include_news else []),
             "case_studies": ([
@@ -37,8 +35,6 @@ def test_search_company_success(client, monkeypatch, payload):
                     "title": "Case A",
                     "url": "https://blog.example.com/case-a",
                     "snippet": "Snippet CA",
-                    "display_link": "blog.example.com",
-                    "type": "case_study",
                 }
             ] if include_case_studies else []),
             "search_timestamp": datetime.now().isoformat(),

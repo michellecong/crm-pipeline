@@ -82,7 +82,6 @@ class AsyncCompanySearchService:
 
     async def _search_official_site(self, company_name: str) -> List[Dict]:
         keywords = [
-            f"{company_name.lower()}",
             f"{company_name.lower()} official website"
         ]
         return await self._concurrent_keyword_search(keywords, settings.MAX_OFFICIAL_SITE_RESULTS)
@@ -90,9 +89,7 @@ class AsyncCompanySearchService:
     async def _search_news(self, company_name: str, official_domain: Optional[str] = None) -> List[Dict]:
         name = company_name.lower()
         keywords = [
-            f"{name} news 2025",
             f"{name} latest news",
-            f"{name} press release"
         ]
         # Exclude official domain from all queries to prioritize third-party sources
         if official_domain:
@@ -105,7 +102,6 @@ class AsyncCompanySearchService:
         keywords = [
             f"{name} case study",
             f"{name} customer success story",
-            f"{name} use case"
         ]
         # Exclude official domain from all queries to prioritize third-party sources
         if official_domain:
@@ -155,32 +151,16 @@ class AsyncCompanySearchService:
                             'title': item.get('title', ''),
                             'url': canonical_url or link,
                             'snippet': item.get('snippet', ''),
-                            'display_link': item.get('displayLink', ''),
-                            'type': self._classify_result({
-                                'title': item.get('title', ''),
-                                'link': canonical_url or link
-                            })
                         })
                 return results
         except Exception:
             return []
 
-    def _classify_result(self, item: Dict) -> str:
-        title = item.get('title', '').lower()
-        url = item.get('link', '').lower()
-        if 'case study' in title or 'case-study' in url:
-            return 'case_study'
-        if 'news' in url or 'press' in url or 'blog' in url:
-            return 'news'
-        if any(domain in url for domain in ['.com/', '.io/', '.ai/']):
-            return 'potential_official'
-        return 'other'
-
     def _is_valid_url(self, url: str) -> bool:
         if not url:
             return False
         exclude_patterns = [
-            'facebook.com', 'twitter.com', 'linkedin.com/company',
+            'facebook.com', 'twitter.com', 
             'youtube.com', 'reddit.com', 'instagram.com'
         ]
         return not any(pattern in url.lower() for pattern in exclude_patterns)
@@ -189,16 +169,21 @@ class AsyncCompanySearchService:
         if not results:
             return None
         company_slug = company_name.lower().replace(' ', '').replace(',', '')
-        # Prefer items classified as potential official site
+        slug_matches: List[Dict] = []
         for result in results:
-            if result.get('type') == 'potential_official':
-                return result['url']
-        # Fallback: any domain that contains the company slug
-        for result in results:
-            domain = self._extract_domain(result['url'])
-            if company_slug in domain:
-                return result['url']
-        return results[0]['url'] if results else None
+            url = result.get('url', '')
+            domain = self._extract_domain(url)
+            if domain and company_slug in domain:
+                slug_matches.append(result)
+        if slug_matches:
+            def path_len(u: str) -> int:
+                try:
+                    return len(urlsplit(u).path or '/')
+                except Exception:
+                    return 9999
+            slug_matches.sort(key=lambda r: path_len(r.get('url', '')))
+            return slug_matches[0].get('url')
+        return results[0].get('url') if results else None
 
     def _extract_domain(self, url: str) -> str:
         match = re.search(r'https?://(?:www\.)?([^/]+)', url.lower())

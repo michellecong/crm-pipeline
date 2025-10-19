@@ -17,8 +17,6 @@ class SearchResultItem(BaseModel):
     title: str
     url: str  
     snippet: str
-    display_link: Optional[str] = None
-    type: str  # 'news', 'case_study', 'official', 'other'
 
 
 class SearchResponse(BaseModel):
