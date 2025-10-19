@@ -89,3 +89,6 @@ async def test_search():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Search test failed: {str(e)}"
         )
+
+
+ 

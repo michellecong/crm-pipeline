@@ -7,9 +7,10 @@ load_dotenv()
 
 
 class Settings:
-    # Smart Proxy configuration
-    SMART_PROXY_API_KEY = os.getenv("SMART_PROXY_API_KEY")
-    SMART_PROXY_BASE_URL = "https://scraper.smartproxy.org/v1/query"
+    # Google Custom Search configuration
+    GOOGLE_CSE_API_KEY = os.getenv("GOOGLE_CSE_API_KEY")
+    GOOGLE_CSE_CX = os.getenv("GOOGLE_CSE_CX")
+    GOOGLE_CSE_BASE_URL = "https://www.googleapis.com/customsearch/v1"
 
     # Firecrawl configuration
     FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
@@ -38,10 +39,4 @@ class Settings:
 
 # Create global settings instance
 settings = Settings()
-
-
-# Manual test: print the first 10 characters of the API key
-if __name__ == "__main__":
-    print(f"✅ API Key loaded: {settings.SMART_PROXY_API_KEY[:10]}...")
-
 

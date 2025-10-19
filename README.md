@@ -33,8 +33,9 @@ pip3 install -r requirements.txt
 Create a `.env` file:
 
 ```bash
-# Smart Proxy - for Google search (Already configured ✅)
-SMART_PROXY_API_KEY=your_key_here
+# Google Custom Search (used for web search)
+GOOGLE_CSE_API_KEY=your_google_api_key
+GOOGLE_CSE_CX=your_search_engine_cx
 
 # Firecrawl - for web scraping
 FIRECRAWL_API_KEY=your_firecrawl_key_here
@@ -73,6 +74,8 @@ curl -X POST http://localhost:8000/api/v1/scrape/company \
 # View saved data
 curl http://localhost:8000/api/v1/scrape/saved
 ```
+
+The API uses Google Custom Search exclusively now.
 
 ## API Documentation
 

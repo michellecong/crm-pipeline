@@ -34,3 +34,6 @@ class SearchResponse(BaseModel):
             datetime: lambda v: v.isoformat()
         }
 
+
+    
+

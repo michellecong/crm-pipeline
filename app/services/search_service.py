@@ -9,11 +9,9 @@ from ..config import settings
 
 class AsyncCompanySearchService:
     def __init__(self):
-        self.base_url = settings.SMART_PROXY_BASE_URL
-        self.headers = {
-            "Authorization": f"Basic {settings.SMART_PROXY_API_KEY}",
-            "Content-Type": "application/json"
-        }
+        self.google_base_url = settings.GOOGLE_CSE_BASE_URL
+        self.google_api_key = settings.GOOGLE_CSE_API_KEY
+        self.google_cx = settings.GOOGLE_CSE_CX
         self.connector = None
         self.session = None
 
@@ -26,7 +24,6 @@ class AsyncCompanySearchService:
         )
         self.session = aiohttp.ClientSession(
             connector=self.connector,
-            headers=self.headers,
             timeout=aiohttp.ClientTimeout(total=settings.REQUEST_TIMEOUT)
         )
         return self
@@ -95,7 +92,7 @@ class AsyncCompanySearchService:
         return await self._concurrent_keyword_search(keywords, settings.MAX_CASE_STUDY_RESULTS)
 
     async def _concurrent_keyword_search(self, keywords: List[str], max_results: int) -> List[Dict]:
-        tasks = [self._single_search(keyword) for keyword in keywords]
+        tasks = [self._single_search_google(keyword) for keyword in keywords]
         try:
             search_results = await asyncio.gather(*tasks, return_exceptions=True)
             all_results: List[Dict] = []
@@ -116,34 +113,37 @@ class AsyncCompanySearchService:
         except Exception:
             return []
 
-    async def _single_search(self, keyword: str) -> List[Dict]:
+    # Only Google CSE is supported now
+
+    async def _single_search_google(self, keyword: str) -> List[Dict]:
+        if not self.google_api_key or not self.google_cx:
+            return []
         params = {
-            "geo": "US",
-            "locale": "en-US",
-            "context": {
-                "keywords_list": [{"keyword": keyword}],
-                "start_page": 1,
-                "end_page": 1
-            },
-            "source": "google_search_web"
+            "key": self.google_api_key,
+            "cx": self.google_cx,
+            "q": keyword,
+            "num": 10,
+            "hl": "en"
         }
         try:
-            async with self.session.post(self.base_url, json=params) as response:
+            async with self.session.get(self.google_base_url, params=params) as response:
                 response.raise_for_status()
                 data = await response.json()
+                items = data.get('items', []) or []
                 results: List[Dict] = []
-                if 'result' in data and len(data['result']) > 0:
-                    contents = data['result'][0].get('contents', [])
-                    for item in contents:
-                        link = item.get('link', '')
-                        if link:
-                            results.append({
+                for item in items:
+                    link = item.get('link', '')
+                    if link:
+                        results.append({
+                            'title': item.get('title', ''),
+                            'url': link,
+                            'snippet': item.get('snippet', ''),
+                            'display_link': item.get('displayLink', ''),
+                            'type': self._classify_result({
                                 'title': item.get('title', ''),
-                                'url': link,
-                                'snippet': item.get('description', ''),
-                                'display_link': item.get('display_link', ''),
-                                'type': self._classify_result(item)
+                                'link': link
                             })
+                        })
                 return results
         except Exception:
             return []
