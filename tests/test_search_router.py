@@ -15,11 +15,12 @@ from datetime import datetime
             "company_name": "Databricks",
             "include_news": False,
             "include_case_studies": True,
+            "provider": "perplexity",
         },
     ],
 )
 def test_search_company_success(client, monkeypatch, payload):
-    async def fake_search_company_async(company_name: str, include_news: bool, include_case_studies: bool):
+    async def fake_search_company_async(company_name: str, include_news: bool, include_case_studies: bool, provider: str = "google"):
         return {
             "company_name": company_name,
             "official_website": f"https://{company_name.lower()}.com",
@@ -79,7 +80,7 @@ def test_search_company_internal_error(client, monkeypatch):
 
 
 def test_search_test_endpoint_success(client, monkeypatch):
-    async def fake_search_company_async(company_name: str, include_news: bool, include_case_studies: bool):
+    async def fake_search_company_async(company_name: str, include_news: bool, include_case_studies: bool, provider: str = "google"):
         return {"official_website": "https://google.com"}
 
     import app.routers.search as search_router

@@ -2,13 +2,17 @@
 """
 Pydantic schemas for search operations
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Literal
 from datetime import datetime
 
 
 class SearchRequest(BaseModel):
-    company_name: str = Field(..., description="Company name to search for", example="Salesforce")
+    company_name: str = Field(
+        ...,
+        description="Company name to search for",
+        json_schema_extra={"example": "Salesforce"}
+    )
     include_news: bool = Field(default=True, description="Include news articles in search")
     include_case_studies: bool = Field(default=True, description="Include case studies in search")
     provider: Literal["google", "perplexity"] = Field(default="google", description="Search provider to use")
@@ -28,10 +32,11 @@ class SearchResponse(BaseModel):
     total_results: int
     search_timestamp: str
     
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
     
