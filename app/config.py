@@ -36,6 +36,10 @@ class Settings:
     OPENAI_FREQUENCY_PENALTY = float(os.getenv("OPENAI_FREQUENCY_PENALTY", "0.0"))
     OPENAI_PRESENCE_PENALTY = float(os.getenv("OPENAI_PRESENCE_PENALTY", "0.0"))
 
+    # Perplexity configuration
+    PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
+    PERPLEXITY_BASE_URL = "https://api.perplexity.ai"
+
 
 # Create global settings instance
 settings = Settings()

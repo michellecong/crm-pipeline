@@ -3,6 +3,7 @@ import aiohttp
 from typing import List, Dict, Optional, Tuple
 import re
 import time
+import json
 from datetime import datetime
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 from ..config import settings
@@ -13,6 +14,8 @@ class AsyncCompanySearchService:
         self.google_base_url = settings.GOOGLE_CSE_BASE_URL
         self.google_api_key = settings.GOOGLE_CSE_API_KEY
         self.google_cx = settings.GOOGLE_CSE_CX
+        self.perplexity_base_url = settings.PERPLEXITY_BASE_URL
+        self.perplexity_api_key = settings.PERPLEXITY_API_KEY
         self.connector = None
         self.session = None
 
@@ -36,12 +39,12 @@ class AsyncCompanySearchService:
             await self.connector.close()
 
     async def search_company(self, company_name: str, include_news: bool = True,
-                             include_case_studies: bool = True) -> Dict:
+                             include_case_studies: bool = True, provider: str = "google") -> Dict:
         start_time = time.time()
 
         # Stage 1: find official domain first to optimize subsequent queries
         try:
-            official_candidates = await self._search_official_site(company_name)
+            official_candidates = await self._search_official_site(company_name, provider=provider)
         except Exception:
             official_candidates = []
 
@@ -51,12 +54,12 @@ class AsyncCompanySearchService:
         # Stage 2: search news and case studies using domain-aware keywords
         tasks: List[asyncio.Task] = []
         if include_news:
-            tasks.append(asyncio.create_task(self._search_news(company_name, official_domain)))
+            tasks.append(asyncio.create_task(self._search_news(company_name, official_domain, provider=provider)))
         else:
             tasks.append(asyncio.create_task(self._return_empty_list()))
 
         if include_case_studies:
-            tasks.append(asyncio.create_task(self._search_case_studies(company_name, official_domain)))
+            tasks.append(asyncio.create_task(self._search_case_studies(company_name, official_domain, provider=provider)))
         else:
             tasks.append(asyncio.create_task(self._return_empty_list()))
 
@@ -80,13 +83,13 @@ class AsyncCompanySearchService:
     async def _return_empty_list(self) -> List[Dict]:
         return []
 
-    async def _search_official_site(self, company_name: str) -> List[Dict]:
+    async def _search_official_site(self, company_name: str, provider: str = "google") -> List[Dict]:
         keywords = [
             f"{company_name.lower()} official website"
         ]
-        return await self._concurrent_keyword_search(keywords, settings.MAX_OFFICIAL_SITE_RESULTS)
+        return await self._concurrent_keyword_search(keywords, settings.MAX_OFFICIAL_SITE_RESULTS, provider=provider)
 
-    async def _search_news(self, company_name: str, official_domain: Optional[str] = None) -> List[Dict]:
+    async def _search_news(self, company_name: str, official_domain: Optional[str] = None, provider: str = "google") -> List[Dict]:
         name = company_name.lower()
         keywords = [
             f"{name} latest news",
@@ -94,10 +97,10 @@ class AsyncCompanySearchService:
         # Exclude official domain from all queries to prioritize third-party sources
         if official_domain:
             keywords = [f"{kw} -site:{official_domain}" for kw in keywords]
-        results = await self._concurrent_keyword_search(keywords, settings.MAX_NEWS_RESULTS, per_domain_cap=1)
+        results = await self._concurrent_keyword_search(keywords, settings.MAX_NEWS_RESULTS, per_domain_cap=1, provider=provider)
         return results
 
-    async def _search_case_studies(self, company_name: str, official_domain: Optional[str] = None) -> List[Dict]:
+    async def _search_case_studies(self, company_name: str, official_domain: Optional[str] = None, provider: str = "google") -> List[Dict]:
         name = company_name.lower()
         keywords = [
             f"{name} case study",
@@ -106,11 +109,14 @@ class AsyncCompanySearchService:
         # Exclude official domain from all queries to prioritize third-party sources
         if official_domain:
             keywords = [f"{kw} -site:{official_domain}" for kw in keywords]
-        results = await self._concurrent_keyword_search(keywords, settings.MAX_CASE_STUDY_RESULTS, per_domain_cap=1)
+        results = await self._concurrent_keyword_search(keywords, settings.MAX_CASE_STUDY_RESULTS, per_domain_cap=1, provider=provider)
         return results
 
-    async def _concurrent_keyword_search(self, keywords: List[str], max_results: int, per_domain_cap: int = 1) -> List[Dict]:
-        tasks = [self._single_search_google(keyword) for keyword in keywords]
+    async def _concurrent_keyword_search(self, keywords: List[str], max_results: int, per_domain_cap: int = 1, provider: str = "google") -> List[Dict]:
+        if provider == "perplexity":
+            tasks = [self._single_search_perplexity(keyword) for keyword in keywords]
+        else:
+            tasks = [self._single_search_google(keyword) for keyword in keywords]
         try:
             search_results = await asyncio.gather(*tasks, return_exceptions=True)
         except Exception:
@@ -124,8 +130,6 @@ class AsyncCompanySearchService:
 
         deduped = self._deduplicate_results(flattened, max_results=max_results, per_domain_cap=per_domain_cap)
         return deduped
-
-    # Only Google CSE is supported now
 
     async def _single_search_google(self, keyword: str) -> List[Dict]:
         if not self.google_api_key or not self.google_cx:
@@ -156,12 +160,45 @@ class AsyncCompanySearchService:
         except Exception:
             return []
 
+    async def _single_search_perplexity(self, keyword: str) -> List[Dict]:
+        if not self.perplexity_api_key or not self.perplexity_base_url:
+            return []
+        url = f"{self.perplexity_base_url.rstrip('/')}/search"
+        headers = {
+            "Authorization": f"Bearer {self.perplexity_api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        payload = {
+            "query": keyword,
+            "max_results": 10,
+            "max_tokens_per_page": 1024,
+        }
+        try:
+            async with self.session.post(url, headers=headers, json=payload) as response:
+                response.raise_for_status()
+                data = await response.json()
+                items = data.get("results", []) or []
+                results: List[Dict] = []
+                for item in items:
+                    link = item.get("url", "")
+                    if link:
+                        canonical_url, _ = self._canonicalize_url(link)
+                        results.append({
+                            'title': item.get('title', ''),
+                            'url': canonical_url or link,
+                            'snippet': item.get('snippet', ''),
+                        })
+                return results
+        except Exception:
+            return []
+
     def _is_valid_url(self, url: str) -> bool:
         if not url:
             return False
         exclude_patterns = [
             'facebook.com', 'twitter.com', 
-            'youtube.com', 'reddit.com', 'instagram.com'
+            'youtube.com', 'reddit.com', 'instagram.com', 'x.com'
         ]
         return not any(pattern in url.lower() for pattern in exclude_patterns)
 
@@ -297,7 +334,7 @@ class AsyncCompanySearchService:
 
 
 async def search_company_async(company_name: str, include_news: bool = True,
-                              include_case_studies: bool = True) -> Dict:
+                              include_case_studies: bool = True, provider: str = "google") -> Dict:
     async with AsyncCompanySearchService() as service:
-        return await service.search_company(company_name, include_news, include_case_studies)
+        return await service.search_company(company_name, include_news, include_case_studies, provider)
 
