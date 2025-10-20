@@ -3,7 +3,7 @@
 Pydantic schemas for search operations
 """
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Literal
 from datetime import datetime
 
 
@@ -11,6 +11,7 @@ class SearchRequest(BaseModel):
     company_name: str = Field(..., description="Company name to search for", example="Salesforce")
     include_news: bool = Field(default=True, description="Include news articles in search")
     include_case_studies: bool = Field(default=True, description="Include case studies in search")
+    provider: Literal["google", "perplexity"] = Field(default="google", description="Search provider to use")
 
 
 class SearchResultItem(BaseModel):

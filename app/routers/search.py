@@ -35,7 +35,8 @@ async def search_company(request: SearchRequest):
         raw_results = await search_company_async(
             company_name=request.company_name.strip(),
             include_news=request.include_news,
-            include_case_studies=request.include_case_studies
+            include_case_studies=request.include_case_studies,
+            provider=request.provider
         )
         
         response = SearchResponse(
