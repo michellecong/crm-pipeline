@@ -47,11 +47,16 @@ OPENAI_API_KEY=your_openai_key_here
 # OPENAI_MODEL=gpt-5-mini
 # OPENAI_TEMPERATURE=0.0
 # OPENAI_MAX_TOKENS=2000
+
+# Perplexity - for provider-based web search (optional if using Google only)
+# Set this to enable the Perplexity provider
+PERPLEXITY_API_KEY=your_perplexity_key_here
 ```
 
 **API Keys:**
-- Firecrawl: https://www.firecrawl.dev/ (Free: 500 credits/month)
-- OpenAI: https://platform.openai.com/api-keys
+- Firecrawl: [firecrawl.dev](https://www.firecrawl.dev/) (Free: 500 credits/month)
+- OpenAI: [platform.openai.com](https://platform.openai.com/api-keys)
+- Perplexity: [perplexity.ai](https://www.perplexity.ai)
 
 ### 4. Run Server
 
@@ -62,6 +67,25 @@ python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ### 5. Use API
 
 ```bash
+# Search company (Google - default provider)
+curl -X POST http://localhost:8000/api/v1/search/company \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "include_news": true,
+    "include_case_studies": true
+  }'
+
+# Search company (Perplexity provider)
+curl -X POST http://localhost:8000/api/v1/search/company \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "include_news": true,
+    "include_case_studies": true,
+    "provider": "perplexity"
+  }'
+
 # Scrape company data
 curl -X POST http://localhost:8000/api/v1/scrape/company \
   -H "Content-Type: application/json" \
@@ -75,7 +99,7 @@ curl -X POST http://localhost:8000/api/v1/scrape/company \
 curl http://localhost:8000/api/v1/scrape/saved
 ```
 
-The API uses Google Custom Search exclusively now.
+The API supports both Google Custom Search and Perplexity Search. Use the `provider` field on `/api/v1/search/company` to select `google` (default) or `perplexity`.
 
 ## API Documentation
 

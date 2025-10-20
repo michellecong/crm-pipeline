@@ -16,7 +16,6 @@ class AsyncCompanySearchService:
         self.google_cx = settings.GOOGLE_CSE_CX
         self.perplexity_base_url = settings.PERPLEXITY_BASE_URL
         self.perplexity_api_key = settings.PERPLEXITY_API_KEY
-        self.perplexity_model = settings.PERPLEXITY_MODEL
         self.connector = None
         self.session = None
 
@@ -199,7 +198,7 @@ class AsyncCompanySearchService:
             return False
         exclude_patterns = [
             'facebook.com', 'twitter.com', 
-            'youtube.com', 'reddit.com', 'instagram.com'
+            'youtube.com', 'reddit.com', 'instagram.com', 'x.com'
         ]
         return not any(pattern in url.lower() for pattern in exclude_patterns)
 

@@ -38,8 +38,7 @@ class Settings:
 
     # Perplexity configuration
     PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
-    PERPLEXITY_BASE_URL = os.getenv("PERPLEXITY_BASE_URL", "https://api.perplexity.ai")
-    PERPLEXITY_MODEL = os.getenv("PERPLEXITY_MODEL", "sonar-medium-online")
+    PERPLEXITY_BASE_URL = "https://api.perplexity.ai"
 
 
 # Create global settings instance
