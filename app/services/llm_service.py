@@ -23,7 +23,7 @@ class LLMConfig:
     Attributes:
         model: The OpenAI model identifier to use
         temperature: Controls randomness in responses (0.0 = deterministic, 2.0 = very random)
-        max_tokens: Maximum number of tokens in the response
+        max_completion_tokens: Maximum number of tokens in the response
         top_p: Nucleus sampling parameter
         frequency_penalty: Penalty for token frequency (-2.0 to 2.0)
         presence_penalty: Penalty for token presence (-2.0 to 2.0)
@@ -33,7 +33,7 @@ class LLMConfig:
         self,
         model: str = None,
         temperature: float = None,
-        max_tokens: int = None,
+        max_completion_tokens: int = None,
         top_p: float = None,
         frequency_penalty: float = None,
         presence_penalty: float = None
@@ -41,7 +41,7 @@ class LLMConfig:
         # Use settings from config if not provided
         self.model = model if model is not None else settings.OPENAI_MODEL
         self.temperature = temperature if temperature is not None else settings.OPENAI_TEMPERATURE
-        self.max_tokens = max_tokens if max_tokens is not None else settings.OPENAI_MAX_TOKENS
+        self.max_completion_tokens = max_completion_tokens if max_completion_tokens is not None else settings.OPENAI_MAX_COMPLETION_TOKENS
         self.top_p = top_p if top_p is not None else settings.OPENAI_TOP_P
         self.frequency_penalty = frequency_penalty if frequency_penalty is not None else settings.OPENAI_FREQUENCY_PENALTY
         self.presence_penalty = presence_penalty if presence_penalty is not None else settings.OPENAI_PRESENCE_PENALTY
@@ -51,7 +51,7 @@ class LLMConfig:
         return {
             "model": self.model,
             "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
+            "max_completion_tokens": self.max_completion_tokens,
             "top_p": self.top_p,
             "frequency_penalty": self.frequency_penalty,
             "presence_penalty": self.presence_penalty
@@ -122,7 +122,7 @@ class LLMService:
         """
         self.api_key = self._get_api_key(api_key)
         self.config = config if config else LLMConfig()
-        self.client = self._initialize_client()
+        self.client = self._initialize_client() # Initialize the OpenAI client
         
         logger.info(f"LLM Service initialized with model: {self.config.model}")
     
@@ -158,7 +158,7 @@ class LLMService:
         Returns:
             Configured OpenAI client instance
         """
-        return OpenAI(api_key=self.api_key)
+        return OpenAI(api_key=self.api_key) 
     
     def _prepare_messages(
         self,
@@ -194,7 +194,7 @@ class LLMService:
         self,
         messages: List[Dict[str, str]],
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_completion_tokens: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Prepare the complete request parameters for the API call.
@@ -202,7 +202,7 @@ class LLMService:
         Args:
             messages: List of messages to send
             temperature: Override default temperature if provided
-            max_tokens: Override default max_tokens if provided
+            max_completion_tokens: Override default max_completion_tokens if provided
             
         Returns:
             Dictionary of request parameters
@@ -211,7 +211,7 @@ class LLMService:
             "model": self.config.model,
             "messages": messages,
             "temperature": temperature if temperature is not None else self.config.temperature,
-            "max_tokens": max_tokens if max_tokens is not None else self.config.max_tokens,
+            "max_completion_tokens": max_completion_tokens if max_completion_tokens is not None else self.config.max_completion_tokens,
             "top_p": self.config.top_p,
             "frequency_penalty": self.config.frequency_penalty,
             "presence_penalty": self.config.presence_penalty
@@ -256,7 +256,7 @@ class LLMService:
         usage = raw_response.usage
         
         response = LLMResponse(
-            content=choice.message.content,
+            content=choice.message.content if choice.message.content is not None else "",
             model=raw_response.model,
             finish_reason=choice.finish_reason,
             prompt_tokens=usage.prompt_tokens,
@@ -276,7 +276,7 @@ class LLMService:
         prompt: str,
         system_message: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_completion_tokens: Optional[int] = None
     ) -> LLMResponse:
         """
         Generate a completion from the language model (synchronous).
@@ -288,7 +288,7 @@ class LLMService:
             prompt: The text prompt to send to the model
             system_message: Optional system message to set context/behavior
             temperature: Override default temperature for this request
-            max_tokens: Override default max_tokens for this request
+            max_completion_tokens: Override default max_completion_tokens for this request
             
         Returns:
             LLMResponse object containing the generated text and metadata
@@ -305,7 +305,7 @@ class LLMService:
         messages = self._prepare_messages(prompt, system_message)
         
         # Step 2: Prepare request parameters
-        params = self._prepare_request_params(messages, temperature, max_tokens)
+        params = self._prepare_request_params(messages, temperature, max_completion_tokens)
         
         # Step 3: Send request
         raw_response = self._send_request(params)
@@ -320,7 +320,7 @@ class LLMService:
         prompt: str,
         system_message: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_completion_tokens: Optional[int] = None
     ) -> LLMResponse:
         """
         Generate a completion from the language model (asynchronous).
@@ -331,7 +331,7 @@ class LLMService:
             prompt: The text prompt to send to the model
             system_message: Optional system message to set context/behavior
             temperature: Override default temperature for this request
-            max_tokens: Override default max_tokens for this request
+            max_completion_tokens: Override default max_completion_tokens for this request
             
         Returns:
             LLMResponse object containing the generated text and metadata
@@ -345,7 +345,7 @@ class LLMService:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
-            lambda: self.generate(prompt, system_message, temperature, max_tokens)
+            lambda: self.generate(prompt, system_message, temperature, max_completion_tokens)
         )
     
     def update_config(self, **kwargs):
@@ -356,7 +356,7 @@ class LLMService:
             **kwargs: Configuration parameters to update
             
         Example:
-            >>> service.update_config(temperature=0.8, max_tokens=1000)
+            >>> service.update_config(temperature=0.8, max_completion_tokens=1000)
         """
         for key, value in kwargs.items():
             if hasattr(self.config, key):

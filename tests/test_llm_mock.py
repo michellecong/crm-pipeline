@@ -34,29 +34,23 @@ def test_config_loading():
     print("Test 1: Configuration Loading")
     print("="*60)
     
-    try:
-        config = LLMConfig(
-            model="gpt-5-mini",
-            temperature=0.0,
-            max_tokens=2000
-        )
-        
-        print("✓ Config created successfully")
-        print(f"  Model: {config.model}")
-        print(f"  Temperature: {config.temperature}")
-        print(f"  Max Tokens: {config.max_tokens}")
-        
-        # Test to_dict
-        config_dict = config.to_dict()
-        assert "model" in config_dict
-        assert config_dict["temperature"] == 0.0
-        
-        print("✓ Config to_dict works")
-        return True
-        
-    except Exception as e:
-        print(f"✗ Failed: {e}")
-        return False
+    config = LLMConfig(
+        model="gpt-5-mini",
+        temperature=0.0,
+        max_completion_tokens=2000
+    )
+    
+    print("✓ Config created successfully")
+    print(f"  Model: {config.model}")
+    print(f"  Temperature: {config.temperature}")
+    print(f"  Max Completion Tokens: {config.max_completion_tokens}")
+    
+    # Test to_dict
+    config_dict = config.to_dict()
+    assert "model" in config_dict
+    assert config_dict["temperature"] == 0.0
+    
+    print("✓ Config to_dict works")
 
 
 def test_llm_response_creation():
@@ -65,32 +59,26 @@ def test_llm_response_creation():
     print("Test 2: LLMResponse Object")
     print("="*60)
     
-    try:
-        response = LLMResponse(
-            content="This is a test response",
-            model="gpt-5-mini",
-            finish_reason="stop",
-            prompt_tokens=15,
-            completion_tokens=25,
-            total_tokens=40
-        )
-        
-        print("✓ Response object created")
-        print(f"  Content: {response.content}")
-        print(f"  Total tokens: {response.total_tokens}")
-        
-        # Test to_dict
-        response_dict = response.to_dict()
-        assert "content" in response_dict
-        assert "usage" in response_dict
-        assert response_dict["usage"]["total_tokens"] == 40
-        
-        print("✓ Response to_dict works")
-        return True
-        
-    except Exception as e:
-        print(f"✗ Failed: {e}")
-        return False
+    response = LLMResponse(
+        content="This is a test response",
+        model="gpt-5-mini",
+        finish_reason="stop",
+        prompt_tokens=15,
+        completion_tokens=25,
+        total_tokens=40
+    )
+
+    print("✓ Response object created")
+    print(f"  Content: {response.content}")
+    print(f"  Total tokens: {response.total_tokens}")
+
+    # Test to_dict
+    response_dict = response.to_dict()
+    assert "content" in response_dict
+    assert "usage" in response_dict
+    assert response_dict["usage"]["total_tokens"] == 40
+    
+    print("✓ Response to_dict works")
 
 
 def test_message_preparation():
@@ -99,34 +87,27 @@ def test_message_preparation():
     print("Test 3: Message Preparation")
     print("="*60)
     
-    try:
-        # Set a dummy API key for testing
-        os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
-        
-        service = LLMService()
-        
-        # Test user message only
-        messages = service._prepare_messages("Hello, world!")
-        assert len(messages) == 1
-        assert messages[0]["role"] == "user"
-        assert messages[0]["content"] == "Hello, world!"
-        print("✓ User message preparation works")
-        
-        # Test with system message
-        messages = service._prepare_messages(
-            "Hello!",
-            system_message="You are a helpful assistant."
-        )
-        assert len(messages) == 2
-        assert messages[0]["role"] == "system"
-        assert messages[1]["role"] == "user"
-        print("✓ System + User message preparation works")
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ Failed: {e}")
-        return False
+    # Set a dummy API key for testing
+    os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
+    
+    service = LLMService()
+    
+    # Test user message only
+    messages = service._prepare_messages("Hello, world!")
+    assert len(messages) == 1
+    assert messages[0]["role"] == "user"
+    assert messages[0]["content"] == "Hello, world!"
+    print("✓ User message preparation works")
+    
+    # Test with system message
+    messages = service._prepare_messages(
+        "Hello!",
+        system_message="You are a helpful assistant."
+    )
+    assert len(messages) == 2
+    assert messages[0]["role"] == "system"
+    assert messages[1]["role"] == "user"
+    print("✓ System + User message preparation works")
 
 
 def test_request_params_preparation():
@@ -135,40 +116,34 @@ def test_request_params_preparation():
     print("Test 4: Request Parameters")
     print("="*60)
     
-    try:
-        os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
-        
-        config = LLMConfig(temperature=0.5, max_tokens=1000)
-        service = LLMService(config=config)
-        
-        messages = [{"role": "user", "content": "Test"}]
-        params = service._prepare_request_params(messages)
-        
-        assert params["model"] == "gpt-5-mini"
-        assert params["temperature"] == 0.5
-        assert params["max_tokens"] == 1000
-        assert params["messages"] == messages
-        
-        print("✓ Request params prepared correctly")
-        print(f"  Model: {params['model']}")
-        print(f"  Temperature: {params['temperature']}")
-        print(f"  Max Tokens: {params['max_tokens']}")
-        
-        # Test parameter override
-        params = service._prepare_request_params(
-            messages,
-            temperature=0.8,
-            max_tokens=500
-        )
-        assert params["temperature"] == 0.8
-        assert params["max_tokens"] == 500
-        
-        print("✓ Parameter override works")
-        return True
-        
-    except Exception as e:
-        print(f"✗ Failed: {e}")
-        return False
+    os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
+    
+    config = LLMConfig(temperature=0.5, max_completion_tokens=1000)
+    service = LLMService(config=config)
+    
+    messages = [{"role": "user", "content": "Test"}]
+    params = service._prepare_request_params(messages)
+    
+    assert params["model"] == "gpt-5-mini"
+    assert params["temperature"] == 0.5
+    assert params["max_completion_tokens"] == 1000
+    assert params["messages"] == messages
+    
+    print("✓ Request params prepared correctly")
+    print(f"  Model: {params['model']}")
+    print(f"  Temperature: {params['temperature']}")
+    print(f"  Max Completion Tokens: {params['max_completion_tokens']}")
+    
+    # Test parameter override
+    params = service._prepare_request_params(
+        messages,
+        temperature=0.8,
+        max_completion_tokens=500
+    )
+    assert params["temperature"] == 0.8
+    assert params["max_completion_tokens"] == 500
+    
+    print("✓ Parameter override works")
 
 
 def test_mock_api_call():
@@ -177,46 +152,38 @@ def test_mock_api_call():
     print("Test 5: Mock API Call (Simulated)")
     print("="*60)
     
-    try:
-        os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
-        
-        # Create service
-        service = LLMService()
-        
-        # Mock the OpenAI client's chat.completions.create method
-        mock_response = MockOpenAIResponse(
-            content="Hello! This is a simulated response from the LLM.",
-            model="gpt-5-mini"
+    os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
+    
+    # Create service
+    service = LLMService()
+    
+    # Mock the OpenAI client's chat.completions.create method
+    mock_response = MockOpenAIResponse(
+        content="Hello! This is a simulated response from the LLM.",
+        model="gpt-5-mini"
+    )
+    
+    with patch.object(service.client.chat.completions, 'create', return_value=mock_response):
+        # Make "API call" (actually mocked)
+        response = service.generate(
+            prompt="Say hello!",
+            system_message="You are a friendly assistant."
         )
         
-        with patch.object(service.client.chat.completions, 'create', return_value=mock_response):
-            # Make "API call" (actually mocked)
-            response = service.generate(
-                prompt="Say hello!",
-                system_message="You are a friendly assistant."
-            )
-            
-            print("✓ Mock API call successful")
-            print(f"\n  Response content: {response.content}")
-            print(f"  Model: {response.model}")
-            print("  Tokens used:")
-            print(f"    - Prompt: {response.prompt_tokens}")
-            print(f"    - Completion: {response.completion_tokens}")
-            print(f"    - Total: {response.total_tokens}")
-            
-            # Verify response structure
-            assert response.content == "Hello! This is a simulated response from the LLM."
-            assert response.total_tokens == 30
-            assert response.finish_reason == "stop"
-            
-            print("\n✓ Response structure validated")
-            return True
+        print("✓ Mock API call successful")
+        print(f"\n  Response content: {response.content}")
+        print(f"  Model: {response.model}")
+        print("  Tokens used:")
+        print(f"    - Prompt: {response.prompt_tokens}")
+        print(f"    - Completion: {response.completion_tokens}")
+        print(f"    - Total: {response.total_tokens}")
         
-    except Exception as e:
-        print(f"✗ Failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        # Verify response structure
+        assert response.content == "Hello! This is a simulated response from the LLM."
+        assert response.total_tokens == 30
+        assert response.finish_reason == "stop"
+        
+        print("\n✓ Response structure validated")
 
 
 def test_config_update():
@@ -225,31 +192,24 @@ def test_config_update():
     print("Test 6: Configuration Update")
     print("="*60)
     
-    try:
-        os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
-        
-        service = LLMService()
-        
-        # Check initial config
-        initial_temp = service.config.temperature
-        print(f"  Initial temperature: {initial_temp}")
-        
-        # Update config
-        service.update_config(temperature=0.9, max_tokens=1500)
-        
-        # Verify update
-        assert service.config.temperature == 0.9
-        assert service.config.max_tokens == 1500
-        
-        print("✓ Config updated successfully")
-        print(f"  New temperature: {service.config.temperature}")
-        print(f"  New max_tokens: {service.config.max_tokens}")
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ Failed: {e}")
-        return False
+    os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
+    
+    service = LLMService()
+    
+    # Check initial config
+    initial_temp = service.config.temperature
+    print(f"  Initial temperature: {initial_temp}")
+    
+    # Update config
+    service.update_config(temperature=0.9, max_completion_tokens=1500)
+    
+    # Verify update
+    assert service.config.temperature == 0.9
+    assert service.config.max_completion_tokens == 1500
+    
+    print("✓ Config updated successfully")
+    print(f"  New temperature: {service.config.temperature}")
+    print(f"  New max_completion_tokens: {service.config.max_completion_tokens}")
 
 
 def test_multiple_generations():
@@ -258,38 +218,31 @@ def test_multiple_generations():
     print("Test 7: Multiple Generations")
     print("="*60)
     
-    try:
-        os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
+    os.environ["OPENAI_API_KEY"] = "sk-test-key-for-mock-testing"
+    
+    service = LLMService()
+    
+    prompts = [
+        "What is Python?",
+        "Explain machine learning.",
+        "Write a haiku about coding."
+    ]
+    
+    responses = []
+    
+    for i, prompt in enumerate(prompts, 1):
+        mock_response = MockOpenAIResponse(
+            content=f"Mock response {i} for: {prompt}",
+            model="gpt-5-mini"
+        )
         
-        service = LLMService()
-        
-        prompts = [
-            "What is Python?",
-            "Explain machine learning.",
-            "Write a haiku about coding."
-        ]
-        
-        responses = []
-        
-        for i, prompt in enumerate(prompts, 1):
-            mock_response = MockOpenAIResponse(
-                content=f"Mock response {i} for: {prompt}",
-                model="gpt-5-mini"
-            )
-            
-            with patch.object(service.client.chat.completions, 'create', return_value=mock_response):
-                response = service.generate(prompt)
-                responses.append(response)
-                print(f"  Generation {i}: ✓ Success")
-        
-        print(f"\n✓ Generated {len(responses)} responses")
-        print(f"  Total tokens used: {sum(r.total_tokens for r in responses)}")
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ Failed: {e}")
-        return False
+        with patch.object(service.client.chat.completions, 'create', return_value=mock_response):
+            response = service.generate(prompt)
+            responses.append(response)
+            print(f"  Generation {i}: ✓ Success")
+    
+    print(f"\n✓ Generated {len(responses)} responses")
+    print(f"  Total tokens used: {sum(r.total_tokens for r in responses)}")
 
 
 def run_all_tests():

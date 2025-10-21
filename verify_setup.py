@@ -26,8 +26,8 @@ try:
     print("✓ LLMConfig created successfully")
     print(f"  - Model: {config.model}")
     print(f"  - Temperature: {config.temperature}")
-    print(f"  - Max tokens: {config.max_tokens}")
-    
+    print(f"  - Max completion tokens: {config.max_completion_tokens}")
+
     assert config.model == "gpt-5-mini", f"Expected gpt-5-mini, got {config.model}"
     print("✓ Default model is gpt-5-mini")
 except Exception as e:
@@ -63,7 +63,7 @@ try:
     request = LLMGenerateRequest(
         prompt="Test prompt",
         temperature=0.5,
-        max_tokens=100
+        max_completion_tokens=100
     )
     print("✓ LLMGenerateRequest validated successfully")
     print(f"  - Prompt length: {len(request.prompt)} chars")
