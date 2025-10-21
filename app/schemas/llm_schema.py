@@ -10,12 +10,12 @@ class LLMGenerateRequest(BaseModel):
     prompt: str = Field(
         ..., 
         description="The main prompt/question to send to the LLM",
-        example="Explain the benefits of CRM systems in 3 sentences"
+        json_schema_extra={"example": "Explain the benefits of CRM systems in 3 sentences"}
     )
     system_message: Optional[str] = Field(
         default=None,
         description="System message to set LLM behavior/context",
-        example="You are a helpful assistant specializing in B2B sales."
+        json_schema_extra={"example": "You are a helpful assistant specializing in B2B sales."}
     )
     temperature: Optional[float] = Field(
         default=None,
@@ -23,7 +23,7 @@ class LLMGenerateRequest(BaseModel):
         le=2.0,
         description="Controls randomness (0=deterministic, 2=very random)"
     )
-    max_tokens: Optional[int] = Field(
+    max_completion_tokens: Optional[int] = Field(
         default=None,
         ge=1,
         le=4000,
@@ -50,7 +50,7 @@ class LLMConfigResponse(BaseModel):
     """Current LLM service configuration"""
     model: str
     temperature: float
-    max_tokens: int
+    max_completion_tokens: int
     top_p: float
     frequency_penalty: float
     presence_penalty: float
@@ -60,7 +60,7 @@ class LLMConfigUpdateRequest(BaseModel):
     """Update LLM configuration"""
     model: Optional[str] = None
     temperature: Optional[float] = Field(None, ge=0.0, le=2.0)
-    max_tokens: Optional[int] = Field(None, ge=1, le=4000)
+    max_completion_tokens: Optional[int] = Field(None, ge=1, le=4000)
     top_p: Optional[float] = Field(None, ge=0.0, le=1.0)
     frequency_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)
     presence_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)

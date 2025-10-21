@@ -41,7 +41,7 @@ async def generate_text(request: LLMGenerateRequest):
             prompt=request.prompt,
             system_message=request.system_message,
             temperature=request.temperature,
-            max_tokens=request.max_tokens
+            max_completion_tokens=request.max_completion_tokens
         )
         
         return LLMGenerateResponse(
@@ -135,7 +135,7 @@ async def test_llm():
         # Try a simple generation
         response = await llm_service.generate_async(
             prompt="Say 'Connection successful!' if you can read this.",
-            max_tokens=20
+            max_completion_tokens=20
         )
         
         return {
