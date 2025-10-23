@@ -26,16 +26,14 @@ class LLMGenerateRequest(BaseModel):
         json_schema_extra={"example": "You are a helpful assistant specializing in B2B sales."}
     )
     temperature: Optional[float] = Field(
-        default=None,
-        ge=0.0,
-        le=2.0,
-        description="Controls randomness (0=deterministic, 2=very random)"
+        default=1.0,
+        description="Temperature for GPT-5 models is fixed at 1.0 (cannot be modified)"
     )
     max_completion_tokens: Optional[int] = Field(
-        default=None,
+        default=8000,
         ge=1,
-        le=4000,
-        description="Maximum tokens in response"
+        le=8000,
+        description="Maximum tokens in response (increased for comprehensive persona generation)"
     )
 
 
@@ -67,8 +65,11 @@ class LLMConfigResponse(BaseModel):
 class LLMConfigUpdateRequest(BaseModel):
     """Update LLM configuration"""
     model: Optional[str] = None
-    temperature: Optional[float] = Field(None, ge=0.0, le=2.0)
-    max_completion_tokens: Optional[int] = Field(None, ge=1, le=4000)
+    temperature: Optional[float] = Field(
+        None, 
+        description="Temperature for GPT-5 models is fixed at 1.0 (cannot be modified)"
+    )
+    max_completion_tokens: Optional[int] = Field(None, ge=1, le=8000)
     top_p: Optional[float] = Field(None, ge=0.0, le=1.0)
     frequency_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)
     presence_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)
