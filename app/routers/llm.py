@@ -9,11 +9,12 @@ from ..schemas.llm_schema import (
     LLMConfigUpdateRequest,
     TokenUsage,
     PersonaGenerateRequest,
-    PersonaResponse
+    PersonaResponse,
+    Persona,
+    TierClassification
 )
 from ..services.llm_service import get_llm_service
-from ..controllers.scraping_controller import get_scraping_controller
-from ..services.data_store import get_data_store
+from ..services.generator_service import get_generator_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -139,7 +140,7 @@ async def test_llm():
         # Try a simple generation
         response = await llm_service.generate_async(
             prompt="Say 'Connection successful!' if you can read this.",
-            max_completion_tokens=20
+            max_completion_tokens=500
         )
         
         return {
@@ -168,77 +169,69 @@ async def test_llm():
 @router.post(
     "/llm/persona/generate",
     response_model=PersonaResponse,
-    summary="Generate persona from company data",
-    description="Search and scrape web content for the company by name, then generate a buyer persona."
+    summary="Generate personas from company data",
+    description="Use scraped web content to generate detailed buyer personas with tier classification and structured data."
 )
 async def generate_persona(request: PersonaGenerateRequest):
+    """
+    Enhanced persona generation endpoint that generates multiple structured personas
+    with tier classification, pain points, goals, and communication preferences.
+    """
     try:
-        # 1) Prefer local cached scraped data if available
-        data_store = get_data_store()
-        scraping_result = data_store.load_latest_scraped_data(request.company_name)
-
-        # Fallback to scraping if no local cache
-        if not scraping_result:
-            controller = get_scraping_controller()
-            scraping_result = await controller.scrape_company(
-                company_name=request.company_name,
-                include_news=request.include_news,
-                include_case_studies=request.include_case_studies,
-                max_urls=request.max_urls,
-                save_to_file=True
+        generator_service = get_generator_service()
+        
+        # Generate personas using the generator service
+        result = await generator_service.generate(
+            generator_type="personas",
+            company_name=request.company_name,
+            generate_count=request.generate_count
+        )
+        
+        # Convert to response format
+        personas_data = result["result"].get("personas", [])
+        tier_data = result["result"].get("tier_classification", {})
+        
+        # Create Persona objects
+        personas = []
+        for persona_data in personas_data:
+            persona = Persona(
+                name=persona_data.get("name", "Unknown"),
+                tier=persona_data.get("tier", "tier_3"),
+                job_title=persona_data.get("job_title"),
+                industry=persona_data.get("industry"),
+                department=persona_data.get("department"),
+                location=persona_data.get("location"),
+                company_size=persona_data.get("company_size"),
+                description=persona_data.get("description"),
+                decision_power=persona_data.get("decision_power"),
+                pain_points=persona_data.get("pain_points", []),
+                goals=persona_data.get("goals", []),
+                communication_preferences=persona_data.get("communication_preferences", [])
             )
-
-        items = [
-            it for it in scraping_result.get("scraped_content", [])
-            if it.get("success") and it.get("markdown")
-        ]
-        if not items:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No usable content scraped for this company"
-            )
-
-        # 2) Concatenate markdown with a conservative character budget
-        char_budget = 4000
-        combined, total = [], 0
-        for it in items:
-            text = it["markdown"].strip()
-            if not text:
-                continue
-            remaining = char_budget - total
-            if remaining <= 0:
-                break
-            snippet = text[:remaining]
-            combined.append(f"URL: {it.get('url','')}\n\n{snippet}")
-            total += len(snippet)
-
-        context = "\n\n---\n\n".join(combined)
-        logger.info(f"Persona context prepared: items={len(items)}, context_chars={len(context)}")
-
-        # 3) Call LLM
-        system_message = (
-            "You are a B2B marketing analyst. Create a concise buyer persona "
-            "(name, role, company size, goals, pain points, key objections, purchase triggers). "
-            "Only output plain text; do not return JSON or tool calls. Base it only on the provided content."
+            personas.append(persona)
+        
+        # Create tier classification
+        tier_classification = TierClassification(
+            tier_1=tier_data.get("tier_1", []),
+            tier_2=tier_data.get("tier_2", []),
+            tier_3=tier_data.get("tier_3", [])
         )
-        prompt = (
-            "Use the following content to infer a single buyer persona for this company.\n\n"
-            f"Content:\n{context}\n\n"
-            "Return only the persona."
+        
+        return PersonaResponse(
+            company_name=result["company_name"],
+            personas=personas,
+            tier_classification=tier_classification,
+            context_length=result["context_length"],
+            generated_at=result["generated_at"],
+            total_personas=len(personas),
+            model=result["result"].get("model")
         )
-
-        llm_service = get_llm_service()
-        resp = await llm_service.generate_async(
-            prompt=prompt,
-            system_message=system_message,
-            max_completion_tokens=2000,
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
         )
-
-        return PersonaResponse(persona=resp.content, model=resp.model)
-
-
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Persona generation failed: {str(e)}")
         raise HTTPException(
