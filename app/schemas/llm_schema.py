@@ -65,3 +65,17 @@ class LLMConfigUpdateRequest(BaseModel):
     frequency_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)
     presence_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)
 
+
+class PersonaGenerateRequest(BaseModel):
+    """Request to generate persona from company data"""
+    company_name: str = Field(..., description="Target company name to search and scrape")
+    include_news: bool = Field(default=True, description="Include news articles")
+    include_case_studies: bool = Field(default=True, description="Include case studies")
+    max_urls: int = Field(default=8, description="Maximum URLs to scrape for context")
+
+
+class PersonaResponse(BaseModel):
+    """Persona generation response"""
+    persona: str
+    model: Optional[str] = None
+
