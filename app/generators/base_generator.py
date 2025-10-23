@@ -40,7 +40,7 @@ class BaseGenerator(ABC):
                 prompt=prompt,
                 system_message=system_message,
                 temperature=1.0,
-                max_completion_tokens=4000
+                max_completion_tokens=8000
             )
             
             parsed_result = self.parse_response(response.content)
