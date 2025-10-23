@@ -214,7 +214,8 @@ class LLMService:
             "max_completion_tokens": max_completion_tokens if max_completion_tokens is not None else self.config.max_completion_tokens,
             "top_p": self.config.top_p,
             "frequency_penalty": self.config.frequency_penalty,
-            "presence_penalty": self.config.presence_penalty
+            "presence_penalty": self.config.presence_penalty,
+            "response_format": {"type": "text"}
         }
         
         return params

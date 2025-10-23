@@ -7,9 +7,13 @@ from ..schemas.llm_schema import (
     LLMGenerateResponse,
     LLMConfigResponse,
     LLMConfigUpdateRequest,
-    TokenUsage
+    TokenUsage,
+    PersonaGenerateRequest,
+    PersonaResponse
 )
 from ..services.llm_service import get_llm_service
+from ..controllers.scraping_controller import get_scraping_controller
+from ..services.data_store import get_data_store
 import logging
 
 logger = logging.getLogger(__name__)
@@ -160,3 +164,84 @@ async def test_llm():
             detail=f"LLM test failed: {str(e)}"
         )
 
+
+@router.post(
+    "/llm/persona/generate",
+    response_model=PersonaResponse,
+    summary="Generate persona from company data",
+    description="Search and scrape web content for the company by name, then generate a buyer persona."
+)
+async def generate_persona(request: PersonaGenerateRequest):
+    try:
+        # 1) Prefer local cached scraped data if available
+        data_store = get_data_store()
+        scraping_result = data_store.load_latest_scraped_data(request.company_name)
+
+        # Fallback to scraping if no local cache
+        if not scraping_result:
+            controller = get_scraping_controller()
+            scraping_result = await controller.scrape_company(
+                company_name=request.company_name,
+                include_news=request.include_news,
+                include_case_studies=request.include_case_studies,
+                max_urls=request.max_urls,
+                save_to_file=True
+            )
+
+        items = [
+            it for it in scraping_result.get("scraped_content", [])
+            if it.get("success") and it.get("markdown")
+        ]
+        if not items:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No usable content scraped for this company"
+            )
+
+        # 2) Concatenate markdown with a conservative character budget
+        char_budget = 4000
+        combined, total = [], 0
+        for it in items:
+            text = it["markdown"].strip()
+            if not text:
+                continue
+            remaining = char_budget - total
+            if remaining <= 0:
+                break
+            snippet = text[:remaining]
+            combined.append(f"URL: {it.get('url','')}\n\n{snippet}")
+            total += len(snippet)
+
+        context = "\n\n---\n\n".join(combined)
+        logger.info(f"Persona context prepared: items={len(items)}, context_chars={len(context)}")
+
+        # 3) Call LLM
+        system_message = (
+            "You are a B2B marketing analyst. Create a concise buyer persona "
+            "(name, role, company size, goals, pain points, key objections, purchase triggers). "
+            "Only output plain text; do not return JSON or tool calls. Base it only on the provided content."
+        )
+        prompt = (
+            "Use the following content to infer a single buyer persona for this company.\n\n"
+            f"Content:\n{context}\n\n"
+            "Return only the persona."
+        )
+
+        llm_service = get_llm_service()
+        resp = await llm_service.generate_async(
+            prompt=prompt,
+            system_message=system_message,
+            max_completion_tokens=2000,
+        )
+
+        return PersonaResponse(persona=resp.content, model=resp.model)
+
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Persona generation failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Persona generation failed: {str(e)}"
+        )
