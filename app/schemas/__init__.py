@@ -5,7 +5,7 @@ Pydantic schemas for API requests and responses
 from .search import SearchRequest, SearchResultItem, SearchResponse
 from .scraping import ScrapeRequest, ScrapedContent, ScrapeResponse
 from .common import ErrorResponse, HealthResponse
-from .persona_schemas import PersonaGenerateRequest, PersonaResponse, Persona, TierClassification
+from .llm_schema import LLMGenerateRequest, LLMGenerateResponse, LLMConfigResponse, LLMConfigUpdateRequest, TokenUsage
 
 __all__ = [
     # Search
@@ -19,9 +19,10 @@ __all__ = [
     # Common
     "ErrorResponse",
     "HealthResponse",
-    # Persona
-    "PersonaGenerateRequest",
-    "PersonaResponse",
-    "Persona",
-    "TierClassification",
+    # LLM
+    "LLMGenerateRequest",
+    "LLMGenerateResponse",
+    "LLMConfigResponse",
+    "LLMConfigUpdateRequest",
+    "TokenUsage",
 ]
