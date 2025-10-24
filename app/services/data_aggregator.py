@@ -6,6 +6,7 @@ from typing import Dict, List
 from ..services.data_store import get_data_store
 from ..controllers.scraping_controller import get_scraping_controller
 import logging
+from ..services.text_cleaning import strip_links
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +47,12 @@ class DataAggregator:
             content_parts.append(f"OFFICIAL WEBSITE: {scraped_data['official_website']}")
             char_count += len(content_parts[-1])
         
-        # Add scraped content
+        # Add scraped content (cleaned)
         for item in scraped_data.get("scraped_content", []):
             if item.get("success") and item.get("markdown"):
                 content_type = item.get("content_type", "unknown")
                 url = item.get("url", "")
-                markdown = item.get("markdown", "")
+                markdown = strip_links(item.get("markdown", ""))
                 
                 if char_count + len(markdown) > max_chars:
                     break
