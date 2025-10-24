@@ -133,7 +133,7 @@ class ScrapingController:
                 )
                 
                 # Merge processed content back with original items
-                processed_items = {item['item']['url']: item for item in batch_processed}
+                processed_items = {item['url']: item for item in batch_processed}
                 
                 for item in scraped_content:
                     if item['success'] and item.get('markdown'):
