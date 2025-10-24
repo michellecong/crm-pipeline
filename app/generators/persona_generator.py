@@ -13,7 +13,7 @@ class PersonaGenerator(BaseGenerator):
     """Persona generation with tier classification"""
     
     def get_system_message(self) -> str:
-      return """You are a B2B sales intelligence expert specializing in enterprise buyer persona identification.
+        return """You are a B2B sales intelligence expert specializing in enterprise buyer persona identification.
 
 CRITICAL INSTRUCTIONS FOR FIELD HANDLING:
 
@@ -373,7 +373,23 @@ Inconsistent size/location/industry across personas
     def parse_response(self, response: str) -> Dict:
         try:
             logger.debug(f"RAW LLM RESPONSE: {response[:2000]}")
-            data = json.loads(response)
+            
+            # Clean response content, remove markdown code block markers
+            cleaned_response = response.strip()
+            
+            # Remove ```json and ``` markers
+            if cleaned_response.startswith('```json'):
+                cleaned_response = cleaned_response[7:]  # Remove ```json
+            elif cleaned_response.startswith('```'):
+                cleaned_response = cleaned_response[3:]   # Remove ```
+            
+            if cleaned_response.endswith('```'):
+                cleaned_response = cleaned_response[:-3]  # Remove trailing ```
+            
+            cleaned_response = cleaned_response.strip()
+            
+            # Try to parse JSON
+            data = json.loads(cleaned_response)
             
             # Validate and clean the data
             personas = data.get("personas", [])
@@ -416,6 +432,7 @@ Inconsistent size/location/industry across personas
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse persona JSON: {e}")
+            logger.error(f"Raw response: {response[:500]}...")
             return {
                 "personas": [],
                 "tier_classification": {"tier_1": [], "tier_2": [], "tier_3": []},

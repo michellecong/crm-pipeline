@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class PersonaTier(str, Enum):
     """Persona tier classification matching database enum"""
     TIER_1 = "tier_1"  # C-level executives with direct budget control
@@ -198,6 +199,7 @@ class PersonaGenerateRequest(BaseModel):
             }
         }
 
+
 class PersonaResponse(BaseModel):
     """Persona generation response"""
     company_name: str
@@ -206,7 +208,6 @@ class PersonaResponse(BaseModel):
     tier_classification: TierClassification
     context_length: int
     generated_at: str
-    total_personas: int
     total_personas: int
     model: Optional[str] = None
     
