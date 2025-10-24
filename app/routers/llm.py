@@ -7,11 +7,14 @@ from ..schemas.llm_schema import (
     LLMGenerateResponse,
     LLMConfigResponse,
     LLMConfigUpdateRequest,
-    TokenUsage,
+    TokenUsage
+)
+from ..schemas.persona_schemas import (
     PersonaGenerateRequest,
     PersonaResponse,
     Persona,
-    TierClassification
+    TierClassification,
+    CompanyInfo
 )
 from ..services.llm_service import get_llm_service
 from ..services.generator_service import get_generator_service
@@ -190,6 +193,17 @@ async def generate_persona(request: PersonaGenerateRequest):
         # Convert to response format
         personas_data = result["result"].get("personas", [])
         tier_data = result["result"].get("tier_classification", {})
+        company_data = result["result"].get("company", {})
+        
+        # Create CompanyInfo object
+        company = CompanyInfo(
+            name=company_data.get("name", "Unknown Company"),
+            size=company_data.get("size", 0),
+            industry=company_data.get("industry", "Unknown"),
+            location=company_data.get("location", "Unknown"),
+            domain=company_data.get("domain", "Unknown"),
+            created_at=result["generated_at"]
+        )
         
         # Create Persona objects
         personas = []
@@ -219,6 +233,7 @@ async def generate_persona(request: PersonaGenerateRequest):
         
         return PersonaResponse(
             company_name=result["company_name"],
+            company=company,
             personas=personas,
             tier_classification=tier_classification,
             context_length=result["context_length"],
@@ -238,3 +253,5 @@ async def generate_persona(request: PersonaGenerateRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Persona generation failed: {str(e)}"
         )
+
+
