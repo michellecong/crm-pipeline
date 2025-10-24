@@ -97,6 +97,14 @@ curl -X POST http://localhost:8000/api/v1/scrape/company \
 
 # View saved data
 curl http://localhost:8000/api/v1/scrape/saved
+
+# Generate personas from company data
+curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "generate_count": 3
+  }'
 ```
 
 The API supports both Google Custom Search and Perplexity Search. Use the `provider` field on `/api/v1/search/company` to select `google` (default) or `perplexity`.
@@ -116,12 +124,13 @@ Interactive docs: http://localhost:8000/docs
 | `/api/v1/pdf/process/`   | POST   | Process PDF and chunk text|
 
 ### LLM Service
-| Endpoint                 | Method | Description               |
-| ------------------------ | ------ | ------------------------- |
-| `/api/v1/llm/generate`   | POST   | Generate text with LLM    |
-| `/api/v1/llm/test`       | GET    | Test LLM connectivity     |
-| `/api/v1/llm/config`     | GET    | Get LLM configuration     |
-| `/api/v1/llm/config`     | PATCH  | Update LLM configuration  |
+| Endpoint                     | Method | Description                    |
+| ---------------------------- | ------ | ------------------------------ |
+| `/api/v1/llm/generate`      | POST   | Generate text with LLM         |
+| `/api/v1/llm/persona/generate` | POST | Generate buyer personas        |
+| `/api/v1/llm/test`          | GET    | Test LLM connectivity          |
+| `/api/v1/llm/config`        | GET    | Get LLM configuration          |
+| `/api/v1/llm/config`        | PATCH  | Update LLM configuration       |
 
 ## Data Storage
 
@@ -144,6 +153,78 @@ python tests/test_llm_connection.py
 python -m pytest tests/ -v
 ```
 
+### Test Persona Generation
+
+#### Basic Persona Generation
+```bash
+# Generate 3 personas for Salesforce
+curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "generate_count": 3
+  }'
+```
+
+#### Generate More Personas
+```bash
+# Generate 5 personas for Microsoft
+curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Microsoft",
+    "generate_count": 5
+  }'
+```
+
+#### Expected Response Format
+```json
+{
+  "company_name": "Salesforce",
+  "personas": [
+    {
+      "name": "Chief Financial Officer (CFO)",
+      "tier": "tier_1",
+      "job_title": "Chief Financial Officer",
+      "industry": "Technology / Cloud Software",
+      "department": "Finance",
+      "location": "San Francisco, CA",
+      "company_size": 79000,
+      "description": "Senior executive responsible for financial strategy...",
+      "decision_power": "final_approver",
+      "pain_points": ["Controlling SaaS spend", "Demonstrating ROI"],
+      "goals": ["Drive profitable growth", "Improve capital allocation"],
+      "communication_preferences": ["Executive summaries", "Data-driven reports"]
+    }
+  ],
+  "tier_classification": {
+    "tier_1": ["persona_1"],
+    "tier_2": ["persona_2"],
+    "tier_3": ["persona_3"]
+  },
+  "context_length": 4621,
+  "generated_at": "2025-10-23T14:43:29.571252",
+  "total_personas": 3,
+  "model": "gpt-4o"
+}
+```
+
+#### Testing Different Companies
+```bash
+# Test with different company types
+curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "Tesla", "generate_count": 3}'
+
+curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "Shopify", "generate_count": 4}'
+
+curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "Stripe", "generate_count": 3}'
+```
+
 ## Troubleshooting
 
 **SSL Certificate Error (macOS)**:
@@ -162,6 +243,14 @@ python -m pytest tests/ -v
 - Ensure `OPENAI_API_KEY` is set in `.env`
 - Test with: `GET /api/v1/llm/test`
 - Check API quota at https://platform.openai.com/usage
+
+**Persona Generation Issues**:
+
+- **No scraped data**: The endpoint will automatically scrape company data if none exists
+- **Slow response**: Persona generation takes 10-30 seconds depending on company size
+- **Empty personas**: Check that company name is spelled correctly
+- **API errors**: Ensure all API keys (Google CSE, Firecrawl, OpenAI) are valid
+- **Token limits**: Increase `max_completion_tokens` if personas are truncated
 
 ## Project Structure
 

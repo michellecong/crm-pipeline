@@ -199,13 +199,14 @@ class PersonaGenerateRequest(BaseModel):
         }
 
 class PersonaResponse(BaseModel):
-    """Enhanced persona generation response"""
+    """Persona generation response"""
     company_name: str
     company: CompanyInfo
     personas: List[Persona]
     tier_classification: TierClassification
     context_length: int
     generated_at: str
+    total_personas: int
     total_personas: int
     model: Optional[str] = None
     
