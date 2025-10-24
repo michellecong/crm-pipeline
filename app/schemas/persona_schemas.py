@@ -38,7 +38,6 @@ class PersonaGenerateRequest(BaseModel):
         default=1, description="Content pack ID to associate personas with"
     )
 
-
 class Persona(BaseModel):
     """Individual persona structure"""
     name: str
@@ -50,24 +49,24 @@ class Persona(BaseModel):
     company_size: Optional[int] = None
     description: Optional[str] = None
     decision_power: Optional[str] = None
-    pain_points: List[str] = Field(default=[])
-    goals: List[str] = Field(default=[])
-    communication_preferences: List[str] = Field(default=[])
+    pain_points: List[str] = Field(default_factory=list)
+    goals: List[str] = Field(default_factory=list)
+    communication_preferences: List[str] = Field(default_factory=list)
 
 
 class TierClassification(BaseModel):
     """Tier classification structure"""
-    tier_1: List[str] = Field(default=[])  # C-level executives
-    tier_2: List[str] = Field(default=[])  # VPs and directors
-    tier_3: List[str] = Field(default=[])  # Managers and contributors
+    tier_1: List[str] = Field(default_factory=list)  # C-level executives
+    tier_2: List[str] = Field(default_factory=list)  # VPs and directors
+    tier_3: List[str] = Field(default_factory=list)  # Managers and contributors
 
 
 class PersonaResponse(BaseModel):
-    """Enhanced persona generation response"""
+    """Persona generation response"""
     company_name: str
     personas: List[Persona]
     tier_classification: TierClassification
     context_length: int
     generated_at: str
-    model: Optional[str] = None
     total_personas: int
+    model: Optional[str] = None

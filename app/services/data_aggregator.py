@@ -53,12 +53,11 @@ class DataAggregator:
             content_parts.append(f"OFFICIAL WEBSITE:\n{website_content}")
             char_count += len(website_content)
         
-        # Add scraped content
+        # Add scraped content (cleaned)
         for item in scraped_data.get("scraped_content", []):
             if item.get("success"):
                 content_type = item.get("content_type", "unknown")
                 url = item.get("url", "")
-                
                 # Use processed content (cleaned and LLM-processed)
                 markdown = item.get("processed_markdown") or item.get("markdown", "")
                 
