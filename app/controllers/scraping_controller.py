@@ -9,6 +9,7 @@ from ..services.data_store import get_data_store
 from ..config import settings
 from datetime import datetime
 import logging
+from ..services.text_cleaning import strip_links
 
 logger = logging.getLogger(__name__)
 
@@ -90,10 +91,13 @@ class ScrapingController:
             if item['success']:
                 successful_count += 1
             
+            # Clean markdown and drop raw HTML to only keep cleaned content
+            cleaned_markdown = strip_links(item.get('markdown', '') or '')
+
             content = {
                 'url': item['url'],
                 'title': item.get('metadata', {}).get('title'),
-                'markdown': item.get('markdown', ''),
+                'markdown': cleaned_markdown,
                 'html': item.get('html'),
                 'metadata': item.get('metadata', {}),
                 'content_type': url_types.get(item['url'], 'unknown'),
