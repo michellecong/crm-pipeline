@@ -7,7 +7,9 @@ from ..schemas.llm_schema import (
     LLMGenerateResponse,
     LLMConfigResponse,
     LLMConfigUpdateRequest,
-    TokenUsage,
+    TokenUsage
+)
+from ..schemas.persona_schemas import (
     PersonaGenerateRequest,
     PersonaResponse,
     Persona,
