@@ -371,7 +371,7 @@ Extracted key information:""")
                 prompt=prompt,
                 system_message=system_message,
                 max_completion_tokens=4000,
-                temperature=0.3
+                temperature=1
             )
             
             extracted_content = response.content.strip()
