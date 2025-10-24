@@ -2,7 +2,7 @@
 """
 Main service for managing generators
 """
-from typing import Dict, Type
+from typing import Dict
 from ..generators.base_generator import BaseGenerator
 from ..generators.persona_generator import PersonaGenerator
 from .data_aggregator import DataAggregator
@@ -10,6 +10,7 @@ from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class GeneratorService:
     """Main service for managing generators"""
@@ -26,11 +27,12 @@ class GeneratorService:
             raise ValueError(f"Unknown generator type: {generator_type}")
         return self.generators[generator_type]
     
-    async def generate(self, generator_type: str, company_name: str, **kwargs) -> Dict:
+    async def generate(self, generator_type: str, company_name: str,
+                      **kwargs) -> Dict:
         """Generate content using specified generator"""
         generator = self.get_generator(generator_type)
         context = await self.data_aggregator.prepare_context(
-            company_name, 
+            company_name,
             kwargs.get('max_context_chars', 15000),
             kwargs.get('include_news', True),
             kwargs.get('include_case_studies', True),
@@ -39,7 +41,11 @@ class GeneratorService:
         
         result = await generator.generate(company_name, context, **kwargs)
         
+        # Check if generation was successful
+        success = bool(result.get('personas')) if generator_type == 'personas' else bool(result)
+        
         return {
+            "success": success,
             "company_name": company_name,
             "generator_type": generator_type,
             "result": result,
@@ -53,6 +59,7 @@ class GeneratorService:
 
 # Singleton instance
 _generator_service = None
+
 
 def get_generator_service() -> GeneratorService:
     """Get or create GeneratorService singleton"""

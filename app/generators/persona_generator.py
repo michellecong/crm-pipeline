@@ -14,7 +14,7 @@ class PersonaGenerator(BaseGenerator):
     
     def get_system_message(self) -> str:
         return """You are a B2B sales expert specializing in buyer persona identification and classification. 
-Your task is to identify 3-7 key decision-makers and stakeholders, classifying each into three tiers:
+Your task is to identify key decision-makers and stakeholders, classifying each into three tiers:
 - tier_1: C-level executives with direct budget control (CEO, CTO, CFO, etc.)
 - tier_2: VPs and directors who influence decisions (VP Sales, Director of Marketing, etc.)
 - tier_3: Managers and individual contributors (Sales Manager, Marketing Manager, etc.)
@@ -74,7 +74,22 @@ Return as JSON with this structure:
     
     def parse_response(self, response: str) -> Dict:
         try:
-            data = json.loads(response)
+            # Clean response content, remove markdown code block markers
+            cleaned_response = response.strip()
+            
+            # Remove ```json and ``` markers
+            if cleaned_response.startswith('```json'):
+                cleaned_response = cleaned_response[7:]  # Remove ```json
+            elif cleaned_response.startswith('```'):
+                cleaned_response = cleaned_response[3:]   # Remove ```
+            
+            if cleaned_response.endswith('```'):
+                cleaned_response = cleaned_response[:-3]  # Remove trailing ```
+            
+            cleaned_response = cleaned_response.strip()
+            
+            # Try to parse JSON
+            data = json.loads(cleaned_response)
             
             # Validate and clean the data
             personas = data.get("personas", [])
@@ -96,6 +111,7 @@ Return as JSON with this structure:
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse persona JSON: {e}")
+            logger.error(f"Raw response: {response[:500]}...")
             return {
                 "personas": [],
                 "tier_classification": {"tier_1": [], "tier_2": [], "tier_3": []},

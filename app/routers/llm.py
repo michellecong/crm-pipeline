@@ -184,7 +184,11 @@ async def generate_persona(request: PersonaGenerateRequest):
         result = await generator_service.generate(
             generator_type="personas",
             company_name=request.company_name,
-            generate_count=request.generate_count
+            generate_count=request.generate_count,
+            max_context_chars=request.max_context_chars,
+            include_news=request.include_news,
+            include_case_studies=request.include_case_studies,
+            max_urls=request.max_urls
         )
         
         # Convert to response format
