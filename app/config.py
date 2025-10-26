@@ -40,6 +40,8 @@ class Settings:
     PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
     PERPLEXITY_BASE_URL = "https://api.perplexity.ai"
 
+    # Database configuration
+    DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Create global settings instance
 settings = Settings()
