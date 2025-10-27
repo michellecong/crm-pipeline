@@ -2,7 +2,8 @@
 """
 Controller for scraping operations - handles business logic
 """
-from typing import Dict
+from typing import Dict, Optional
+from sqlalchemy.orm import Session
 from ..services.search_service import search_company_async
 from ..services.firecrawl_service import scrape_urls_async
 from ..services.content_processor import get_content_processor
@@ -17,40 +18,19 @@ logger = logging.getLogger(__name__)
 class ScrapingController:
     """Controller for handling scraping business logic"""
     
-    async def scrape_company(
-        self,
-        company_name: str,
-        include_news: bool = True,
-        include_case_studies: bool = True,
-        max_urls: int = 10,
-        save_to_file: bool = False
-    ) -> Dict:
+    def _prepare_urls_for_scraping(
+        self, 
+        search_results: Dict, 
+        max_urls: int
+    ) -> tuple[list, dict]:
         """
-        Main business logic for scraping company data
+        Collect URLs to scrape from search results with their types
         
-        Args:
-            company_name: Target company name
-            include_news: Include news articles
-            include_case_studies: Include case studies
-            max_urls: Maximum URLs to scrape
-            save_to_file: Save scraped data to file
-            
         Returns:
-            Dict with scraped data and metadata
+            Tuple of (urls_to_scrape, url_types)
         """
-        logger.info(f"Starting data scraping for: {company_name}")
-        
-        # Step 1: Search for company information
-        logger.info(f"Step 1/2: Searching for {company_name}...")
-        search_results = await search_company_async(
-            company_name=company_name,
-            include_news=include_news,
-            include_case_studies=include_case_studies
-        )
-        
-        # Collect URLs to scrape with their types
         urls_to_scrape = []
-        url_types = {}  # Map URL to type
+        url_types = {}
         
         # Add official website (highest priority)
         if search_results.get('official_website'):
@@ -72,18 +52,19 @@ class ScrapingController:
                 urls_to_scrape.append(url)
                 url_types[url] = 'case_study'
         
-        total_urls_found = len(urls_to_scrape)
+        return urls_to_scrape, url_types
+    
+    def _format_scraped_content(
+        self, 
+        scraped_data: list, 
+        url_types: dict
+    ) -> tuple[list, int]:
+        """
+        Format scraped data into structured content
         
-        if not urls_to_scrape:
-            raise ValueError(f"No URLs found for company: {company_name}")
-        
-        logger.info(f"Found {total_urls_found} URLs to scrape")
-        
-        # Step 2: Scrape all URLs with Firecrawl
-        logger.info(f"Step 2/2: Scraping {len(urls_to_scrape)} URLs...")
-        scraped_data = await scrape_urls_async(urls_to_scrape, max_concurrent=10)
-        
-        # Format scraped content
+        Returns:
+            Tuple of (scraped_content, successful_count)
+        """
         scraped_content = []
         successful_count = 0
         
@@ -107,10 +88,19 @@ class ScrapingController:
             }
             scraped_content.append(content)
         
-        logger.info(f"Successfully scraped {successful_count}/{len(urls_to_scrape)} URLs")
+        return scraped_content, successful_count
+    
+    async def _process_content_batch(
+        self, 
+        scraped_content: list, 
+        company_name: str
+    ) -> list:
+        """
+        Batch process and clean scraped content with LLM
         
-        # Step 3: Process and clean scraped content (batch processing)
-        logger.info("Step 3/3: Processing and cleaning scraped content...")
+        Returns:
+            List of processed content items
+        """
         content_processor = get_content_processor()
         
         # Collect all content for batch processing
@@ -123,7 +113,6 @@ class ScrapingController:
                     'type': item['content_type']
                 })
         
-        # Batch process all content at once
         processed_content = []
         if content_batch:
             try:
@@ -155,28 +144,53 @@ class ScrapingController:
             except Exception as e:
                 logger.warning(f"Batch processing failed, falling back to rule-based cleaning: {str(e)}")
                 # Fallback to rule-based cleaning only
-                for item in scraped_content:
-                    if item['success'] and item.get('markdown'):
-                        try:
-                            # Only do rule-based cleaning, no LLM processing
-                            cleaned_markdown = content_processor.clean_markdown(item['markdown'])
-                            processed_item = item.copy()
-                            processed_item['processed_markdown'] = cleaned_markdown
-                            processed_item['original_markdown_length'] = len(item['markdown'])
-                            processed_item['processed_markdown_length'] = len(cleaned_markdown)
-                            processed_item['compression_ratio'] = len(cleaned_markdown) / len(item['markdown']) if item['markdown'] else 0
-                            processed_content.append(processed_item)
-                        except Exception as e:
-                            logger.warning(f"Failed to clean content for {item['url']}: {str(e)}")
-                            processed_content.append(item)
-                    else:
-                        processed_content.append(item)
+                processed_content = self._fallback_clean_content(scraped_content, content_processor)
         else:
             processed_content = scraped_content
         
-        logger.info(f"Content processing completed for {len(processed_content)} items")
+        return processed_content
+    
+    def _fallback_clean_content(self, scraped_content: list, content_processor) -> list:
+        """
+        Fallback to rule-based cleaning when batch processing fails
         
-        # Prepare search results summary
+        Returns:
+            List of content items with rule-based cleaning applied
+        """
+        processed_content = []
+        for item in scraped_content:
+            if item['success'] and item.get('markdown'):
+                try:
+                    cleaned_markdown = content_processor.clean_markdown(item['markdown'])
+                    processed_item = item.copy()
+                    processed_item['processed_markdown'] = cleaned_markdown
+                    processed_item['original_markdown_length'] = len(item['markdown'])
+                    processed_item['processed_markdown_length'] = len(cleaned_markdown)
+                    processed_item['compression_ratio'] = len(cleaned_markdown) / len(item['markdown']) if item['markdown'] else 0
+                    processed_content.append(processed_item)
+                except Exception as e:
+                    logger.warning(f"Failed to clean content for {item['url']}: {str(e)}")
+                    processed_content.append(item)
+            else:
+                processed_content.append(item)
+        return processed_content
+    
+    def _build_response_dict(
+        self,
+        company_name: str,
+        search_results: dict,
+        total_urls_found: int,
+        scraped_data: list,
+        successful_count: int,
+        processed_content: list,
+        saved_filepath: Optional[str]
+    ) -> dict:
+        """
+        Build the final response dictionary
+        
+        Returns:
+            Complete response dictionary with all metrics
+        """
         search_summary = {
             "official_website": search_results.get('official_website'),
             "news_count": len(search_results.get('news_articles', [])),
@@ -184,30 +198,7 @@ class ScrapingController:
             "total_search_results": search_results.get('total_results', 0)
         }
         
-        # Save to file if requested
-        saved_filepath = None
-        if save_to_file:
-            data_store = get_data_store()
-            response_dict = {
-                "company_name": company_name,
-                "official_website": search_results.get('official_website'),
-                "total_urls_found": total_urls_found,
-                "total_urls_scraped": len(scraped_data),
-                "successful_scrapes": successful_count,
-                "scraped_content": processed_content,  # Save processed data
-                "search_results_summary": search_summary,
-                "scraping_timestamp": datetime.now().isoformat(),
-                "content_processing": {
-                    "processed_items": len([item for item in processed_content if 'processed_markdown' in item]),
-                    "total_items": len(processed_content),
-                    "processing_timestamp": datetime.now().isoformat()
-                }
-            }
-            saved_filepath = data_store.save_scraped_data(company_name, response_dict)
-            logger.info(f"Saved data to: {saved_filepath}")
-        
-        # Build final response
-        result = {
+        return {
             "company_name": company_name,
             "official_website": search_results.get('official_website'),
             "total_urls_found": total_urls_found,
@@ -223,18 +214,119 @@ class ScrapingController:
                 "processing_timestamp": datetime.now().isoformat()
             }
         }
+    
+    async def scrape_company(
+        self,
+        company_name: str,
+        include_news: bool = True,
+        include_case_studies: bool = True,
+        max_urls: int = 10,
+        save_to_file: bool = False,
+        db: Optional[Session] = None
+    ) -> Dict:
+        """
+        Main business logic for scraping company data
+        
+        Args:
+            company_name: Target company name
+            include_news: Include news articles
+            include_case_studies: Include case studies
+            max_urls: Maximum URLs to scrape
+            save_to_file: Save scraped data to file
+            db: Database session (optional)
+            
+        Returns:
+            Dict with scraped data and metadata
+        """
+        logger.info(f"Starting data scraping for: {company_name}")
+        
+        # Step 1: Search for company information
+        logger.info(f"Step 1/3: Searching for {company_name}...")
+        search_results = await search_company_async(
+            company_name=company_name,
+            include_news=include_news,
+            include_case_studies=include_case_studies
+        )
+        
+        # Collect URLs to scrape
+        urls_to_scrape, url_types = self._prepare_urls_for_scraping(search_results, max_urls)
+        
+        if not urls_to_scrape:
+            raise ValueError(f"No URLs found for company: {company_name}")
+        
+        logger.info(f"Found {len(urls_to_scrape)} URLs to scrape")
+        
+        # Step 2: Scrape all URLs
+        logger.info(f"Step 2/3: Scraping {len(urls_to_scrape)} URLs...")
+        scraped_data = await scrape_urls_async(urls_to_scrape, max_concurrent=10)
+        
+        # Format scraped content
+        scraped_content, successful_count = self._format_scraped_content(scraped_data, url_types)
+        logger.info(f"Successfully scraped {successful_count}/{len(urls_to_scrape)} URLs")
+        
+        # Step 3: Process and clean content
+        logger.info("Step 3/3: Processing and cleaning scraped content...")
+        processed_content = await self._process_content_batch(scraped_content, company_name)
+        logger.info(f"Content processing completed for {len(processed_content)} items")
+        
+        # Save to database or file
+        saved_filepath = None
+        if db is not None or save_to_file:
+            data_store = get_data_store(db=db)
+            response_dict = {
+                "company_name": company_name,
+                "official_website": search_results.get('official_website'),
+                "total_urls_found": len(urls_to_scrape),
+                "total_urls_scraped": len(scraped_data),
+                "successful_scrapes": successful_count,
+                "scraped_content": processed_content,
+                "search_results_summary": {
+                    "official_website": search_results.get('official_website'),
+                    "news_count": len(search_results.get('news_articles', [])),
+                    "case_studies_count": len(search_results.get('case_studies', [])),
+                    "total_search_results": search_results.get('total_results', 0)
+                },
+                "scraping_timestamp": datetime.now().isoformat(),
+                "content_processing": {
+                    "processed_items": len([item for item in processed_content if 'processed_markdown' in item]),
+                    "total_items": len(processed_content),
+                    "processing_timestamp": datetime.now().isoformat()
+                }
+            }
+            
+            # Save based on parameters: save_to_file=True will skip database
+            if db is not None:
+                saved_filepath = data_store.save_scraped_data(company_name, response_dict, user_id=1, save_to_file=save_to_file)
+            else:
+                saved_filepath = data_store.save_scraped_data(company_name, response_dict, save_to_file=save_to_file)
+            
+            logger.info(f"Saved data to: {saved_filepath}")
+        
+        # Build final response
+        result = self._build_response_dict(
+            company_name=company_name,
+            search_results=search_results,
+            total_urls_found=len(urls_to_scrape),
+            scraped_data=scraped_data,
+            successful_count=successful_count,
+            processed_content=processed_content,
+            saved_filepath=saved_filepath
+        )
         
         logger.info(f"Data scraping completed for {company_name}")
         return result
     
-    async def list_saved_data(self) -> Dict:
+    async def list_saved_data(self, db: Optional[Session] = None) -> Dict:
         """
         List all saved scraped data
         
+        Args:
+            db: Database session (optional)
+            
         Returns:
             Dict with list of saved files
         """
-        data_store = get_data_store()
+        data_store = get_data_store(db=db)
         companies = data_store.list_scraped_companies()
         
         return {

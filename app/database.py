@@ -2,10 +2,14 @@
 Simple database connection test
 """
 from sqlalchemy import create_engine, text
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
 
 from app.config import settings
+
+# Create declarative base for models
+Base = declarative_base()
 
 # Create database engine
 engine = create_engine(
@@ -43,3 +47,4 @@ def test_connection() -> bool:
     except Exception as e:
         print(f"Database connection failed: {e}")
         return False
+
