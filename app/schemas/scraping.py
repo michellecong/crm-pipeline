@@ -12,7 +12,7 @@ class ScrapeRequest(BaseModel):
     include_news: bool = Field(default=True, description="Include news articles")
     include_case_studies: bool = Field(default=True, description="Include case studies")
     max_urls: int = Field(default=10, description="Maximum URLs to scrape")
-    save_to_file: bool = Field(default=False, description="Save scraped data to local file")
+    save_to_file: bool = Field(default=False, description="If True, save to file only (skip database)")
 
 
 class ScrapedContent(BaseModel):
