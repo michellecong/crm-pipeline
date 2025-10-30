@@ -2,7 +2,14 @@
 """
 Pydantic schemas for API requests and responses
 """
-from .search import SearchRequest, SearchResultItem, SearchResponse
+from .search import (
+    SearchRequest,
+    SearchResultItem,
+    SearchResponse,
+    LLMCompanyWebSearchRequest,
+    LLMCompanyWebSearchResponse,
+    LLMWebSearchResponse,
+)
 from .scraping import ScrapeRequest, ScrapedContent, ScrapeResponse
 from .common import ErrorResponse, HealthResponse
 from .llm_schema import LLMGenerateRequest, LLMGenerateResponse, LLMConfigResponse, LLMConfigUpdateRequest, TokenUsage
@@ -12,6 +19,9 @@ __all__ = [
     "SearchRequest",
     "SearchResultItem", 
     "SearchResponse",
+    "LLMCompanyWebSearchRequest",
+    "LLMCompanyWebSearchResponse",
+    "LLMWebSearchResponse",
     # Scraping
     "ScrapeRequest",
     "ScrapedContent",

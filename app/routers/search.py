@@ -1,7 +1,15 @@
 # api/search.py
 from fastapi import APIRouter, HTTPException, status
-from ..schemas import SearchRequest, SearchResponse, SearchResultItem, HealthResponse
+from ..schemas import (
+    SearchRequest,
+    SearchResponse,
+    SearchResultItem,
+    HealthResponse,
+    LLMCompanyWebSearchRequest,
+    LLMWebSearchResponse,
+)
 from ..services.search_service import search_company_async
+from ..services.llm_web_search_service import llm_company_web_search_freeform
 from datetime import datetime
 import logging
 
@@ -91,5 +99,36 @@ async def test_search():
             detail=f"Search test failed: {str(e)}"
         )
 
+
+@router.post(
+    "/search/web",
+    response_model=LLMWebSearchResponse,
+    summary="LLM Web Search (freeform)",
+    description="Input company name; LLM plans queries, uses web_search, and returns freeform URLs output"
+)
+async def search_web(request: LLMCompanyWebSearchRequest):
+    try:
+        if not request.company_name.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Company name cannot be empty"
+            )
+
+        text = await llm_company_web_search_freeform(request.company_name)
+        return LLMWebSearchResponse(result=text)
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"LLM web search failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"LLM web search failed: {str(e)}"
+        )
 
  

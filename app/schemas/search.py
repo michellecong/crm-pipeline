@@ -39,5 +39,34 @@ class SearchResponse(BaseModel):
     )
 
 
-    
+class LLMCompanyWebSearchRequest(BaseModel):
+    company_name: str = Field(
+        ..., description="Target B2B seller company name", json_schema_extra={"example": "Salesforce"}
+    )
+
+
+class LLMCompanyWebItem(BaseModel):
+    url: str
+    title: Optional[str] = None
+
+
+class LLMCompanyWebNewsItem(BaseModel):
+    url: str
+    title: Optional[str] = None
+    published_at: Optional[str] = None
+
+
+class LLMCompanyWebSearchResponse(BaseModel):
+    company: str
+    queries_planned: List[str] = []
+    official_website: List[LLMCompanyWebItem] = []
+    products: List[LLMCompanyWebItem] = []
+    news: List[LLMCompanyWebNewsItem] = []
+    case_studies: List[LLMCompanyWebItem] = []
+    collected_at: Optional[str] = None
+
+
+class LLMWebSearchResponse(BaseModel):
+    result: str = Field(description="Freeform LLM output with planned queries and URLs")
+
 
