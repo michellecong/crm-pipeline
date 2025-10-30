@@ -1,7 +1,3 @@
-# services/generator_service.py
-"""
-Main service for managing generators
-"""
 from typing import Dict
 from ..generators.base_generator import BaseGenerator
 from ..generators.persona_generator import PersonaGenerator
@@ -27,10 +23,14 @@ class GeneratorService:
             raise ValueError(f"Unknown generator type: {generator_type}")
         return self.generators[generator_type]
     
-    async def generate(self, generator_type: str, company_name: str,
-                      **kwargs) -> Dict:
-        """Generate content using specified generator"""
+    async def generate(self, generator_type: str, company_name: str, **kwargs) -> Dict:
+        """
+        Generate content using specified generator.
+        
+        For personas: Generates buyer company archetypes (market segments)
+        """
         generator = self.get_generator(generator_type)
+        
         context = await self.data_aggregator.prepare_context(
             company_name,
             kwargs.get('max_context_chars', 15000),
@@ -39,12 +39,12 @@ class GeneratorService:
             kwargs.get('max_urls', 8)
         )
         
+        logger.info(f"Prepared context length: {len(context)} chars for {company_name}")
+        
         result = await generator.generate(company_name, context, **kwargs)
         
-        # Check if generation was successful
         success = bool(result.get('personas')) if generator_type == 'personas' else bool(result)
         
-        # Save generated content to file
         saved_filepath = None
         if success:
             saved_filepath = self._save_generated_content(
@@ -70,16 +70,13 @@ class GeneratorService:
         import json
         from pathlib import Path
         
-        # Create generated directory if it doesn't exist
         generated_dir = Path("data/generated")
         generated_dir.mkdir(parents=True, exist_ok=True)
         
-        # Generate filename
         timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
         filename = f"{company_name.lower().replace(' ', '_')}_{generator_type}_{timestamp}.json"
         filepath = generated_dir / filename
         
-        # Prepare data to save
         data_to_save = {
             "company_name": company_name,
             "generator_type": generator_type,
@@ -87,16 +84,14 @@ class GeneratorService:
             "result": result
         }
         
-        # Save to file
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data_to_save, f, indent=2, ensure_ascii=False)
         
         logger.info(f"Saved generated content to: {filepath}")
         return str(filepath)
 
-# Singleton instance
-_generator_service = None
 
+_generator_service = None
 
 def get_generator_service() -> GeneratorService:
     """Get or create GeneratorService singleton"""
