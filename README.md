@@ -98,16 +98,77 @@ curl -X POST http://localhost:8000/api/v1/scrape/company \
 # View saved data
 curl http://localhost:8000/api/v1/scrape/saved
 
-# Generate personas from company data
+# Generate product catalog from company data
+curl -X POST http://localhost:8000/api/v1/llm/products/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "max_products": 10
+  }'
+
+# Response format:
+# {
+#   "products": [
+#     {
+#       "product_name": "Sales Cloud",
+#       "description": "Complete CRM platform for managing sales pipelines..."
+#     }
+#   ]
+# }
+
+# Generate personas (auto-loads products if available)
 curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
   -H "Content-Type: application/json" \
   -d '{
     "company_name": "Salesforce",
     "generate_count": 3
   }'
+# Note: If you previously generated products for this company, they will be
+# automatically loaded and used. Otherwise, personas are generated from web content.
+
+# Generate personas WITH explicit product catalog (override auto-load)
+curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "generate_count": 3,
+    "products": [
+      {
+        "product_name": "Sales Cloud",
+        "description": "Complete CRM platform for managing sales pipelines..."
+      },
+      {
+        "product_name": "Service Cloud",
+        "description": "Customer service platform that unifies support across channels..."
+      }
+    ]
+  }'
 ```
 
 The API supports both Google Custom Search and Perplexity Search. Use the `provider` field on `/api/v1/search/company` to select `google` (default) or `perplexity`.
+
+## Product Auto-Loading Feature
+
+The persona generator automatically loads previously generated products for the same company:
+
+**Workflow:**
+1. Generate products: `POST /api/v1/llm/products/generate`
+   - Products saved to `data/generated/salesforce_products_*.json`
+2. Generate personas: `POST /api/v1/llm/persona/generate`
+   - System automatically finds and loads latest products
+   - Personas are generated with product context
+   - No manual passing required!
+
+**Behavior:**
+- ✅ **Products found**: Auto-loaded and used for persona generation
+- ℹ️ **No products found**: Personas generated from web content only
+- 🔄 **Override**: Pass explicit `products` parameter to use different products
+
+**Logs to watch for:**
+```
+✅ Auto-loaded 5 products from previous generation
+📦 Loaded 5 products from: salesforce_products_2025-10-30T21-27-16.json
+```
 
 ## API Documentation
 
@@ -127,6 +188,7 @@ Interactive docs: http://localhost:8000/docs
 | Endpoint                     | Method | Description                    |
 | ---------------------------- | ------ | ------------------------------ |
 | `/api/v1/llm/generate`      | POST   | Generate text with LLM         |
+| `/api/v1/llm/products/generate` | POST | Generate product catalog       |
 | `/api/v1/llm/persona/generate` | POST | Generate buyer personas        |
 | `/api/v1/llm/test`          | GET    | Test LLM connectivity          |
 | `/api/v1/llm/config`        | GET    | Get LLM configuration          |
