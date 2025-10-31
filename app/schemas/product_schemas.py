@@ -4,8 +4,6 @@ Pydantic schemas for product catalog generation
 """
 from pydantic import BaseModel, Field, field_validator
 from typing import List
-from datetime import datetime
-
 
 class Product(BaseModel):
     """Individual product/service offering"""

@@ -2,6 +2,7 @@ from typing import Dict
 from ..generators.base_generator import BaseGenerator
 from ..generators.persona_generator import PersonaGenerator
 from ..generators.product_generator import ProductGenerator
+from ..generators.mapping_generator import MappingGenerator
 from .data_aggregator import DataAggregator
 from datetime import datetime
 import logging
@@ -15,7 +16,8 @@ class GeneratorService:
     def __init__(self):
         self.generators: Dict[str, BaseGenerator] = {
             "personas": PersonaGenerator(),
-            "products": ProductGenerator()
+            "products": ProductGenerator(),
+            "mappings": MappingGenerator()
         }
         self.data_aggregator = DataAggregator()
     
@@ -31,6 +33,8 @@ class GeneratorService:
         
         For personas: Generates buyer company archetypes (market segments)
         Auto-injects products if available and not explicitly provided.
+        
+        For mappings: Auto-injects products and personas if not provided.
         """
         generator = self.get_generator(generator_type)
         
@@ -42,6 +46,25 @@ class GeneratorService:
                 logger.info(f"✅ Auto-loaded {len(products)} products from previous generation")
             else:
                 logger.info("ℹ️  No saved products found. Generating personas from web content only.")
+        
+        # Auto-inject products and personas for mapping generation if not provided
+        if generator_type == "mappings":
+            if "products" not in kwargs:
+                products = self._load_latest_products(company_name)
+                if products:
+                    kwargs["products"] = products
+                    logger.info(f"✅ Auto-loaded {len(products)} products for mapping generation")
+                else:
+                    logger.warning("⚠️  No saved products found. Mappings may be less specific.")
+            
+            if "personas" not in kwargs:
+                personas = self._load_latest_personas(company_name)
+                if personas:
+                    kwargs["personas"] = personas
+                    logger.info(f"✅ Auto-loaded {len(personas)} personas for mapping generation")
+                else:
+                    logger.warning("⚠️  No saved personas found. Cannot generate mappings without personas.")
+                    raise ValueError("Personas are required for mapping generation. Please generate personas first.")
         
         context = await self.data_aggregator.prepare_context(
             company_name,
@@ -118,6 +141,47 @@ class GeneratorService:
                     
         except Exception as e:
             logger.error(f"Failed to load products from {latest_file}: {e}")
+            return None
+    
+    def _load_latest_personas(self, company_name: str) -> list:
+        """
+        Load the most recent personas for a company from saved files.
+        
+        Returns:
+            List of personas if found, None otherwise
+        """
+        import json
+        import glob
+        from pathlib import Path
+        
+        # Normalize company name for filename matching
+        normalized_name = company_name.lower().replace(' ', '_')
+        pattern = f"data/generated/{normalized_name}_personas_*.json"
+        
+        # Find all matching persona files
+        files = glob.glob(pattern)
+        
+        if not files:
+            logger.debug(f"No saved personas found for {company_name}")
+            return None
+        
+        # Sort by filename (timestamp) to get most recent
+        latest_file = sorted(files, reverse=True)[0]
+        
+        try:
+            with open(latest_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                personas = data.get("result", {}).get("personas", [])
+                
+                if personas:
+                    logger.info(f"👥 Loaded {len(personas)} personas from: {Path(latest_file).name}")
+                    return personas
+                else:
+                    logger.warning(f"Persona file found but no personas in it: {latest_file}")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"Failed to load personas from {latest_file}: {e}")
             return None
     
     def _save_generated_content(self, generator_type: str, company_name: str, result: Dict) -> str:

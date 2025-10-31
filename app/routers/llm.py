@@ -16,6 +16,11 @@ from ..schemas.product_schemas import (
     ProductCatalogResponse,
     Product
 )
+from ..schemas.mapping_schemas import (
+    MappingGenerateRequest,
+    MappingGenerationResponse,
+    PersonaWithMappings
+)
 from ..services.llm_service import get_llm_service
 from ..services.generator_service import get_generator_service
 import logging
@@ -248,4 +253,68 @@ async def generate_products(request: ProductGenerateRequest):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Product generation failed: {str(e)}", exc_info=True)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post(
+    "/llm/mappings/generate",
+    response_model=MappingGenerationResponse,
+    summary="Generate pain-point to value-prop mappings",
+    description="Generate persona-specific pain-point to value-proposition mappings (Regie.ai style)"
+)
+async def generate_mappings(request: MappingGenerateRequest):
+    """
+    Generate pain-point to value-proposition mappings for buyer personas.
+    
+    This creates 3-10 mappings per persona, where each mapping includes:
+    - Pain Point: Specific challenge the persona faces (1-2 sentences, <300 chars)
+    - Value Proposition: How product solves it (1-2 sentences, <300 chars, product integrated)
+    
+    The system automatically loads:
+    - Products (from previous product generation)
+    - Personas (from previous persona generation)
+    
+    Requirements:
+    - Must have generated personas first (required)
+    - Products are recommended but optional
+    
+    Style: Regie.ai format - concise, tactical, product-integrated
+    """
+    try:
+        logger.info(f"Generating pain-point mappings for: {request.company_name}")
+        
+        generator_service = get_generator_service()
+        
+        # Generate mappings (auto-loads products + personas)
+        result = await generator_service.generate(
+            generator_type="mappings",
+            company_name=request.company_name
+        )
+        
+        if not result.get("success"):
+            raise ValueError("Mapping generation failed")
+        
+        response_data = result["result"]
+        response = MappingGenerationResponse(**response_data)
+        
+        total_mappings = sum(len(p.mappings) for p in response.personas_with_mappings)
+        
+        logger.info(
+            f"Generated mappings for {len(response.personas_with_mappings)} personas "
+            f"({total_mappings} total mappings)"
+        )
+        
+        for i, persona_data in enumerate(response.personas_with_mappings):
+            logger.info(
+                f"  Persona {i+1}: '{persona_data.persona_name}' "
+                f"({len(persona_data.mappings)} mappings)"
+            )
+        
+        return response
+        
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"Mapping generation failed: {str(e)}", exc_info=True)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
