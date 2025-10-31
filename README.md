@@ -40,11 +40,11 @@ GOOGLE_CSE_CX=your_search_engine_cx
 # Firecrawl - for web scraping
 FIRECRAWL_API_KEY=your_firecrawl_key_here
 
-# OpenAI - for LLM services
+# OpenAI - for LLM services and LLM web search
 OPENAI_API_KEY=your_openai_key_here
 
 # Optional: OpenAI Configuration (defaults shown)
-# OPENAI_MODEL=gpt-5-mini
+# OPENAI_MODEL=gpt-4.1  # Use gpt-4.1 or newer for web search support
 # OPENAI_TEMPERATURE=0.0
 # OPENAI_MAX_TOKENS=2000
 
@@ -350,19 +350,41 @@ This script demonstrates both freeform and structured versions of the LLM web se
 - **API errors**: Ensure all API keys (Google CSE, Firecrawl, OpenAI) are valid
 - **Token limits**: Increase `max_completion_tokens` if personas are truncated
 
+**LLM Web Search Issues**:
+
+- **Missing official website**: The endpoint validates that official website is found. If it fails, check:
+  - Company name spelling
+  - OPENAI_API_KEY is valid
+  - OpenAI model supports web search (e.g., `gpt-4.1` or newer)
+- **Slow response**: LLM web search takes 15-45 seconds as it plans and executes multiple queries
+- **Service unavailable (503)**: LLM failed to find official website or validation failed
+- **Empty results**: Company might be too obscure or name is misspelled
+- **API quota exceeded**: Check OpenAI API usage at https://platform.openai.com/usage
+
 ## Project Structure
 
 ```
 crm-pipeline/
 ├── app/
-│   ├── main.py              # FastAPI app
-│   ├── routers/             # API endpoints
-│   ├── services/            # Business logic
-│   └── schemas/             # Data models
-├── data/scraped/            # Saved data
-├── tests/                   # Tests
-├── requirements.txt         # Dependencies
-└── .env                     # API keys (create this)
+│   ├── main.py                      # FastAPI app
+│   ├── routers/                     # API endpoints
+│   │   ├── search.py               # Search & LLM web search endpoints
+│   │   ├── scraping.py             # Web scraping endpoints
+│   │   └── llm.py                  # LLM & persona generation endpoints
+│   ├── services/                    # Business logic
+│   │   ├── llm_web_search_service.py  # LLM-powered web search
+│   │   ├── search_service.py       # Traditional search (Google/Perplexity)
+│   │   ├── llm_service.py          # LLM text generation
+│   │   └── generator_service.py    # Persona generation
+│   └── schemas/                     # Data models
+│       └── search.py               # Search & LLM web search schemas
+├── data/
+│   ├── scraped/                     # Saved scraped data
+│   └── generated/                   # Generated personas
+├── tests/                           # Tests
+├── test_llm_web_search.py          # LLM web search test script
+├── requirements.txt                 # Dependencies
+└── .env                             # API keys (create this)
 ```
 
 ## Cost
