@@ -105,9 +105,18 @@ curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
     "company_name": "Salesforce",
     "generate_count": 3
   }'
+
+# LLM-powered web search (structured JSON with guaranteed official website)
+curl -X POST http://localhost:8000/api/v1/search/web \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce"
+  }'
 ```
 
 The API supports both Google Custom Search and Perplexity Search. Use the `provider` field on `/api/v1/search/company` to select `google` (default) or `perplexity`.
+
+The `/api/v1/search/web` endpoint uses OpenAI's LLM with web search capabilities to intelligently plan and execute search queries, returning structured JSON with company information including official website, products, news, and case studies.
 
 ## API Documentation
 
@@ -116,12 +125,13 @@ Interactive docs: http://localhost:8000/docs
 ## Main Endpoints
 
 ### Data Collection
-| Endpoint                 | Method | Description               |
-| ------------------------ | ------ | ------------------------- |
-| `/api/v1/search/company` | POST   | Search for company URLs   |
-| `/api/v1/scrape/company` | POST   | Search and scrape content |
-| `/api/v1/scrape/saved`   | GET    | List saved data           |
-| `/api/v1/pdf/process/`   | POST   | Process PDF and chunk text|
+| Endpoint                 | Method | Description                                    |
+| ------------------------ | ------ | ---------------------------------------------- |
+| `/api/v1/search/company` | POST   | Search for company URLs (Google/Perplexity)    |
+| `/api/v1/search/web`     | POST   | LLM-powered web search (structured JSON)       |
+| `/api/v1/scrape/company` | POST   | Search and scrape content                      |
+| `/api/v1/scrape/saved`   | GET    | List saved data                                |
+| `/api/v1/pdf/process/`   | POST   | Process PDF and chunk text                     |
 
 ### LLM Service
 | Endpoint                     | Method | Description                    |
@@ -224,6 +234,94 @@ curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
   -H "Content-Type: application/json" \
   -d '{"company_name": "Stripe", "generate_count": 3}'
 ```
+
+### Test LLM Web Search
+
+#### Basic LLM Web Search
+```bash
+# Search for company information using LLM-powered web search
+curl -X POST http://localhost:8000/api/v1/search/web \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce"
+  }'
+```
+
+#### What is LLM Web Search?
+
+The LLM Web Search endpoint (`/api/v1/search/web`) uses OpenAI's language model with web search capabilities to intelligently gather company information. Unlike traditional search APIs, this endpoint:
+
+**Key Features:**
+- **Intelligent Query Planning**: LLM automatically plans and executes strategic search queries
+- **Guaranteed Official Website**: Ensures the company's official website is always included
+- **Structured JSON Output**: Returns validated, structured data with products, news, and case studies
+- **High-Authority Sources**: Prioritizes reputable sources (Bloomberg, Reuters, TechCrunch, etc.)
+- **Deduplication**: Automatically removes duplicate URLs
+
+**Use Cases:**
+- Automated company research for B2B sales intelligence
+- Building buyer personas based on customer case studies
+- Identifying customer pain points from success stories
+- Tracking company news and product launches
+
+#### Expected Response Format
+```json
+{
+  "company": "Salesforce",
+  "queries_planned": [
+    "Salesforce official website",
+    "site:salesforce.com products solutions",
+    "Salesforce customer case study success story",
+    "Salesforce news announcement 2024 2025"
+  ],
+  "official_website": [
+    {
+      "url": "https://www.salesforce.com",
+      "title": "Salesforce: The Customer Company - CRM & Cloud Solutions"
+    }
+  ],
+  "products": [
+    {
+      "url": "https://www.salesforce.com/products/sales-cloud/",
+      "title": "Sales Cloud - Sales CRM & Customer Relationship Management"
+    }
+  ],
+  "news": [
+    {
+      "url": "https://techcrunch.com/2024/...",
+      "title": "Salesforce announces new AI features",
+      "published_at": "2024-10-15"
+    }
+  ],
+  "case_studies": [
+    {
+      "url": "https://www.salesforce.com/customer-success-stories/...",
+      "title": "How Company X Increased Sales by 40% with Salesforce"
+    }
+  ],
+  "collected_at": "2025-10-31T12:00:00"
+}
+```
+
+#### Testing Different Companies
+```bash
+# Test with various companies
+curl -X POST http://localhost:8000/api/v1/search/web \
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "DocuSign"}'
+
+curl -X POST http://localhost:8000/api/v1/search/web \
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "Miro"}'
+```
+
+#### Command Line Test Script
+```bash
+# Run the test script
+python test_llm_web_search.py
+```
+
+This script demonstrates both freeform and structured versions of the LLM web search functionality.
 
 ## Troubleshooting
 
