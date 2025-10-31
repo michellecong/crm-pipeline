@@ -98,6 +98,15 @@ curl -X POST http://localhost:8000/api/v1/scrape/company \
 # View saved data
 curl http://localhost:8000/api/v1/scrape/saved
 
+# LLM-powered web search (intelligent search with structured JSON)
+curl -X POST http://localhost:8000/api/v1/search/web \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce"
+  }'
+# Note: Uses OpenAI's LLM to intelligently plan and execute searches,
+# returning structured JSON with official website, products, news, and case studies.
+
 # Generate product catalog from company data
 curl -X POST http://localhost:8000/api/v1/llm/products/generate \
   -H "Content-Type: application/json" \
@@ -123,12 +132,6 @@ curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
     "company_name": "Salesforce",
     "generate_count": 3
   }'
-
-# LLM-powered web search (structured JSON with guaranteed official website)
-curl -X POST http://localhost:8000/api/v1/search/web \
-  -H "Content-Type: application/json" \
-  -d '{
-    "company_name": "Salesforce"
 # Note: If you previously generated products for this company, they will be
 # automatically loaded and used. Otherwise, personas are generated from web content.
 
@@ -149,32 +152,52 @@ curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
       }
     ]
   }'
+
+# Generate pain-point to value-prop mappings (auto-loads products + personas)
+curl -X POST http://localhost:8000/api/v1/llm/mappings/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce"
+  }'
+# Note: Requires personas to be generated first. Products and personas are auto-loaded.
 ```
 
-The API supports both Google Custom Search and Perplexity Search. Use the `provider` field on `/api/v1/search/company` to select `google` (default) or `perplexity`.
+## Search Options
 
-The `/api/v1/search/web` endpoint uses OpenAI's LLM with web search capabilities to intelligently plan and execute search queries, returning structured JSON with company information including official website, products, news, and case studies.
-## Product Auto-Loading Feature
+The system provides multiple search methods:
 
-The persona generator automatically loads previously generated products for the same company:
+### **Traditional Search**
+- **Google Custom Search** (default): `POST /api/v1/search/company` with `"provider": "google"`
+- **Perplexity Search**: `POST /api/v1/search/company` with `"provider": "perplexity"`
 
-**Workflow:**
-1. Generate products: `POST /api/v1/llm/products/generate`
-   - Products saved to `data/generated/salesforce_products_*.json`
-2. Generate personas: `POST /api/v1/llm/persona/generate`
-   - System automatically finds and loads latest products
-   - Personas are generated with product context
-   - No manual passing required!
+### **LLM-Powered Intelligent Search**
+- **Endpoint**: `POST /api/v1/search/web`
+- **How it works**: Uses OpenAI's LLM with web search capabilities to intelligently plan and execute multi-step searches
+- **Output**: Structured JSON with guaranteed official website, products, news, and case studies
+- **Best for**: Complex research requiring intelligent query planning and data synthesis
 
-**Behavior:**
-- ✅ **Products found**: Auto-loaded and used for persona generation
-- ℹ️ **No products found**: Personas generated from web content only
-- 🔄 **Override**: Pass explicit `products` parameter to use different products
+## Auto-Loading Features
+
+The system automatically loads previously generated data to streamline the workflow:
+
+### **Persona Generation**
+- **Auto-loads products** if available
+- Workflow:
+  1. Generate products: `POST /api/v1/llm/products/generate`
+  2. Generate personas: `POST /api/v1/llm/persona/generate` (products auto-loaded)
+
+### **Mapping Generation**
+- **Auto-loads products AND personas** (both required)
+- Workflow:
+  1. Generate products: `POST /api/v1/llm/products/generate`
+  2. Generate personas: `POST /api/v1/llm/persona/generate`
+  3. Generate mappings: `POST /api/v1/llm/mappings/generate` (both auto-loaded)
 
 **Logs to watch for:**
 ```
 ✅ Auto-loaded 5 products from previous generation
-📦 Loaded 5 products from: salesforce_products_2025-10-30T21-27-16.json
+📦 Loaded 5 products from: salesforce_products_2025-10-30.json
+👥 Loaded 3 personas from: salesforce_personas_2025-10-30.json
 ```
 
 ## API Documentation
@@ -198,6 +221,7 @@ Interactive docs: http://localhost:8000/docs
 | `/api/v1/llm/generate`      | POST   | Generate text with LLM         |
 | `/api/v1/llm/products/generate` | POST | Generate product catalog       |
 | `/api/v1/llm/persona/generate` | POST | Generate buyer personas        |
+| `/api/v1/llm/mappings/generate` | POST | Generate pain-point to value-prop mappings |
 | `/api/v1/llm/test`          | GET    | Test LLM connectivity          |
 | `/api/v1/llm/config`        | GET    | Get LLM configuration          |
 | `/api/v1/llm/config`        | PATCH  | Update LLM configuration       |
