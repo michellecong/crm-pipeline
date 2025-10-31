@@ -6,10 +6,10 @@ from ..schemas import (
     SearchResultItem,
     HealthResponse,
     LLMCompanyWebSearchRequest,
-    LLMWebSearchResponse,
+    LLMCompanyWebSearchResponse,
 )
 from ..services.search_service import search_company_async
-from ..services.llm_web_search_service import llm_company_web_search_freeform
+from ..services.llm_web_search_service import llm_company_web_search_structured
 from datetime import datetime
 import logging
 
@@ -102,11 +102,19 @@ async def test_search():
 
 @router.post(
     "/search/web",
-    response_model=LLMWebSearchResponse,
-    summary="LLM Web Search (freeform)",
-    description="Input company name; LLM plans queries, uses web_search, and returns freeform URLs output"
+    response_model=LLMCompanyWebSearchResponse,
+    summary="LLM Web Search (structured JSON)",
+    description="Input company name; LLM plans queries, uses web_search, and returns structured JSON with guaranteed official website"
 )
 async def search_web(request: LLMCompanyWebSearchRequest):
+    """
+    LLM-powered web search that returns structured, validated JSON.
+    
+    Key features:
+    - Guarantees official website is included
+    - Returns structured data with products, news, and case studies
+    - Validates all data with Pydantic schemas
+    """
     try:
         if not request.company_name.strip():
             raise HTTPException(
@@ -114,12 +122,24 @@ async def search_web(request: LLMCompanyWebSearchRequest):
                 detail="Company name cannot be empty"
             )
 
-        text = await llm_company_web_search_freeform(request.company_name)
-        return LLMWebSearchResponse(result=text)
+        # Use the new structured search function that validates and ensures official website
+        result = await llm_company_web_search_structured(request.company_name)
+        
+        logger.info(
+            f"LLM web search completed for {request.company_name}: "
+            f"{len(result.official_website)} official URLs, "
+            f"{len(result.products)} products, "
+            f"{len(result.news)} news items, "
+            f"{len(result.case_studies)} case studies"
+        )
+        
+        return result
 
     except HTTPException:
         raise
     except ValueError as e:
+        # This catches validation errors (e.g., missing official website)
+        logger.error(f"LLM web search validation failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(e)
