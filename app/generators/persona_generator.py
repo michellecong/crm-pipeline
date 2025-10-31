@@ -14,14 +14,14 @@ class PersonaGenerator(BaseGenerator):
     """
     
     def get_system_message(self) -> str:
-        return """You are an expert B2B sales strategist helping generate buyer company personas for a seller company. 
+      return """You are an expert B2B sales strategist helping generate buyer company personas for a seller company. 
 
 Your task is to analyze the seller's business and identify buyer company archetypes that would be ideal customers for the seller's products and services.
 
 CRITICAL: You are generating COMPANY ARCHETYPES (market segments), NOT individual people.
 
 Examples:
-✓ CORRECT: "California Mid-Market SaaS - Sales Leaders" (a type of company)
+✓ CORRECT: "CA Mid-Market SaaS - Sales Leaders" (a type of company)
 ✗ WRONG: "John Smith, CFO at Acme Corp" (a specific person)
 """
 
@@ -36,27 +36,27 @@ Examples:
         if products and len(products) > 0:
             products_json = json.dumps(products, indent=2)
             products_section = f"""
-[SELLER PRODUCT CATALOG - Stage 1 Output]
-{products_json}
-"""
+    [SELLER PRODUCT CATALOG - Stage 1 Output]
+    {products_json}
+    """
         else:
             products_section = """
-[SELLER PRODUCT CATALOG]
-Not available yet. Generate personas based on web content analysis.
-Infer likely products from company description and industry.
-"""
+    [SELLER PRODUCT CATALOG]
+    Not available yet. Generate personas based on web content analysis.
+    Infer likely products from company description and industry.
+    """
         
         crm_section = ""
         if crm_data and len(crm_data.strip()) > 0:
             crm_section = f"""
-[CRM CUSTOMER DATA]
-{crm_data}
-"""
+    [CRM CUSTOMER DATA]
+    {crm_data}
+    """
         else:
             crm_section = """
-[CRM CUSTOMER DATA]
-Not available. Generate personas based on company analysis and industry best practices.
-"""
+    [CRM CUSTOMER DATA]
+    Not available. Generate personas based on company analysis and industry best practices.
+    """
         
         return f"""## Task
 
@@ -69,8 +69,11 @@ CRITICAL REQUIREMENTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. **persona_name**: Max 60 characters, format "[Geography] [Size] [Industry] - [Function]"
-   - Use abbreviations: "CA" not "California", "US" not "United States"
+   - Geography: Can be state/province, region, country, or multi-country
+   - Size: Small/Mid-Market/Large/Enterprise (descriptive, not numeric)
    - ✓ "CA Enterprise SaaS - Revenue Leaders" (40 chars)
+   - ✓ "UK Mid-Market Manufacturing - Sales VPs" (45 chars)
+   - ✓ "DACH Large Financial Services - Ops Leaders" (49 chars)
    - ✗ "United States Enterprise Retail & E-commerce - Marketing Leaders" (67 chars)
 
 2. **industry**: ONE specific vertical per persona (never combine industries)
@@ -79,7 +82,7 @@ CRITICAL REQUIREMENTS
 
 3. **description**: MUST include ALL 4 quantitative metrics:
    - Team size: "20-100 sales reps" or "50-200 staff"
-   - Deal size: "$100K-$350K annually" or "$500K-$2M multi-year"
+   - Deal size: "$100K-$350K annually" or "$500K-$2M multi-year" (use local currency if applicable)
    - Sales cycle: "3-6 months" or "8-12 months"
    - Stakeholders: "3-5 decision makers" or "6-9 stakeholders"
 
@@ -110,17 +113,82 @@ PERSONA FIELDS
 
 **industry** (string): Single focused vertical (no combinations)
 
-**company_size_range** (string): Standard ranges:
-- "50-200 employees" | "200-800 employees" | "800-2000 employees" | "2000-5000 employees" | "5000+ employees"
+**company_size_range** (string): Employee count range using standard thresholds
+
+**Standard Thresholds (use these break points):**
+- 50, 200, 500, 1000, 2000, 5000, 10000
+
+**Valid Range Formats:**
+- Single threshold span: "50-200", "200-500", "500-1000", "1000-2000", "2000-5000", "5000-10000"
+- Multi-threshold span: "50-500", "200-1000", "500-2000", "1000-5000", "2000-10000"
+- Open-ended: "10000+" or "10001+"
+
+**Selection Guidelines:**
+1. **Narrow ranges** (single threshold span) when persona targets specific size:
+   - "50-200 employees" → Small companies with lean teams
+   - "1000-2000 employees" → Large companies, not quite enterprise
+
+2. **Wider ranges** (multi-threshold span) when persona spans multiple size categories:
+   - "200-1000 employees" → Mid-market spanning small-to-medium
+   - "500-2000 employees" → Mid-to-large market
+   - "1000-5000 employees" → Large enterprises
+
+3. **Very wide ranges** when buying behavior is similar across sizes:
+   - "50-1000 employees" → SMB to mid-market (similar decision processes)
+   - "2000-10000 employees" → Enterprise segment
+
+4. **Open-ended** for very large enterprises:
+   - "10000+" or "10001+" → Mega enterprises only
+
+**Examples:**
+- "50-200 employees" → Boutique firms, owner-led decisions
+- "200-500 employees" → Emerging mid-market, dedicated functions
+- "500-2000 employees" → Established mid-to-large, complex orgs
+- "1000-5000 employees" → Large enterprises, multi-location
+- "2000-10000 employees" → Very large enterprises, global presence
+- "50-1000 employees" → Broad SMB/mid-market with similar CRM needs
 
 **company_type** (string): Detailed company characteristics
 
-**location** (string): US state/region
-- Use specific state when CRM data shows concentration
-- Use "United States" when no geographic pattern exists
+**location** (string): Geographic focus - can be specific or broad based on data
+
+**Geographic Precision Hierarchy (most specific to most general):**
+1. State/Province level (when data strongly supports): "California", "Texas", "Ontario", "Bavaria"
+2. Metro/Regional level: "San Francisco Bay Area", "Greater Toronto Area", "London Metro"
+3. Multi-state/Regional: "US West Coast", "US Northeast", "Western Europe", "Southeast Asia"
+4. Country level (when no regional pattern): "United States", "United Kingdom", "Germany", "Japan"
+5. Multi-country/Continental: "North America", "European Union", "Asia-Pacific", "EMEA"
+6. Global (only if truly distributed): "Global" or "Worldwide"
+
+**Decision Logic:**
+- IF CRM data shows 60%+ concentration in specific geography → Use that specific level
+- IF CRM data shows regional pattern (e.g., "40% West Coast, 30% Northeast") → Use regional grouping
+- IF NO clear geographic pattern in data → Use country or broader region
+- IF company serves global markets evenly → Use "Global" or multi-region descriptor
+
+**Examples by data scenario:**
+- Strong state data: "California" (if 70% customers in CA)
+- Regional pattern: "US West Coast" (if CA+OR+WA = 65%)
+- Country-wide: "United States" (if distributed across US)
+- Multi-country: "Western Europe" (if UK+DE+FR distributed evenly)
+- Global: "Global" (if customers across 5+ regions)
+
+**International Location Examples:**
+- "United Kingdom", "Germany", "France", "Canada", "Australia", "Japan", "Singapore"
+- "Scandinavia" (Norway, Sweden, Denmark, Finland)
+- "Benelux" (Belgium, Netherlands, Luxembourg)
+- "DACH Region" (Germany, Austria, Switzerland)
+- "ANZ" (Australia and New Zealand)
+- "Southeast Asia", "Middle East", "Latin America", "Sub-Saharan Africa"
 
 **description** (string): 3-5 sentences with required structure:
 "[Company characteristics]. [Team size]. [Deal size] with [sales cycle] involving [stakeholders]. [Decision process]. [Strategic fit]. [Engagement approach]."
+
+**REQUIRED METRICS (all 4 must be present):**
+1. Team size (when relevant for sales/marketing roles)
+2. Deal size range (use appropriate currency: $, £, €, ¥, etc.)
+3. Sales cycle timeline
+4. Stakeholder count
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MASTER JOB TITLE PATTERNS
@@ -245,9 +313,9 @@ OUTPUT JSON SCHEMA
       "tier": "tier_1 | tier_2 | tier_3",
       "target_decision_makers": ["array", "of", "title", "strings"],
       "industry": "string (single vertical)",
-      "company_size_range": "string",
+      "company_size_range": "string (use standard thresholds: 50, 200, 500, 1000, 2000, 5000, 10000)",
       "company_type": "string",
-      "location": "string",
+      "location": "string (state/region/country/multi-country based on data)",
       "description": "string (must include: team size, deal size, sales cycle, stakeholder count)"
     }}
   ],
@@ -272,14 +340,14 @@ EXAMPLE OUTPUT
         "Head of Revenue Operations", "VP GTM Operations"
       ],
       "industry": "B2B SaaS Platforms",
-      "company_size_range": "2000-5000 employees",
+      "company_size_range": "2000-10000 employees",
       "company_type": "Enterprise B2B SaaS platforms and cloud infrastructure companies",
       "location": "California",
       "description": "Enterprise SaaS platforms with 200-500 sales reps across global go-to-market teams. $500K-$2M annual contracts with 8-12 month sales cycles involving 6-9 stakeholders (CRO, CFO, Security, IT, Procurement, Sales Leadership). Procurement requires security reviews, ROI analysis, and executive sponsorship. Strong product fit for CRM consolidation and revenue intelligence plays. Best engaged through executive briefings, technical deep-dives, and enterprise customer case studies."
     }},
     {{
-      "persona_name": "Mid-Atlantic Small Consulting - Sales Directors",
-      "tier": "tier_3",
+      "persona_name": "UK Mid-Market Professional Services - Sales Directors",
+      "tier": "tier_2",
       "target_decision_makers": [
         "Director of Sales", "Director Sales", "Senior Director Sales", "Sr Director Sales",
         "Director Business Development", "Director of Business Development",
@@ -288,13 +356,29 @@ EXAMPLE OUTPUT
         "Director of Marketing", "Director Marketing"
       ],
       "industry": "Management Consulting",
-      "company_size_range": "50-200 employees",
-      "company_type": "Boutique and mid-size professional services and consulting firms",
-      "location": "Mid-Atlantic",
-      "description": "Boutique consulting firms with lean client development teams of 5-20 professionals driving partner-led sales. $30K-$100K annual technology spend with 2-4 month procurement cycles involving 2-3 stakeholders (Managing Partner, Sales Director, Operations). Decision-making is cost-sensitive and values ease of use and quick time-to-value. Opportunistic fit for lightweight CRM, pipeline management, and client collaboration tools. Best engaged via SMB pricing, simplified implementation plans, and peer references."
+      "company_size_range": "50-500 employees",
+      "company_type": "Mid-size professional services and consulting firms serving UK and European clients",
+      "location": "United Kingdom",
+      "description": "UK-based consulting firms with client development teams of 10-40 professionals managing partner-led and team-based sales. £40K-£200K annual technology spend with 2-5 month procurement cycles involving 2-4 stakeholders (Managing Partner, Sales Director, Operations, Finance). Decision-making balances cost efficiency with scalability as firms grow. Moderate fit for CRM, pipeline management, and client collaboration tools. Best engaged via ROI-focused proposals, UK-specific case studies, and scalable pricing models."
+    }},
+    {{
+      "persona_name": "DACH Large Manufacturing - Operations Leaders",
+      "tier": "tier_1",
+      "target_decision_makers": [
+        "VP of Sales", "Vice President of Sales", "VP Sales",
+        "VP of Operations", "Vice President of Operations", "VP Operations",
+        "Director of Sales", "Senior Director Sales", "Sales Director",
+        "Director of Operations", "Senior Director Operations",
+        "VP Revenue Operations", "Director Sales Operations"
+      ],
+      "industry": "Manufacturing - Industrial Equipment",
+      "company_size_range": "1000-5000 employees",
+      "company_type": "Large German, Austrian, and Swiss manufacturers of precision equipment and industrial machinery",
+      "location": "DACH Region",
+      "description": "Established DACH manufacturers with regional and global sales operations and complex multi-site production. 50-200 sales and technical sales staff. €200K-€800K annual platform investments with 6-9 month evaluation cycles involving 4-6 stakeholders (Vertriebsleiter, Betriebsleiter, IT, Einkauf). Decision-making emphasizes integration with SAP/ERP systems, technical precision, and long-term vendor partnerships. Strong fit for CRM with CPQ and industrial-grade integrations. Best engaged through technical workshops, German-language support commitments, and references from peer DACH manufacturers."
     }}
   ],
-  "generation_reasoning": "Selected tier_1 enterprise SaaS for strong product fit and large deal sizes, and tier_3 small consulting for opportunistic SMB market. Balanced tier distribution with additional tier_2 personas. Job titles follow industry-specific rules (Sales/Enablement/Ops for SaaS, BTL Sales/Marketing for consulting). All descriptions include 4 required metrics."
+  "generation_reasoning": "Selected diverse personas spanning geographies (California, UK, DACH), company sizes (50-500, 1000-5000, 2000-10000), and industries. Used specific geographies where industry concentration exists (CA for SaaS, DACH for manufacturing) and country-level for distributed markets (UK services). Company size ranges span multiple thresholds to reflect similar buying behaviors within each segment. Tier distribution balanced across strategic value."
 }}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -307,6 +391,9 @@ Before submitting, verify:
 ✓ Tier distribution balanced: tier_1 (30-40%), tier_2 (40-50%), tier_3 (10-20%)
 ✓ target_decision_makers has 10-30+ titles matching industry
 ✓ description includes all 4 metrics: team size, deal size, sales cycle, stakeholders
+✓ company_size_range uses standard thresholds (50, 200, 500, 1000, 2000, 5000, 10000)
+✓ company_size_range width matches buying behavior similarity (narrow for distinct, wide for similar)
+✓ location uses appropriate geographic precision based on data (state/country/region/global)
 ✓ Titles ordered by seniority (C-level → VP → Director → Manager)
 ✓ Each persona differs in 2+ dimensions (industry, size, geography, function)
 
@@ -334,6 +421,8 @@ CRITICAL:
 - ALL 4 metrics in description
 - Balanced tier distribution
 - Industry-appropriate job titles
+- company_size_range uses standard thresholds (narrow or wide based on buying behavior)
+- location precision based on available data (specific to general)
 
 Return ONLY valid JSON.
 """

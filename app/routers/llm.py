@@ -25,12 +25,20 @@ router = APIRouter()
     summary="Generate text from LLM"
 )
 async def generate_text(request: LLMGenerateRequest):
-    """General-purpose LLM text generation endpoint."""
+    """
+    General-purpose LLM text generation endpoint.
+    
+    Use this for:
+    - Testing LLM connectivity
+    - Custom prompts
+    - Debugging generation issues
+    """
     try:
         logger.info(f"Generating text with prompt length: {len(request.prompt)}")
         
         llm_service = get_llm_service()
         
+        # Call LLM service (async wrapper)
         response = await llm_service.generate_async(
             prompt=request.prompt,
             system_message=request.system_message,
@@ -74,10 +82,13 @@ async def update_llm_config(request: LLMConfigUpdateRequest):
     """Update LLM configuration"""
     try:
         llm_service = get_llm_service()
+
+        # Update only provided fields
         update_data = request.dict(exclude_none=True)
         if update_data:
             llm_service.update_config(**update_data)
             logger.info(f"Updated LLM config: {update_data}")
+        # Return updated config
         config = llm_service.get_config()
         return LLMConfigResponse(**config)
     except Exception as e:
@@ -134,6 +145,7 @@ async def generate_buyer_personas(request: PersonaGenerateRequest):
         
         generator_service = get_generator_service()
         
+        # Generate personas using the generator service
         result = await generator_service.generate(
             generator_type="personas",
             company_name=request.company_name,

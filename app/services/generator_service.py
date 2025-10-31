@@ -43,8 +43,10 @@ class GeneratorService:
         
         result = await generator.generate(company_name, context, **kwargs)
         
+        # Check if generation was successful
         success = bool(result.get('personas')) if generator_type == 'personas' else bool(result)
         
+        # Save generated content to file
         saved_filepath = None
         if success:
             saved_filepath = self._save_generated_content(
@@ -70,13 +72,16 @@ class GeneratorService:
         import json
         from pathlib import Path
         
+        # Create generated directory if it doesn't exist
         generated_dir = Path("data/generated")
         generated_dir.mkdir(parents=True, exist_ok=True)
         
+        # Generate filename
         timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
         filename = f"{company_name.lower().replace(' ', '_')}_{generator_type}_{timestamp}.json"
         filepath = generated_dir / filename
         
+        # Prepare data to save
         data_to_save = {
             "company_name": company_name,
             "generator_type": generator_type,
@@ -84,13 +89,14 @@ class GeneratorService:
             "result": result
         }
         
+        # Save to file
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data_to_save, f, indent=2, ensure_ascii=False)
         
         logger.info(f"Saved generated content to: {filepath}")
         return str(filepath)
 
-
+# Singleton instance
 _generator_service = None
 
 def get_generator_service() -> GeneratorService:
