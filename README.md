@@ -40,7 +40,7 @@ GOOGLE_CSE_CX=your_search_engine_cx
 # Firecrawl - for web scraping
 FIRECRAWL_API_KEY=your_firecrawl_key_here
 
-# OpenAI - for LLM services
+# OpenAI - for LLM services and LLM web search
 OPENAI_API_KEY=your_openai_key_here
 
 # Optional: OpenAI Configuration (defaults shown)
@@ -123,6 +123,12 @@ curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
     "company_name": "Salesforce",
     "generate_count": 3
   }'
+
+# LLM-powered web search (structured JSON with guaranteed official website)
+curl -X POST http://localhost:8000/api/v1/search/web \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce"
 # Note: If you previously generated products for this company, they will be
 # automatically loaded and used. Otherwise, personas are generated from web content.
 
@@ -147,6 +153,7 @@ curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
 
 The API supports both Google Custom Search and Perplexity Search. Use the `provider` field on `/api/v1/search/company` to select `google` (default) or `perplexity`.
 
+The `/api/v1/search/web` endpoint uses OpenAI's LLM with web search capabilities to intelligently plan and execute search queries, returning structured JSON with company information including official website, products, news, and case studies.
 ## Product Auto-Loading Feature
 
 The persona generator automatically loads previously generated products for the same company:
@@ -177,12 +184,13 @@ Interactive docs: http://localhost:8000/docs
 ## Main Endpoints
 
 ### Data Collection
-| Endpoint                 | Method | Description               |
-| ------------------------ | ------ | ------------------------- |
-| `/api/v1/search/company` | POST   | Search for company URLs   |
-| `/api/v1/scrape/company` | POST   | Search and scrape content |
-| `/api/v1/scrape/saved`   | GET    | List saved data           |
-| `/api/v1/pdf/process/`   | POST   | Process PDF and chunk text|
+| Endpoint                 | Method | Description                                    |
+| ------------------------ | ------ | ---------------------------------------------- |
+| `/api/v1/search/company` | POST   | Search for company URLs (Google/Perplexity)    |
+| `/api/v1/search/web`     | POST   | LLM-powered web search (structured JSON)       |
+| `/api/v1/scrape/company` | POST   | Search and scrape content                      |
+| `/api/v1/scrape/saved`   | GET    | List saved data                                |
+| `/api/v1/pdf/process/`   | POST   | Process PDF and chunk text                     |
 
 ### LLM Service
 | Endpoint                     | Method | Description                    |
@@ -287,6 +295,69 @@ curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
   -d '{"company_name": "Stripe", "generate_count": 3}'
 ```
 
+### Test LLM Web Search
+
+#### Basic LLM Web Search
+```bash
+# Search for company information using LLM-powered web search
+curl -X POST http://localhost:8000/api/v1/search/web \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce"
+  }'
+```
+
+#### Expected Response Format
+```json
+{
+  "company": "Salesforce",
+  "queries_planned": [
+    "Salesforce official website",
+    "site:salesforce.com products solutions",
+    "Salesforce customer case study success story",
+    "Salesforce news announcement 2024 2025"
+  ],
+  "official_website": [
+    {
+      "url": "https://www.salesforce.com",
+      "title": "Salesforce: The Customer Company - CRM & Cloud Solutions"
+    }
+  ],
+  "products": [
+    {
+      "url": "https://www.salesforce.com/products/sales-cloud/",
+      "title": "Sales Cloud - Sales CRM & Customer Relationship Management"
+    }
+  ],
+  "news": [
+    {
+      "url": "https://techcrunch.com/2024/...",
+      "title": "Salesforce announces new AI features",
+      "published_at": "2024-10-15"
+    }
+  ],
+  "case_studies": [
+    {
+      "url": "https://www.salesforce.com/customer-success-stories/...",
+      "title": "How Company X Increased Sales by 40% with Salesforce"
+    }
+  ],
+  "collected_at": "2025-10-31T12:00:00"
+}
+```
+
+#### Testing Different Companies
+```bash
+# Test with various companies
+curl -X POST http://localhost:8000/api/v1/search/web \
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "DocuSign"}'
+
+curl -X POST http://localhost:8000/api/v1/search/web \
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "Miro"}'
+```
+
 ## Troubleshooting
 
 **SSL Certificate Error (macOS)**:
@@ -314,19 +385,31 @@ curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
 - **API errors**: Ensure all API keys (Google CSE, Firecrawl, OpenAI) are valid
 - **Token limits**: Increase `max_completion_tokens` if personas are truncated
 
+
 ## Project Structure
 
 ```
 crm-pipeline/
 ├── app/
-│   ├── main.py              # FastAPI app
-│   ├── routers/             # API endpoints
-│   ├── services/            # Business logic
-│   └── schemas/             # Data models
-├── data/scraped/            # Saved data
-├── tests/                   # Tests
-├── requirements.txt         # Dependencies
-└── .env                     # API keys (create this)
+│   ├── main.py                      # FastAPI app
+│   ├── routers/                     # API endpoints
+│   │   ├── search.py               # Search & LLM web search endpoints
+│   │   ├── scraping.py             # Web scraping endpoints
+│   │   └── llm.py                  # LLM & persona generation endpoints
+│   ├── services/                    # Business logic
+│   │   ├── llm_web_search_service.py  # LLM-powered web search
+│   │   ├── search_service.py       # Traditional search (Google/Perplexity)
+│   │   ├── llm_service.py          # LLM text generation
+│   │   └── generator_service.py    # Persona generation
+│   └── schemas/                     # Data models
+│       └── search.py               # Search & LLM web search schemas
+├── data/
+│   ├── scraped/                     # Saved scraped data
+│   └── generated/                   # Generated personas
+├── tests/                           # Tests
+├── test_llm_web_search.py          # LLM web search test script
+├── requirements.txt                 # Dependencies
+└── .env                             # API keys (create this)
 ```
 
 ## Cost
