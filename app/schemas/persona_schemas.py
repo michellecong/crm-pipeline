@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 from enum import Enum
 import logging
@@ -123,12 +123,22 @@ class PersonaGenerateRequest(BaseModel):
     
     company_name: str = Field(..., description="Company name to analyze")
     generate_count: int = Field(default=5, ge=3, le=12)
+    products: Optional[List[Dict]] = Field(
+        default=None,
+        description="Optional product catalog to inform persona generation. If not provided, personas will be generated from web content only."
+    )
     
     class Config:
         json_schema_extra = {
             "example": {
                 "company_name": "Salesforce",
-                "generate_count": 5
+                "generate_count": 5,
+                "products": [
+                    {
+                        "product_name": "Sales Cloud",
+                        "description": "Complete CRM platform for managing sales pipelines..."
+                    }
+                ]
             }
         }
 

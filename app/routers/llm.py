@@ -11,6 +11,11 @@ from ..schemas.persona_schemas import (
     PersonaGenerationResponse,
     BuyerPersona
 )
+from ..schemas.product_schemas import (
+    ProductGenerateRequest,
+    ProductCatalogResponse,
+    Product
+)
 from ..services.llm_service import get_llm_service
 from ..services.generator_service import get_generator_service
 import logging
@@ -134,10 +139,20 @@ async def generate_buyer_personas(request: PersonaGenerateRequest):
         
         generator_service = get_generator_service()
         
+        # Prepare kwargs for generator
+        generator_kwargs = {
+            "generate_count": request.generate_count
+        }
+        
+        # Add products if provided
+        if request.products:
+            generator_kwargs["products"] = request.products
+            logger.info(f"Using {len(request.products)} products for persona generation")
+        
         result = await generator_service.generate(
             generator_type="personas",
             company_name=request.company_name,
-            generate_count=request.generate_count
+            **generator_kwargs
         )
         
         if not result.get("success"):
@@ -163,4 +178,63 @@ async def generate_buyer_personas(request: PersonaGenerateRequest):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Persona generation failed: {str(e)}", exc_info=True)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post(
+    "/llm/products/generate",
+    response_model=ProductCatalogResponse,
+    summary="Generate product catalog from company data",
+    description="Analyze seller company's web content to extract product catalog with names and descriptions"
+)
+async def generate_products(request: ProductGenerateRequest):
+    """
+    Generate seller company's product catalog.
+    
+    This analyzes the seller's web content to extract:
+    - Core products/services (3-10 offerings)
+    - Clear, buyer-focused descriptions
+    - Value propositions and use cases
+    
+    The generated product catalog can be used to:
+    - Feed into persona generation for better targeting
+    - Create pain-point to product mappings
+    - Understand seller's go-to-market strategy
+    """
+    try:
+        logger.info(f"Generating product catalog for: {request.company_name}")
+        
+        generator_service = get_generator_service()
+        
+        # Generate products using the generator service
+        result = await generator_service.generate(
+            generator_type="products",
+            company_name=request.company_name,
+            max_products=request.max_products
+        )
+        
+        if not result.get("success"):
+            raise ValueError("Product generation failed")
+        
+        response_data = result["result"]
+        
+        response = ProductCatalogResponse(**response_data)
+        
+        logger.info(
+            f"Generated {len(response.products)} products for {request.company_name}"
+        )
+        
+        for i, product in enumerate(response.products):
+            logger.info(
+                f"  Product {i+1}: '{product.product_name}' "
+                f"({len(product.description)} chars)"
+            )
+        
+        return response
+        
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"Product generation failed: {str(e)}", exc_info=True)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
