@@ -44,7 +44,7 @@ FIRECRAWL_API_KEY=your_firecrawl_key_here
 OPENAI_API_KEY=your_openai_key_here
 
 # Optional: OpenAI Configuration (defaults shown)
-# OPENAI_MODEL=gpt-4.1  # Use gpt-4.1 or newer for web search support
+# OPENAI_MODEL=gpt-5-mini
 # OPENAI_TEMPERATURE=0.0
 # OPENAI_MAX_TOKENS=2000
 
@@ -247,23 +247,6 @@ curl -X POST http://localhost:8000/api/v1/search/web \
   }'
 ```
 
-#### What is LLM Web Search?
-
-The LLM Web Search endpoint (`/api/v1/search/web`) uses OpenAI's language model with web search capabilities to intelligently gather company information. Unlike traditional search APIs, this endpoint:
-
-**Key Features:**
-- **Intelligent Query Planning**: LLM automatically plans and executes strategic search queries
-- **Guaranteed Official Website**: Ensures the company's official website is always included
-- **Structured JSON Output**: Returns validated, structured data with products, news, and case studies
-- **High-Authority Sources**: Prioritizes reputable sources (Bloomberg, Reuters, TechCrunch, etc.)
-- **Deduplication**: Automatically removes duplicate URLs
-
-**Use Cases:**
-- Automated company research for B2B sales intelligence
-- Building buyer personas based on customer case studies
-- Identifying customer pain points from success stories
-- Tracking company news and product launches
-
 #### Expected Response Format
 ```json
 {
@@ -314,14 +297,6 @@ curl -X POST http://localhost:8000/api/v1/search/web \
   -H "Content-Type: application/json" \
   -d '{"company_name": "Miro"}'
 ```
-
-#### Command Line Test Script
-```bash
-# Run the test script
-python test_llm_web_search.py
-```
-
-This script demonstrates both freeform and structured versions of the LLM web search functionality.
 
 ## Troubleshooting
 
