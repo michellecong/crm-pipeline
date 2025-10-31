@@ -89,11 +89,6 @@ class ProductGenerateRequest(BaseModel):
         min_length=2
     )
     
-    use_cached_data: bool = Field(
-        default=True,
-        description="Use cached scraped data if available"
-    )
-    
     max_products: int = Field(
         default=10,
         ge=3,
@@ -105,7 +100,6 @@ class ProductGenerateRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "company_name": "Salesforce",
-                "use_cached_data": True,
                 "max_products": 10
             }
         }
