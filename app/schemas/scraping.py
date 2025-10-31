@@ -22,7 +22,7 @@ class ScrapedContent(BaseModel):
     markdown: str = Field(..., description="Content in markdown format")
     html: Optional[str] = None
     metadata: Dict = Field(default={})
-    content_type: str = Field(..., description="website, news, or case_study")
+    content_type: str = Field(..., description="website, product, news, or case_study")
     success: bool
     error: Optional[str] = None
     scraped_at: str

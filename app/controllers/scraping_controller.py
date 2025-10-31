@@ -4,13 +4,14 @@ Controller for scraping operations - handles business logic
 """
 from typing import Dict, Optional
 from sqlalchemy.orm import Session
-from ..services.search_service import search_company_async
+from ..services.llm_web_search_service import llm_company_web_search_structured
 from ..services.firecrawl_service import scrape_urls_async
 from ..services.content_processor import get_content_processor
 from ..services.data_store import get_data_store
 from datetime import datetime
 import logging
 from ..services.text_cleaning import strip_links
+from ..schemas.search import LLMCompanyWebSearchResponse
 
 logger = logging.getLogger(__name__)
 
@@ -19,39 +20,41 @@ class ScrapingController:
     """Controller for handling scraping business logic"""
     
     def _prepare_urls_for_scraping(
-        self, 
-        search_results: Dict, 
-        max_urls: int
-    ) -> tuple[list, dict]:
+        self,
+        search_results: LLMCompanyWebSearchResponse,
+        max_urls: int,
+        include_news: bool,
+        include_case_studies: bool
+    ) -> tuple[list[str], dict]:
         """
         Collect URLs to scrape from search results with their types
         
         Returns:
             Tuple of (urls_to_scrape, url_types)
         """
-        urls_to_scrape = []
-        url_types = {}
-        
-        # Add official website (highest priority)
-        if search_results.get('official_website'):
-            url = search_results['official_website']
+        urls_to_scrape: list[str] = []
+        url_types: dict[str, str] = {}
+
+        def add_url(url: Optional[str], kind: str) -> None:
+            if not url or url in url_types or len(urls_to_scrape) >= max_urls:
+                return
             urls_to_scrape.append(url)
-            url_types[url] = 'website'
-        
-        # Add news articles
-        for article in search_results.get('news_articles', []):
-            if article.get('url') and len(urls_to_scrape) < max_urls:
-                url = article['url']
-                urls_to_scrape.append(url)
-                url_types[url] = 'news'
-        
-        # Add case studies
-        for case in search_results.get('case_studies', []):
-            if case.get('url') and len(urls_to_scrape) < max_urls:
-                url = case['url']
-                urls_to_scrape.append(url)
-                url_types[url] = 'case_study'
-        
+            url_types[url] = kind
+
+        for item in search_results.official_website:
+            add_url(item.url, 'website')
+
+        for item in search_results.products:
+            add_url(item.url, 'product')
+
+        if include_news:
+            for item in search_results.news:
+                add_url(item.url, 'news')
+
+        if include_case_studies:
+            for item in search_results.case_studies:
+                add_url(item.url, 'case_study')
+
         return urls_to_scrape, url_types
     
     def _format_scraped_content(
@@ -178,7 +181,7 @@ class ScrapingController:
     def _build_response_dict(
         self,
         company_name: str,
-        search_results: dict,
+        search_results: LLMCompanyWebSearchResponse,
         total_urls_found: int,
         scraped_data: list,
         successful_count: int,
@@ -191,16 +194,29 @@ class ScrapingController:
         Returns:
             Complete response dictionary with all metrics
         """
+        official_url = search_results.official_website[0].url if search_results.official_website else None
         search_summary = {
-            "official_website": search_results.get('official_website'),
-            "news_count": len(search_results.get('news_articles', [])),
-            "case_studies_count": len(search_results.get('case_studies', [])),
-            "total_search_results": search_results.get('total_results', 0)
+            "official_website": official_url,
+            "news_count": len(search_results.news),
+            "case_studies_count": len(search_results.case_studies),
+            "product_count": len(search_results.products),
+            "total_search_results": (
+                len(search_results.official_website)
+                + len(search_results.products)
+                + len(search_results.news)
+                + len(search_results.case_studies)
+            ),
+            "queries_planned": search_results.queries_planned,
+            "collected_at": search_results.collected_at,
+            "official_website_entries": [item.model_dump() for item in search_results.official_website],
+            "product_entries": [item.model_dump() for item in search_results.products],
+            "news_entries": [item.model_dump() for item in search_results.news],
+            "case_study_entries": [item.model_dump() for item in search_results.case_studies],
         }
-        
+
         return {
             "company_name": company_name,
-            "official_website": search_results.get('official_website'),
+            "official_website": official_url,
             "total_urls_found": total_urls_found,
             "total_urls_scraped": len(scraped_data),
             "successful_scrapes": successful_count,
@@ -220,7 +236,7 @@ class ScrapingController:
         company_name: str,
         include_news: bool = True,
         include_case_studies: bool = True,
-        max_urls: int = 10,
+        max_urls: int = 15,
         save_to_file: bool = False,
         db: Optional[Session] = None
     ) -> Dict:
@@ -242,14 +258,17 @@ class ScrapingController:
         
         # Step 1: Search for company information
         logger.info(f"Step 1/3: Searching for {company_name}...")
-        search_results = await search_company_async(
-            company_name=company_name,
-            include_news=include_news,
-            include_case_studies=include_case_studies
+        search_results = await llm_company_web_search_structured(
+            company_name=company_name
         )
         
         # Collect URLs to scrape
-        urls_to_scrape, url_types = self._prepare_urls_for_scraping(search_results, max_urls)
+        urls_to_scrape, url_types = self._prepare_urls_for_scraping(
+            search_results,
+            max_urls,
+            include_news,
+            include_case_studies
+        )
         
         if not urls_to_scrape:
             raise ValueError(f"No URLs found for company: {company_name}")
@@ -271,38 +290,6 @@ class ScrapingController:
         
         # Save to database or file
         saved_filepath = None
-        if db is not None or save_to_file:
-            data_store = get_data_store(db=db)
-            response_dict = {
-                "company_name": company_name,
-                "official_website": search_results.get('official_website'),
-                "total_urls_found": len(urls_to_scrape),
-                "total_urls_scraped": len(scraped_data),
-                "successful_scrapes": successful_count,
-                "scraped_content": processed_content,
-                "search_results_summary": {
-                    "official_website": search_results.get('official_website'),
-                    "news_count": len(search_results.get('news_articles', [])),
-                    "case_studies_count": len(search_results.get('case_studies', [])),
-                    "total_search_results": search_results.get('total_results', 0)
-                },
-                "scraping_timestamp": datetime.now().isoformat(),
-                "content_processing": {
-                    "processed_items": len([item for item in processed_content if 'processed_markdown' in item]),
-                    "total_items": len(processed_content),
-                    "processing_timestamp": datetime.now().isoformat()
-                }
-            }
-            
-            # Save based on parameters: save_to_file=True will skip database
-            if db is not None:
-                saved_filepath = data_store.save_scraped_data(company_name, response_dict, user_id=1, save_to_file=save_to_file)
-            else:
-                saved_filepath = data_store.save_scraped_data(company_name, response_dict, save_to_file=save_to_file)
-            
-            logger.info(f"Saved data to: {saved_filepath}")
-        
-        # Build final response
         result = self._build_response_dict(
             company_name=company_name,
             search_results=search_results,
@@ -310,8 +297,32 @@ class ScrapingController:
             scraped_data=scraped_data,
             successful_count=successful_count,
             processed_content=processed_content,
-            saved_filepath=saved_filepath
+            saved_filepath=None
         )
+
+        if db is not None or save_to_file:
+            data_store = get_data_store(db=db)
+            storage_payload = result.copy()
+
+            # Save based on parameters: save_to_file=True will skip database
+            if db is not None:
+                saved_filepath = data_store.save_scraped_data(
+                    company_name,
+                    storage_payload,
+                    user_id=1,
+                    save_to_file=save_to_file
+                )
+            else:
+                saved_filepath = data_store.save_scraped_data(
+                    company_name,
+                    storage_payload,
+                    save_to_file=save_to_file
+                )
+
+            result["saved_filepath"] = saved_filepath
+            logger.info(f"Saved data to: {saved_filepath}")
+        else:
+            saved_filepath = None
         
         logger.info(f"Data scraping completed for {company_name}")
         return result
