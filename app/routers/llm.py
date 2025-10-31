@@ -1,6 +1,3 @@
-"""
-LLM Router - API endpoints for language model operations
-"""
 from fastapi import APIRouter, HTTPException, status
 from ..schemas.llm_schema import (
     LLMGenerateRequest,
@@ -11,10 +8,13 @@ from ..schemas.llm_schema import (
 )
 from ..schemas.persona_schemas import (
     PersonaGenerateRequest,
-    PersonaResponse,
-    Persona,
-    TierClassification,
-    CompanyInfo
+    PersonaGenerationResponse,
+    BuyerPersona
+)
+from ..schemas.product_schemas import (
+    ProductGenerateRequest,
+    ProductCatalogResponse,
+    Product
 )
 from ..services.llm_service import get_llm_service
 from ..services.generator_service import get_generator_service
@@ -27,8 +27,7 @@ router = APIRouter()
 @router.post(
     "/llm/generate",
     response_model=LLMGenerateResponse,
-    summary="Generate text from LLM",
-    description="Send a prompt to the LLM and get a response"
+    summary="Generate text from LLM"
 )
 async def generate_text(request: LLMGenerateRequest):
     """
@@ -65,87 +64,52 @@ async def generate_text(request: LLMGenerateRequest):
         
     except ValueError as e:
         logger.error(f"Configuration error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Configuration error: {str(e)}"
-        )
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"LLM generation failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"LLM generation failed: {str(e)}"
-        )
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.get(
-    "/llm/config",
-    response_model=LLMConfigResponse,
-    summary="Get current LLM configuration"
-)
+@router.get("/llm/config", response_model=LLMConfigResponse)
 async def get_llm_config():
-    """Get current LLM service configuration settings."""
+    """Get current LLM configuration"""
     try:
         llm_service = get_llm_service()
         config = llm_service.get_config()
         return LLMConfigResponse(**config)
-        
     except Exception as e:
         logger.error(f"Failed to get config: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get config: {str(e)}"
-        )
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.patch(
-    "/llm/config",
-    response_model=LLMConfigResponse,
-    summary="Update LLM configuration"
-)
+@router.patch("/llm/config", response_model=LLMConfigResponse)
 async def update_llm_config(request: LLMConfigUpdateRequest):
-    """
-    Update LLM service configuration.
-    Only provided fields will be updated.
-    """
+    """Update LLM configuration"""
     try:
         llm_service = get_llm_service()
-        
+
         # Update only provided fields
         update_data = request.dict(exclude_none=True)
         if update_data:
             llm_service.update_config(**update_data)
             logger.info(f"Updated LLM config: {update_data}")
-        
         # Return updated config
         config = llm_service.get_config()
         return LLMConfigResponse(**config)
-        
     except Exception as e:
         logger.error(f"Failed to update config: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update config: {str(e)}"
-        )
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.get(
-    "/llm/test",
-    summary="Test LLM service connectivity"
-)
+@router.get("/llm/test")
 async def test_llm():
-    """
-    Test if LLM service is configured and can connect to OpenAI API.
-    This endpoint will fail gracefully if API key is not set.
-    """
+    """Test LLM connectivity"""
     try:
         llm_service = get_llm_service()
-        
-        # Try a simple generation
         response = await llm_service.generate_async(
             prompt="Say 'Connection successful!' if you can read this.",
             max_completion_tokens=500
         )
-        
         return {
             "status": "success",
             "message": "LLM service is working",
@@ -153,105 +117,135 @@ async def test_llm():
             "model": response.model,
             "tokens_used": response.total_tokens
         }
-        
     except ValueError as e:
-        # API key not configured
         return {
             "status": "not_configured",
             "message": str(e),
-            "note": "Set OPENAI_API_KEY in .env file to enable LLM features"
+            "note": "Set OPENAI_API_KEY in .env"
         }
     except Exception as e:
         logger.error(f"LLM test failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"LLM test failed: {str(e)}"
-        )
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.post(
     "/llm/persona/generate",
-    response_model=PersonaResponse,
-    summary="Generate personas from company data",
-    description="Use scraped web content to generate detailed buyer personas with tier classification and structured data."
+    response_model=PersonaGenerationResponse,
+    summary="Generate buyer personas",
+    description="Generate buyer company archetypes (market segments) based on company analysis"
 )
-async def generate_persona(request: PersonaGenerateRequest):
+async def generate_buyer_personas(request: PersonaGenerateRequest):
     """
-    Enhanced persona generation endpoint that generates multiple structured personas
-    with tier classification, pain points, goals, and communication preferences.
+    Generate buyer company personas for a seller company.
+    
+    Input: Company name (seller company to analyze)
+    Process: Scrape company data → Analyze business → Generate buyer personas
+    Output: Buyer company archetypes (e.g., "California Mid-Market SaaS - Sales Leaders")
+    
+    Note: Products and CRM data are optional for MVP. Personas will be generated
+    based on available web content. Full integration coming in later stages.
     """
     try:
+        logger.info(f"Generating buyer personas for: {request.company_name}")
+        
         generator_service = get_generator_service()
         
-        # Generate personas using the generator service
+        # Prepare kwargs for generator
+        generator_kwargs = {
+            "generate_count": request.generate_count
+        }
+        
+        # Add products if provided
+        if request.products:
+            generator_kwargs["products"] = request.products
+            logger.info(f"Using {len(request.products)} products for persona generation")
+        
         result = await generator_service.generate(
             generator_type="personas",
             company_name=request.company_name,
-            generate_count=request.generate_count,
+            **generator_kwargs
         )
         
-        # Convert to response format
-        personas_data = result["result"].get("personas", [])
-        tier_data = result["result"].get("tier_classification", {})
-        company_data = result["result"].get("company", {})
+        if not result.get("success"):
+            raise ValueError("Persona generation failed")
         
-        # Create CompanyInfo object
-        company = CompanyInfo(
-            name=company_data.get("name", "Unknown Company"),
-            size=company_data.get("size", 0),
-            industry=company_data.get("industry", "Unknown"),
-            location=company_data.get("location", "Unknown"),
-            domain=company_data.get("domain", "Unknown"),
-            created_at=result["generated_at"]
+        response_data = result["result"]
+        response = PersonaGenerationResponse(**response_data)
+        
+        logger.info(
+            f"Generated {len(response.personas)} buyer personas for {request.company_name}"
         )
         
-        # Create Persona objects
-        personas = []
-        for persona_data in personas_data:
-            persona = Persona(
-                name=persona_data.get("name", "Unknown"),
-                tier=persona_data.get("tier", "tier_3"),
-                job_title=persona_data.get("job_title"),
-                industry=persona_data.get("industry"),
-                department=persona_data.get("department"),
-                location=persona_data.get("location"),
-                company_size=persona_data.get("company_size"),
-                description=persona_data.get("description"),
-                decision_power=persona_data.get("decision_power"),
-                pain_points=persona_data.get("pain_points", []),
-                goals=persona_data.get("goals", []),
-                communication_preferences=persona_data.get("communication_preferences", [])
+        for i, persona in enumerate(response.personas):
+            logger.info(
+                f"  Persona {i+1}: '{persona.persona_name}' "
+                f"({persona.tier.value}, {len(persona.target_decision_makers)} titles)"
             )
-            personas.append(persona)
         
-        # Create tier classification
-        tier_classification = TierClassification(
-            tier_1=tier_data.get("tier_1", []),
-            tier_2=tier_data.get("tier_2", []),
-            tier_3=tier_data.get("tier_3", [])
-        )
-        
-        return PersonaResponse(
-            company_name=result["company_name"],
-            company=company,
-            personas=personas,
-            tier_classification=tier_classification,
-            context_length=result["context_length"],
-            generated_at=result["generated_at"],
-            total_personas=len(personas),
-            model=result["result"].get("model")
-        )
+        return response
         
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        logger.error(f"Persona generation failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Persona generation failed: {str(e)}"
+        logger.error(f"Persona generation failed: {str(e)}", exc_info=True)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post(
+    "/llm/products/generate",
+    response_model=ProductCatalogResponse,
+    summary="Generate product catalog from company data",
+    description="Analyze seller company's web content to extract product catalog with names and descriptions"
+)
+async def generate_products(request: ProductGenerateRequest):
+    """
+    Generate seller company's product catalog.
+    
+    This analyzes the seller's web content to extract:
+    - Core products/services (3-10 offerings)
+    - Clear, buyer-focused descriptions
+    - Value propositions and use cases
+    
+    The generated product catalog can be used to:
+    - Feed into persona generation for better targeting
+    - Create pain-point to product mappings
+    - Understand seller's go-to-market strategy
+    """
+    try:
+        logger.info(f"Generating product catalog for: {request.company_name}")
+        
+        generator_service = get_generator_service()
+        
+        # Generate products using the generator service
+        result = await generator_service.generate(
+            generator_type="products",
+            company_name=request.company_name,
+            max_products=request.max_products
         )
-
-
+        
+        if not result.get("success"):
+            raise ValueError("Product generation failed")
+        
+        response_data = result["result"]
+        
+        response = ProductCatalogResponse(**response_data)
+        
+        logger.info(
+            f"Generated {len(response.products)} products for {request.company_name}"
+        )
+        
+        for i, product in enumerate(response.products):
+            logger.info(
+                f"  Product {i+1}: '{product.product_name}' "
+                f"({len(product.description)} chars)"
+            )
+        
+        return response
+        
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"Product generation failed: {str(e)}", exc_info=True)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

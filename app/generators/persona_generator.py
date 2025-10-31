@@ -1,441 +1,599 @@
-# generators/persona_generator.py
-"""
-Persona generator for creating detailed buyer personas
-"""
 from .base_generator import BaseGenerator
-from typing import Dict
+from typing import Dict, List
 import json
 import logging
 
 logger = logging.getLogger(__name__)
 
 class PersonaGenerator(BaseGenerator):
-    """Persona generation with tier classification"""
+    """
+    Generates buyer company personas (market segments) for a seller company.
+    
+    This is NOT for generating individual contacts at a specific company.
+    This generates buyer COMPANY ARCHETYPES representing market segments.
+    """
     
     def get_system_message(self) -> str:
-        return """You are a B2B sales intelligence expert specializing in enterprise buyer persona identification.
+      return """You are an expert B2B sales strategist helping generate buyer company personas for a seller company. 
 
-CRITICAL INSTRUCTIONS FOR FIELD HANDLING:
+Your task is to analyze the seller's business and identify buyer company archetypes that would be ideal customers for the seller's products and services.
 
-1. DIRECTLY INFERABLE FIELDS (from company data - MUST be filled):
-   - name, tier, job_title, industry, department, location, company_size
-   - These MUST match or derive from the provided company data
-   - Never use null for these fields
+CRITICAL: You are generating COMPANY ARCHETYPES (market segments), NOT individual people.
 
-2. ROLE-BASED INFERABLE FIELDS (from industry standards - MUST be filled):
-   - description, decision_power, communication_preferences
-   - Generate these based on the role's typical responsibilities in this industry and company size
-   - Use industry best practices and common patterns for this role
-   - Even if specific details aren't in the data, provide realistic role-appropriate content
-
-3. EVIDENCE-BASED FIELDS (requires reference from data - nullable):
-   - pain_points: Only include if you can infer from the provided company data
-   - Must be based on actual information in the context (e.g., news about challenges, company initiatives, industry trends mentioned)
-   - If the data doesn't provide evidence of specific pain points, use null or empty array
-   - Do NOT fabricate pain points based on generic role assumptions
-
-4. CONTACT FIELDS (specific to individual - nullable):
-   - email, phone, linkedin_url
-   - Only fill if explicitly found in the provided data
-   - Use null if not found - do NOT fabricate contact information
-
-PERSONA GENERATION APPROACH:
-- For company-level fields: Extract from provided data
-- For role-level fields: Use your knowledge of standard responsibilities for that role
-- For pain_points: Only include if evidence exists in the provided data
-- For contact fields: Only use if explicitly provided
+Examples:
+✓ CORRECT: "CA Mid-Market SaaS - Sales Leaders" (a type of company)
+✗ WRONG: "John Smith, CFO at Acme Corp" (a specific person)
 """
 
     def build_prompt(self, company_name: str, context: str, **kwargs) -> str:
-      generate_count = kwargs.get('generate_count', 3)
         
-      return f"""Based on the following company information about {company_name}:
+        generate_count = kwargs.get('generate_count', 5)
+        
+        products = kwargs.get('products', [])
+        crm_data = kwargs.get('crm_data', '')
+        
+        products_section = ""
+        if products and len(products) > 0:
+            products_json = json.dumps(products, indent=2)
+            products_section = f"""
+    [SELLER PRODUCT CATALOG - Stage 1 Output]
+    {products_json}
+    """
+        else:
+            products_section = """
+    [SELLER PRODUCT CATALOG]
+    Not available yet. Generate personas based on web content analysis.
+    Infer likely products from company description and industry.
+    """
+        
+        crm_section = ""
+        if crm_data and len(crm_data.strip()) > 0:
+            crm_section = f"""
+    [CRM CUSTOMER DATA]
+    {crm_data}
+    """
+        else:
+            crm_section = """
+    [CRM CUSTOMER DATA]
+    Not available. Generate personas based on company analysis and industry best practices.
+    """
+        
+        return f"""## Task
 
-COMPANY DATA:
-{context}
+Generate buyer company personas (market segments) for the seller company. Each persona represents a distinct market segment with clear needs the seller's products can address.
 
-Generate exactly {generate_count} buyer personas ranked by purchasing influence.
+Generate 3-8 personas depending on market diversity.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CRITICAL: FIELD NAMING AND AUTO-INCREMENT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. company_size field MUST equal company.size for ALL personas
-   Example: If company.size = 70000, then EVERY persona's company_size = 70000
+1. **persona_name**: Max 60 characters, format "[Geography] [Size] [Industry] - [Function]"
+   - Geography: Can be state/province, region, country, or multi-country
+   - Size: Small/Mid-Market/Large/Enterprise (descriptive, not numeric)
+   - ✓ "CA Enterprise SaaS - Revenue Leaders" (40 chars)
+   - ✓ "UK Mid-Market Manufacturing - Sales VPs" (45 chars)
+   - ✓ "DACH Large Financial Services - Ops Leaders" (49 chars)
+   - ✗ "United States Enterprise Retail & E-commerce - Marketing Leaders" (67 chars)
 
+2. **industry**: ONE specific vertical per persona (never combine industries)
+   - ✓ "B2B SaaS Platforms" or "Healthcare Revenue Cycle Management"
+   - ✗ "Professional Services - Consulting, IT, Legal" (combines 3 industries)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FIELD REQUIREMENTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. **description**: MUST include ALL 4 quantitative metrics:
+   - Team size: "20-100 sales reps" or "50-200 staff"
+   - Deal size: "$100K-$350K annually" or "$500K-$2M multi-year" (use local currency if applicable)
+   - Sales cycle: "3-6 months" or "8-12 months"
+   - Stakeholders: "3-5 decision makers" or "6-9 stakeholders"
 
-GROUP 1: COMPANY-DERIVED FIELDS (MANDATORY)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. **tier**: Balanced distribution (avoid over-concentration)
+   - tier_1: 30-40% (best opportunities)
+   - tier_2: 40-50% (solid opportunities)
+   - tier_3: 10-20% (opportunistic)
 
-These MUST be extracted/derived from the company data above:
+5. **target_decision_makers**: 10-30+ industry-appropriate titles from master list
+   - Match titles to how that industry actually buys
+   - Retail → Marketing/Commerce leaders (NOT Sales VPs)
+   - Healthcare → Revenue Cycle/Clinical leaders (NOT Enablement)
+   - Manufacturing → Operations/Sales Ops (NOT Enablement/SDR)
 
-- name: Role title (e.g., "Chief Financial Officer")
-- tier: "tier_1" | "tier_2" | "tier_3" (based on budget authority)
-- job_title: Standard title for this role
-- industry: Extract from company data (MUST match company.industry)
-- department: Standard department for this role
-- location: Use company headquarters (MUST match company.location)
-- company_size: Company employee count (MUST match company.size EXACTLY)
-  CRITICAL: If company.size = 70000, then company_size = 70000
-  NEVER use null
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PERSONA FIELDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-RULE: These fields MUST be consistent across all personas and match the company object.
+**persona_name** (string): Concise market segment identifier, max 60 chars
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-GROUP 2: ROLE-BASED FIELDS (MANDATORY - USE PROFESSIONAL KNOWLEDGE)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**tier** (enum): tier_1 | tier_2 | tier_3
+- Consider: deal size, product fit, sales cycle, accessibility, volume
+- Balance distribution across tiers
 
-Generate these based on typical responsibilities for this role at this company size/industry:
+**target_decision_makers** (array): 10-30+ job titles from master list below
+- Include ALL title variations for matching coverage
+- Order by seniority: C-level → VP → Director → Manager
 
-A. description (TEXT - 2-3 sentences):
-   - Describe standard responsibilities for this role
-   - Tailor to company size (e.g., 70k employees = enterprise-scale challenges)
-   - Tailor to industry (e.g., SaaS = subscription management focus)
+**industry** (string): Single focused vertical (no combinations)
 
-B. decision_power (ENUM - pick one):
-   - "budget_owner": Final approver (typically tier_1)
-   - "influencer": Strong voice, controls dept budget (typically tier_2)
-   - "recommender": Evaluates and recommends (typically tier_2/3)
-   - "implementer": Daily user, provides feedback (typically tier_3)
+**company_size_range** (string): Employee count range using standard thresholds
 
+**Standard Thresholds (use these break points):**
+- 50, 200, 500, 1000, 2000, 5000, 10000
 
-D. communication_preferences (JSONB OBJECT - MANDATORY - NEVER EMPTY):
-   CRITICAL: This field MUST ALWAYS be filled with realistic, role-appropriate content
-   DO NOT leave channels, content_format, or meeting_style empty
-   Generate based on B2B sales best practices for this seniority level
-   
-   Structure (ALL sub-fields required and must have content):
-   {{
-     "channels": [
-       {{"type": "email", "frequency": "bi-weekly", "note": "Specific preference"}},
-       {{"type": "phone", "frequency": "monthly", "note": "Specific preference"}}
-     ],
-     "content_format": ["Format 1", "Format 2", "Format 3"],
-     "meeting_style": ["Style 1", "Style 2"],
-     "response_time": "Specific timeframe"
-   }}
-   
-   GUIDELINES BY SENIORITY LEVEL:
-   
-   Tier 1 (C-Level Executives - CFO, CEO, CTO):
-   {{
-     "channels": [
-       {{"type": "email", "frequency": "bi-weekly", "note": "Concise executive summaries with clear ROI focus"}},
-       {{"type": "in-person", "frequency": "quarterly", "note": "Strategic planning sessions and board-level presentations"}},
-       {{"type": "phone", "frequency": "monthly", "note": "Scheduled calls only, no cold calls"}}
-     ],
-     "content_format": [
-       "One-page executive summaries with financial impact",
-       "ROI models and TCO analysis",
-       "Board-level presentations with strategic implications",
-       "Peer references from other Fortune 500 C-suite executives"
-     ],
-     "meeting_style": [
-       "30-minute scheduled video calls with pre-read materials sent 48 hours in advance",
-       "In-person meetings for strategic decisions over $500K",
-       "Quarterly business reviews with quantitative performance metrics"
-     ],
-     "response_time": "3-5 business days for standard inquiries, same-day for board-level strategic priorities"
-   }}
-   
-   Tier 2 (VPs and Directors):
-   {{
-     "channels": [
-       {{"type": "email", "frequency": "weekly", "note": "Detailed updates with technical depth welcome"}},
-       {{"type": "video call", "frequency": "bi-weekly", "note": "Flexible scheduling for deep-dive sessions"}},
-       {{"type": "linkedin", "frequency": "monthly", "note": "Industry insights and relevant case studies"}}
-     ],
-     "content_format": [
-       "Detailed technical documentation and architecture diagrams",
-       "Product demonstrations and hands-on trials",
-       "Case studies from similar-sized companies in the same industry",
-       "Implementation roadmaps and integration guides"
-     ],
-     "meeting_style": [
-       "45-60 minute video calls for comprehensive product walkthroughs",
-       "Working sessions with technical teams for proof-of-concept",
-       "Quarterly roadmap alignment meetings"
-     ],
-     "response_time": "1-2 business days for inquiries, same-day for urgent technical issues"
-   }}
-   
-   Tier 3 (Managers and Individual Contributors):
-   {{
-     "channels": [
-       {{"type": "email", "frequency": "as-needed", "note": "Quick, actionable updates preferred"}},
-       {{"type": "slack", "frequency": "daily", "note": "Best for quick questions and real-time support"}},
-       {{"type": "video call", "frequency": "weekly", "note": "For detailed implementation discussions"}}
-     ],
-     "content_format": [
-       "Step-by-step implementation guides and documentation",
-       "Video tutorials and screen-sharing demos",
-       "Technical specifications and API documentation",
-       "Quick reference cards and troubleshooting guides"
-     ],
-     "meeting_style": [
-       "30-minute hands-on working sessions",
-       "Screen-sharing demonstrations with live Q&A",
-       "Weekly sync-ups during implementation phases"
-     ],
-     "response_time": "Same day or within 24 hours for operational questions"
-   }}
-   
-   RULE: Base communication preferences on B2B sales best practices for this role level.
-   NEVER leave any sub-field empty - generate realistic, role-appropriate content.
+**Valid Range Formats:**
+- Single threshold span: "50-200", "200-500", "500-1000", "1000-2000", "2000-5000", "5000-10000"
+- Multi-threshold span: "50-500", "200-1000", "500-2000", "1000-5000", "2000-10000"
+- Open-ended: "10000+" or "10001+"
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-GROUP 3: EVIDENCE-BASED FIELDS (NULLABLE - REQUIRES DATA REFERENCE)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Selection Guidelines:**
+1. **Narrow ranges** (single threshold span) when persona targets specific size:
+   - "50-200 employees" → Small companies with lean teams
+   - "1000-2000 employees" → Large companies, not quite enterprise
 
-A. pain_points (ARRAY or NULL):
-   - ONLY include if you can infer pain points from the provided company data
-   - Valid sources of evidence:
-     * News articles mentioning company challenges
-     * Company statements about initiatives or transformations
-     * Industry trends explicitly mentioned in the data
-     * Specific company metrics or problems referenced
-   - If no evidence in data: use null
-   - Do NOT generate generic pain points based only on role/industry assumptions
-   
-   Examples of when to include pain_points:
-   ✓ Data says: "Company is consolidating vendors" → pain_point: "Vendor sprawl management"
-   ✓ Data says: "Facing compliance challenges" → pain_point: "Meeting regulatory requirements"
-   ✓ Data says: "Rapid growth to 70k employees" → pain_point: "Scaling processes for enterprise size"
-   
-   Examples of when to use null:
-   ✗ Data only says: "Salesforce, 70k employees, SaaS" → pain_points: null
-   ✗ No specific challenges mentioned → pain_points: null
+2. **Wider ranges** (multi-threshold span) when persona spans multiple size categories:
+   - "200-1000 employees" → Mid-market spanning small-to-medium
+   - "500-2000 employees" → Mid-to-large market
+   - "1000-5000 employees" → Large enterprises
 
-RULE: If you cannot point to specific evidence in the provided data, use null.
+3. **Very wide ranges** when buying behavior is similar across sizes:
+   - "50-1000 employees" → SMB to mid-market (similar decision processes)
+   - "2000-10000 employees" → Enterprise segment
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-GROUP 4: CONTACT FIELDS (NULLABLE)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. **Open-ended** for very large enterprises:
+   - "10000+" or "10001+" → Mega enterprises only
 
-Only fill if explicitly found in provided data:
+**Examples:**
+- "50-200 employees" → Boutique firms, owner-led decisions
+- "200-500 employees" → Emerging mid-market, dedicated functions
+- "500-2000 employees" → Established mid-to-large, complex orgs
+- "1000-5000 employees" → Large enterprises, multi-location
+- "2000-10000 employees" → Very large enterprises, global presence
+- "50-1000 employees" → Broad SMB/mid-market with similar CRM needs
 
-- email: null (unless found in data)
-- phone: null (unless found in data)
-- linkedin_url: null (unless found in data)
+**company_type** (string): Detailed company characteristics
 
-RULE: Do NOT generate or guess contact information. Use null if not provided.
+**location** (string): Geographic focus - can be specific or broad based on data
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-OUTPUT JSON STRUCTURE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Geographic Precision Hierarchy (most specific to most general):**
+1. State/Province level (when data strongly supports): "California", "Texas", "Ontario", "Bavaria"
+2. Metro/Regional level: "San Francisco Bay Area", "Greater Toronto Area", "London Metro"
+3. Multi-state/Regional: "US West Coast", "US Northeast", "Western Europe", "Southeast Asia"
+4. Country level (when no regional pattern): "United States", "United Kingdom", "Germany", "Japan"
+5. Multi-country/Continental: "North America", "European Union", "Asia-Pacific", "EMEA"
+6. Global (only if truly distributed): "Global" or "Worldwide"
+
+**Decision Logic:**
+- IF CRM data shows 60%+ concentration in specific geography → Use that specific level
+- IF CRM data shows regional pattern (e.g., "40% West Coast, 30% Northeast") → Use regional grouping
+- IF NO clear geographic pattern in data → Use country or broader region
+- IF company serves global markets evenly → Use "Global" or multi-region descriptor
+
+**Examples by data scenario:**
+- Strong state data: "California" (if 70% customers in CA)
+- Regional pattern: "US West Coast" (if CA+OR+WA = 65%)
+- Country-wide: "United States" (if distributed across US)
+- Multi-country: "Western Europe" (if UK+DE+FR distributed evenly)
+- Global: "Global" (if customers across 5+ regions)
+
+**International Location Examples:**
+- "United Kingdom", "Germany", "France", "Canada", "Australia", "Japan", "Singapore"
+- "Scandinavia" (Norway, Sweden, Denmark, Finland)
+- "Benelux" (Belgium, Netherlands, Luxembourg)
+- "DACH Region" (Germany, Austria, Switzerland)
+- "ANZ" (Australia and New Zealand)
+- "Southeast Asia", "Middle East", "Latin America", "Sub-Saharan Africa"
+
+**description** (string): 3-5 sentences with required structure:
+"[Company characteristics]. [Team size]. [Deal size] with [sales cycle] involving [stakeholders]. [Decision process]. [Strategic fit]. [Engagement approach]."
+
+**REQUIRED METRICS (all 4 must be present):**
+1. Team size (when relevant for sales/marketing roles)
+2. Deal size range (use appropriate currency: $, £, €, ¥, etc.)
+3. Sales cycle timeline
+4. Stakeholder count
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MASTER JOB TITLE PATTERNS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When selecting titles, generate ALL variations of each pattern:
+
+[SALES LEADERS - ATL]
+Pattern: VP/SVP/Head of Sales | Enterprise Sales | Commercial Sales | Global Sales
+Variations: "VP [of] Sales", "Vice President [of] Sales", "Vice President Sales"
+Geographic: Regional VP, Area VP, VP Sales Americas, VP Sales North America
+Include: CRO, Chief Revenue Officer, Chief Sales Officer
+
+[SALES LEADERS - BTL]
+Pattern: Director/Senior Director/Manager of Sales | Enterprise Sales | Commercial Sales | Inside Sales | Business Development
+Variations: Same as ATL
+Include: Sales Director, Sr Director Sales
+
+[ENABLEMENT LEADERS - ATL]
+Pattern: VP/SVP/Head of Sales Enablement | Revenue Enablement | GTM Enablement
+Variations: "VP [of] Sales Enablement", "Vice President [of] Sales Enablement"
+Geographic: Global Head, Chief Enablement Officer
+Include: VP Sales Readiness, AVP Revenue Enablement
+
+[ENABLEMENT LEADERS - BTL]
+Pattern: Director/Senior Director/Manager of Sales Enablement | Revenue Enablement | GTM Enablement
+Variations: Same as ATL
+Geographic: Global Director, Global Manager
+
+[OPERATIONS LEADERS - ATL]
+Pattern: VP/SVP/Head of Revenue Operations | Sales Operations | GTM Operations | RevOps
+Variations: "VP [of] Revenue Operations", "Vice President [of] Revenue Operations"
+Geographic: Global VP, AVP, Executive VP
+Include: CRO, Chief Revenue Officer
+
+[OPERATIONS LEADERS - BTL]
+Pattern: Director/Senior Director/Manager of Revenue Operations | Sales Operations | GTM Operations
+Variations: Same as ATL
+Geographic: Global Director, Global Manager
+
+[MARKETING LEADERS - ATL]
+Pattern: CMO | VP/SVP/Head of Marketing | Demand Generation | Growth Marketing | Marketing Operations
+Variations: "VP [of] Marketing", "Vice President [of] Marketing"
+Include: Chief Marketing Officer, Senior Vice President of Marketing
+
+[MARKETING LEADERS - BTL]
+Pattern: Director/Senior Director/Manager of Marketing | Demand Generation | Marketing Operations
+Variations: Same as ATL
+Include: ABM Manager, Demand Generation Manager
+
+[SDR LEADERS - ATL]
+Pattern: VP/Head of Sales Development | Business Development | Inside Sales
+Variations: "VP [of] Sales Development", "Vice President [of] Sales Development"
+Geographic: Global Head, Global VP
+
+[SDR LEADERS - BTL]
+Pattern: Director/Senior Director/Manager of Sales Development | Business Development | Inside Sales
+Variations: Same as ATL
+Include: SDR Manager, BDR Manager, Enterprise BDR Manager
+
+[REVENUE LEADERS - ATL]
+Chief Revenue Officer, CRO, Chief Sales Officer, CSO
+
+[HEALTHCARE - C-SUITE & VPs]
+C-Suite: CAO, CEO, CFO, COO, CRO, CSO, CIO, Chief Administrative Officer, Chief Executive Officer, Chief Financial Officer, Chief Operating Officer, Chief Revenue Officer, Chief Strategy Officer
+VPs: VP/SVP Revenue Cycle Management, VP Patient Financial Services, VP Healthcare Finance, VP Medical Billing Operations, VP Managed Care
+Directors: Director of Revenue Cycle, Executive Director of Patient Financial Services
+
+[RETAIL & ECOMMERCE - ATL]
+Pattern: CMO | CDO | CXO | VP/SVP/Head of Digital Commerce | E-commerce | Customer Experience | Omnichannel
+Include: Chief Marketing Officer, Chief Digital Officer, Chief Experience Officer
+
+[RETAIL & ECOMMERCE - BTL]
+Pattern: Director/Senior Director/Manager of Digital Commerce | E-commerce | Customer Experience | Omnichannel
+Include: Digital Commerce Manager, E-commerce Manager
+
+[FINANCIAL SERVICES - ATL]
+Pattern: CRO | COO | CDO | VP/SVP/Head of Sales | Revenue Operations | Sales Operations | Distribution | Wealth Management | Retail Banking
+Include: Chief Revenue Officer, Chief Operating Officer, Chief Digital Officer
+
+[FINANCIAL SERVICES - BTL]
+Pattern: Director/Senior Director/Manager of Sales | Revenue Operations | Sales Operations | Distribution
+Include: Sales Operations Manager, Revenue Operations Manager
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INDUSTRY → JOB FUNCTION MAPPING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Select job titles from appropriate function categories:
+
+Industry                    | Include These Functions           | Avoid These
+----------------------------|-----------------------------------|------------------
+B2B SaaS/Tech              | Sales, Enablement, Operations     | Healthcare, Retail
+Healthcare                  | Healthcare (C-Suite & VPs), Revenue Leaders | Enablement, SDR, Marketing
+Manufacturing              | Sales, Operations                 | Enablement, SDR, Marketing  
+Retail/E-commerce          | Retail & Ecommerce, Marketing     | Sales, Enablement, SDR
+Financial Services         | Financial Services, Operations    | Enablement, SDR
+Professional Services      | Sales (BTL focus), Marketing (BTL) | ATL Enablement, Healthcare
+Logistics                  | Sales, Operations                 | Enablement, Marketing
+
+**Seniority by Company Size:**
+- Enterprise (2000+): 70% ATL, 30% BTL
+- Large (800-2000): 50% ATL, 50% BTL
+- Mid-Market (200-800): 30% ATL, 70% BTL
+- Small (50-200): 10% ATL, 90% BTL
+
+**Title Selection Guidelines:**
+1. Include ALL variations: "VP of Sales", "Vice President of Sales", "Vice President Sales", "VP Sales"
+2. Include geographic variants: "Global Head", "Regional VP", "VP Americas"
+3. Include functional variants: "VP Enterprise Sales", "VP Commercial Sales"
+4. Typical count: 10-15 titles (Small), 15-22 (Mid-Market), 18-25 (Large), 20-27 (Enterprise)
+5. Order by seniority within the array
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT JSON SCHEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 {{
-  "company": {{
-    "name": "{company_name}",
-    "size": 70000,
-    "industry": "SaaS / CRM",
-    "location": "San Francisco, CA, USA",
-    "domain": "salesforce.com"
-  }},
   "personas": [
     {{
-      "name": "Chief Financial Officer",
-      "tier": "tier_1",
-      "job_title": "Chief Financial Officer (CFO)",
-      "industry": "SaaS / CRM",
-      "department": "Finance",
-      "location": "San Francisco, CA, USA",
-      "company_size": 70000,
-      "description": "Senior executive responsible for financial strategy, capital allocation, and approval of major technology investments at enterprise scale.",
-      "decision_power": "budget_owner",
-      "communication_preferences": {{
-        "channels": [
-          {{"type": "email", "frequency": "bi-weekly", "note": "Concise executive summaries with ROI focus"}},
-          {{"type": "in-person", "frequency": "quarterly", "note": "Strategic planning sessions"}},
-          {{"type": "phone", "frequency": "monthly", "note": "Scheduled calls for high-priority items"}}
-        ],
-        "content_format": [
-          "One-page executive summary with ROI projection",
-          "Financial models showing 3-year TCO",
-          "Peer references from Fortune 500 CFOs",
-          "Board-level presentations"
-        ],
-        "meeting_style": [
-          "30-minute scheduled video calls with pre-read materials",
-          "In-person board-room presentations for deals >$1M",
-          "Quarterly business reviews with quantitative metrics"
-        ],
-        "response_time": "3-5 business days for non-urgent, same-day for strategic priorities"
-      }},
-      "pain_points": null,
-      "email": null,
-      "phone": null,
-      "linkedin_url": null
-    }},
-    {{
-      "name": "VP of Information Technology",
-      "tier": "tier_2",
-      "job_title": "Vice President of Information Technology",
-      "industry": "SaaS / CRM",
-      "department": "Information Technology",
-      "location": "San Francisco, CA, USA",
-      "company_size": 70000,
-      "description": "Senior technology leader responsible for IT strategy, infrastructure decisions, and vendor evaluation for enterprise-scale operations.",
-      "decision_power": "influencer",
-      "communication_preferences": {{
-        "channels": [
-          {{"type": "email", "frequency": "weekly", "note": "Detailed technical updates welcome"}},
-          {{"type": "video call", "frequency": "bi-weekly", "note": "Flexible for technical deep-dives"}},
-          {{"type": "linkedin", "frequency": "monthly", "note": "Industry best practices and case studies"}}
-        ],
-        "content_format": [
-          "Technical documentation and architecture diagrams",
-          "Product demonstrations and POC proposals",
-          "Case studies from similar enterprise tech companies",
-          "Integration roadmaps and security documentation"
-        ],
-        "meeting_style": [
-          "45-60 minute technical walkthrough sessions",
-          "Proof-of-concept working sessions with engineering team",
-          "Quarterly technology strategy alignment meetings"
-        ],
-        "response_time": "1-2 business days"
-      }},
-      "pain_points": null,
-      "email": null,
-      "phone": null,
-      "linkedin_url": null
-    }},
-    {{
-      "name": "IT Manager, Infrastructure",
-      "tier": "tier_3",
-      "job_title": "IT Manager — Infrastructure & Operations",
-      "industry": "SaaS / CRM",
-      "department": "Information Technology",
-      "location": "San Francisco, CA, USA",
-      "company_size": 70000,
-      "description": "Hands-on operational manager responsible for infrastructure deployment, vendor implementation, and day-to-day technical evaluation.",
-      "decision_power": "implementer",
-      "communication_preferences": {{
-        "channels": [
-          {{"type": "email", "frequency": "as-needed", "note": "Quick, actionable updates"}},
-          {{"type": "slack", "frequency": "daily", "note": "Preferred for quick technical questions"}},
-          {{"type": "video call", "frequency": "weekly", "note": "For implementation planning"}}
-        ],
-        "content_format": [
-          "Step-by-step implementation guides",
-          "Video tutorials and screen-share demos",
-          "Technical specifications and API docs",
-          "Troubleshooting guides and quick references"
-        ],
-        "meeting_style": [
-          "30-minute hands-on working sessions",
-          "Live demos with Q&A",
-          "Weekly implementation sync-ups"
-        ],
-        "response_time": "Same day or within 24 hours"
-      }},
-      "pain_points": null,
-      "email": null,
-      "phone": null,
-      "linkedin_url": null
+      "persona_name": "string (max 60 chars)",
+      "tier": "tier_1 | tier_2 | tier_3",
+      "target_decision_makers": ["array", "of", "title", "strings"],
+      "industry": "string (single vertical)",
+      "company_size_range": "string (use standard thresholds: 50, 200, 500, 1000, 2000, 5000, 10000)",
+      "company_type": "string",
+      "location": "string (state/region/country/multi-country based on data)",
+      "description": "string (must include: team size, deal size, sales cycle, stakeholder count)"
     }}
   ],
-  "tier_classification": {{
-    "tier_1": ["0"],
-    "tier_2": ["1"],
-    "tier_3": ["2"]
-  }}
+  "generation_reasoning": "string"
 }}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-VALIDATION CHECKLIST
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXAMPLE OUTPUT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Before returning, verify:
-✓ company_size in ALL personas = company.size (e.g., all = 70000)
-✓ communication_preferences has ALL 4 keys filled with content
-✓ communication_preferences.channels has at least 2-3 items with type, frequency, and note
-✓ communication_preferences.content_format has at least 3-4 items
-✓ communication_preferences.meeting_style has at least 2-3 items
-✓ communication_preferences.response_time is a specific timeframe (not just "2-3 business days")
-✓ pain_points is null OR contains only evidence-based items from data
-✓ All personas have matching industry/location from company data
-✓ tier_classification contains correct persona indices
+{{
+  "personas": [
+    {{
+      "persona_name": "CA Enterprise SaaS - Revenue Leaders",
+      "tier": "tier_1",
+      "target_decision_makers": [
+        "CRO", "Chief Revenue Officer", "Chief Sales Officer", "CSO",
+        "VP of Sales", "Vice President of Sales", "Vice President Sales", "VP Sales", "SVP Sales",
+        "VP Sales Enablement", "Vice President Sales Enablement", "VP of Sales Enablement",
+        "Head of Sales Enablement", "Global Head of Sales Enablement",
+        "VP Revenue Operations", "Vice President Revenue Operations", "VP of Revenue Operations", "VP RevOps",
+        "Head of Revenue Operations", "VP GTM Operations"
+      ],
+      "industry": "B2B SaaS Platforms",
+      "company_size_range": "2000-10000 employees",
+      "company_type": "Enterprise B2B SaaS platforms and cloud infrastructure companies",
+      "location": "California",
+      "description": "Enterprise SaaS platforms with 200-500 sales reps across global go-to-market teams. $500K-$2M annual contracts with 8-12 month sales cycles involving 6-9 stakeholders (CRO, CFO, Security, IT, Procurement, Sales Leadership). Procurement requires security reviews, ROI analysis, and executive sponsorship. Strong product fit for CRM consolidation and revenue intelligence plays. Best engaged through executive briefings, technical deep-dives, and enterprise customer case studies."
+    }},
+    {{
+      "persona_name": "UK Mid-Market Professional Services - Sales Directors",
+      "tier": "tier_2",
+      "target_decision_makers": [
+        "Director of Sales", "Director Sales", "Senior Director Sales", "Sr Director Sales",
+        "Director Business Development", "Director of Business Development",
+        "Manager of Sales", "Sales Manager", "Senior Sales Manager",
+        "Manager Sales Development", "Sales Development Manager",
+        "Director of Marketing", "Director Marketing"
+      ],
+      "industry": "Management Consulting",
+      "company_size_range": "50-500 employees",
+      "company_type": "Mid-size professional services and consulting firms serving UK and European clients",
+      "location": "United Kingdom",
+      "description": "UK-based consulting firms with client development teams of 10-40 professionals managing partner-led and team-based sales. £40K-£200K annual technology spend with 2-5 month procurement cycles involving 2-4 stakeholders (Managing Partner, Sales Director, Operations, Finance). Decision-making balances cost efficiency with scalability as firms grow. Moderate fit for CRM, pipeline management, and client collaboration tools. Best engaged via ROI-focused proposals, UK-specific case studies, and scalable pricing models."
+    }},
+    {{
+      "persona_name": "DACH Large Manufacturing - Operations Leaders",
+      "tier": "tier_1",
+      "target_decision_makers": [
+        "VP of Sales", "Vice President of Sales", "VP Sales",
+        "VP of Operations", "Vice President of Operations", "VP Operations",
+        "Director of Sales", "Senior Director Sales", "Sales Director",
+        "Director of Operations", "Senior Director Operations",
+        "VP Revenue Operations", "Director Sales Operations"
+      ],
+      "industry": "Manufacturing - Industrial Equipment",
+      "company_size_range": "1000-5000 employees",
+      "company_type": "Large German, Austrian, and Swiss manufacturers of precision equipment and industrial machinery",
+      "location": "DACH Region",
+      "description": "Established DACH manufacturers with regional and global sales operations and complex multi-site production. 50-200 sales and technical sales staff. €200K-€800K annual platform investments with 6-9 month evaluation cycles involving 4-6 stakeholders (Vertriebsleiter, Betriebsleiter, IT, Einkauf). Decision-making emphasizes integration with SAP/ERP systems, technical precision, and long-term vendor partnerships. Strong fit for CRM with CPQ and industrial-grade integrations. Best engaged through technical workshops, German-language support commitments, and references from peer DACH manufacturers."
+    }}
+  ],
+  "generation_reasoning": "Selected diverse personas spanning geographies (California, UK, DACH), company sizes (50-500, 1000-5000, 2000-10000), and industries. Used specific geographies where industry concentration exists (CA for SaaS, DACH for manufacturing) and country-level for distributed markets (UK services). Company size ranges span multiple thresholds to reflect similar buying behaviors within each segment. Tier distribution balanced across strategic value."
+}}
 
-CRITICAL ERRORS TO AVOID:
-company_size is null (MUST be a number matching company.size)
-communication_preferences has empty arrays for channels/content_format/meeting_style
-communication_preferences.channels missing type, frequency, or note fields
-Fabricating pain_points without data evidence
-Inconsistent size/location/industry across personas
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUALITY CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before submitting, verify:
+✓ persona_name ≤ 60 characters (count them!)
+✓ industry is single vertical (not combined)
+✓ Tier distribution balanced: tier_1 (30-40%), tier_2 (40-50%), tier_3 (10-20%)
+✓ target_decision_makers has 10-30+ titles matching industry
+✓ description includes all 4 metrics: team size, deal size, sales cycle, stakeholders
+✓ company_size_range uses standard thresholds (50, 200, 500, 1000, 2000, 5000, 10000)
+✓ company_size_range width matches buying behavior similarity (narrow for distinct, wide for similar)
+✓ location uses appropriate geographic precision based on data (state/country/region/global)
+✓ Titles ordered by seniority (C-level → VP → Director → Manager)
+✓ Each persona differs in 2+ dimensions (industry, size, geography, function)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NOW GENERATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[SELLER COMPANY]
+Company Name: {company_name}
+
+{products_section}
+
+{crm_section}
+
+[WEB CONTENT]
+{context}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Generate buyer personas following all requirements above.
+
+CRITICAL:
+- persona_name < 60 characters
+- ONE industry per persona
+- ALL 4 metrics in description
+- Balanced tier distribution
+- Industry-appropriate job titles
+- company_size_range uses standard thresholds (narrow or wide based on buying behavior)
+- location precision based on available data (specific to general)
+
+Return ONLY valid JSON.
 """
     
+    def parse_response(self, response_text: str) -> Dict:
+        """
+        Parse and validate LLM response
+        """
+        try:
+            result = json.loads(response_text)
+            
+            if "personas" not in result:
+                raise ValueError("Response missing 'personas' key")
+            
+            personas = result["personas"]
+            
+            if not isinstance(personas, list) or len(personas) == 0:
+                raise ValueError("'personas' must be a non-empty array")
+            
+            for idx, persona in enumerate(personas):
+                self._validate_persona(persona, idx)
+            
+            logger.info(f"Successfully parsed {len(personas)} buyer personas")
+            return result
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON response: {e}")
+            raise ValueError(f"Invalid JSON response: {e}")
+    
+    def _validate_persona(self, persona: Dict, index: int):
+        """Validate individual persona structure"""
+        required_fields = [
+            "persona_name",
+            "tier", 
+            "target_decision_makers",
+            "industry",
+            "company_size_range",
+            "company_type",
+            "location",
+            "description"
+        ]
+        
+        for field in required_fields:
+            if field not in persona:
+                raise ValueError(f"Persona {index} missing required field: {field}")
+        
+        if persona["tier"] not in ["tier_1", "tier_2", "tier_3"]:
+            raise ValueError(f"Persona {index} has invalid tier: {persona['tier']}")
+        
+        if not isinstance(persona["target_decision_makers"], list):
+            raise ValueError(
+                f"Persona {index}: target_decision_makers must be an array, "
+                f"got {type(persona['target_decision_makers'])}"
+            )
+        
+        if len(persona["target_decision_makers"]) == 0:
+            raise ValueError(f"Persona {index}: target_decision_makers cannot be empty")
+        
+        for title in persona["target_decision_makers"]:
+            if not isinstance(title, str):
+                raise ValueError(
+                    f"Persona {index}: all titles must be strings, got {type(title)}"
+                )
+        
+        if len(persona["target_decision_makers"]) < 10:
+            logger.warning(
+                f"Persona {index} '{persona['persona_name']}' has only "
+                f"{len(persona['target_decision_makers'])} titles. "
+                f"Recommend 10-30+ for better matching coverage."
+            )
+        
+        if not persona["persona_name"] or len(persona["persona_name"]) < 10:
+            raise ValueError(f"Persona {index}: persona_name too short or empty")
+        
+        logger.debug(
+            f"Persona {index} validated: '{persona['persona_name']}' "
+            f"with {len(persona['target_decision_makers'])} titles"
+        )
+    
     def parse_response(self, response: str) -> Dict:
+        """
+        Parse and validate LLM response for buyer persona generation.
+        """
         try:
             logger.debug(f"RAW LLM RESPONSE: {response[:2000]}")
             
-            # Clean response content, remove markdown code block markers
+            # Clean markdown code block markers
             cleaned_response = response.strip()
             
-            # Remove ```json and ``` markers
             if cleaned_response.startswith('```json'):
-                cleaned_response = cleaned_response[7:]  # Remove ```json
+                cleaned_response = cleaned_response[7:]
             elif cleaned_response.startswith('```'):
-                cleaned_response = cleaned_response[3:]   # Remove ```
+                cleaned_response = cleaned_response[3:]
             
             if cleaned_response.endswith('```'):
-                cleaned_response = cleaned_response[:-3]  # Remove trailing ```
+                cleaned_response = cleaned_response[:-3]
             
             cleaned_response = cleaned_response.strip()
             
-            # Try to parse JSON
+            # Parse JSON
             data = json.loads(cleaned_response)
             
-            # Validate and clean the data
-            personas = data.get("personas", [])
-            for i, persona in enumerate(personas):
-                logger.debug(f"BEFORE processing persona {i}: {persona}")
-                
-                # Ensure required fields
-                if "name" not in persona:
-                    persona["name"] = persona.get("job_title", f"Persona {i+1}")
-                
-                # Ensure tier is valid
-                if persona.get("tier") not in ["tier_1", "tier_2", "tier_3"]:
-                    persona["tier"] = "tier_3"
-                
-                # Only ensure pain_points and goals are lists, NOT communication_preferences
-                for field in ["pain_points", "goals"]:
-                    if field not in persona or not isinstance(persona[field], list):
-                        persona[field] = []
-                
-                # Handle communication_preferences separately - preserve structure
-                if "communication_preferences" not in persona:
-                    persona["communication_preferences"] = {
-                        "channels": [],
-                        "content_format": [],
-                        "meeting_style": [],
-                        "response_time": "2-3 business days"
-                    }
-                elif isinstance(persona["communication_preferences"], list):
-                    # Convert old list format to new structure
-                    persona["communication_preferences"] = {
-                        "channels": [],
-                        "content_format": persona["communication_preferences"],
-                        "meeting_style": [],
-                        "response_time": "2-3 business days"
-                    }
-                
-                logger.debug(f"AFTER processing persona {i}: {persona}")
+            # Validate structure
+            if "personas" not in data:
+                raise ValueError("Response missing 'personas' key")
             
+            personas = data["personas"]
+            
+            if not isinstance(personas, list) or len(personas) == 0:
+                raise ValueError("'personas' must be a non-empty array")
+            
+            # Validate each persona
+            for i, persona in enumerate(personas):
+                logger.debug(f"Validating persona {i}: {persona.get('persona_name', 'Unknown')}")
+                
+                # Validate required fields
+                required_fields = [
+                    "persona_name", "tier", "target_decision_makers",
+                    "industry", "company_size_range", "company_type",
+                    "location", "description"
+                ]
+                
+                for field in required_fields:
+                    if field not in persona or persona[field] is None:
+                        raise ValueError(f"Persona {i} missing required field: {field}")
+                
+                # Validate tier
+                if persona["tier"] not in ["tier_1", "tier_2", "tier_3"]:
+                    raise ValueError(f"Persona {i} invalid tier: {persona['tier']}")
+                
+                # Validate target_decision_makers is array
+                if not isinstance(persona["target_decision_makers"], list):
+                    raise ValueError(f"Persona {i}: target_decision_makers must be an array, got {type(persona['target_decision_makers'])}")
+                
+                if len(persona["target_decision_makers"]) == 0:
+                    raise ValueError(f"Persona {i}: target_decision_makers array is empty")
+                
+                # Validate all titles are strings
+                for title in persona["target_decision_makers"]:
+                    if not isinstance(title, str):
+                        raise ValueError(f"Persona {i}: all titles must be strings, got {type(title)}")
+                
+                # Warning if too few titles
+                if len(persona["target_decision_makers"]) < 10:
+                    logger.warning(
+                        f"Persona {i} '{persona['persona_name']}' has only "
+                        f"{len(persona['target_decision_makers'])} titles. "
+                        f"Recommend 10-30+ for better matching coverage."
+                    )
+                
+                # Validate description length
+                if len(persona["description"]) < 50:
+                    logger.warning(f"Persona {i} description is very short: {len(persona['description'])} chars")
+                
+                logger.info(
+                    f"Persona {i} validated: '{persona['persona_name']}' "
+                    f"({persona['tier']}, {len(persona['target_decision_makers'])} titles)"
+                )
+            
+            logger.info(f"Successfully validated {len(personas)} buyer personas")
             return data
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse persona JSON: {e}")
             logger.error(f"Raw response: {response[:500]}...")
-            return {
-                "personas": [],
-                "tier_classification": {"tier_1": [], "tier_2": [], "tier_3": []},
-                "raw_response": response,
-                "parse_error": str(e)
-            }
+            raise ValueError(f"Invalid JSON response from LLM: {e}")
+        
+        except ValueError as e:
+            logger.error(f"Persona validation failed: {e}")
+            raise
+        
+        except Exception as e:
+            logger.error(f"Unexpected error parsing persona response: {e}")
+            raise ValueError(f"Failed to parse persona response: {e}")
