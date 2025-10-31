@@ -350,16 +350,6 @@ This script demonstrates both freeform and structured versions of the LLM web se
 - **API errors**: Ensure all API keys (Google CSE, Firecrawl, OpenAI) are valid
 - **Token limits**: Increase `max_completion_tokens` if personas are truncated
 
-**LLM Web Search Issues**:
-
-- **Missing official website**: The endpoint validates that official website is found. If it fails, check:
-  - Company name spelling
-  - OPENAI_API_KEY is valid
-  - OpenAI model supports web search (e.g., `gpt-4.1` or newer)
-- **Slow response**: LLM web search takes 15-45 seconds as it plans and executes multiple queries
-- **Service unavailable (503)**: LLM failed to find official website or validation failed
-- **Empty results**: Company might be too obscure or name is misspelled
-- **API quota exceeded**: Check OpenAI API usage at https://platform.openai.com/usage
 
 ## Project Structure
 
