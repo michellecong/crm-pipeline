@@ -112,7 +112,7 @@ async def search_web(request: LLMCompanyWebSearchRequest):
     
     Key features:
     - Guarantees official website is included
-    - Returns structured data with products, news, and case studies
+    - Returns structured data with official sources, news, and case studies
     - Validates all data with Pydantic schemas
     """
     try:
@@ -128,7 +128,6 @@ async def search_web(request: LLMCompanyWebSearchRequest):
         logger.info(
             f"LLM web search completed for {request.company_name}: "
             f"{len(result.official_website)} official URLs, "
-            f"{len(result.products)} products, "
             f"{len(result.news)} news items, "
             f"{len(result.case_studies)} case studies"
         )

@@ -11,7 +11,7 @@ class ScrapeRequest(BaseModel):
     company_name: str = Field(..., description="Target company name")
     include_news: bool = Field(default=True, description="Include news articles")
     include_case_studies: bool = Field(default=True, description="Include case studies")
-    max_urls: int = Field(default=10, description="Maximum URLs to scrape")
+    max_urls: int = Field(default=20, description="Maximum URLs to scrape")
     save_to_file: bool = Field(default=False, description="If True, save to file only (skip database)")
 
 
@@ -22,7 +22,7 @@ class ScrapedContent(BaseModel):
     markdown: str = Field(..., description="Content in markdown format")
     html: Optional[str] = None
     metadata: Dict = Field(default={})
-    content_type: str = Field(..., description="website, news, or case_study")
+    content_type: str = Field(..., description="website, product, news, or case_study")
     success: bool
     error: Optional[str] = None
     scraped_at: str

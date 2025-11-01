@@ -63,11 +63,6 @@ async def test_structured_search():
             print(f"  • {item.title or 'No title'}")
             print(f"    URL: {item.url}")
         
-        print(f"\nProducts ({len(result.products)} items):")
-        for item in result.products[:3]:  # Show first 3
-            print(f"  • {item.title or 'No title'}")
-            print(f"    URL: {item.url}")
-        
         print(f"\nNews ({len(result.news)} items):")
         for item in result.news[:3]:  # Show first 3
             print(f"  • {item.title or 'No title'}")

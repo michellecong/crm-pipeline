@@ -61,10 +61,13 @@ def _sync_company_web_search_freeform(company_name: str) -> str:
         "\n\n"
         "Plan strategic search queries and use web_search to collect URLs. "
         "Focus on finding:\n"
-        "- Official website and product pages (features, use cases, benefits)\n"
+        "- Official website\n"
         "- Customer case studies/success stories (reveals buyer personas & pain points)\n"
         "- Recent news/announcements (funding, product launches, partnerships)\n"
         "- Industry analyst reports or authoritative third-party reviews\n"
+        "\n"
+        "Lean on the official homepage for product context instead of separate product searches. "
+        "Highlight high-level sources that help understand the company's positioning and customer impact. "
         "\n"
         "Prefer high-authority sources. Include both official domain (with site: filter) "
         "and reputable third-party sources (Bloomberg, Reuters, WSJ, TechCrunch, industry publications). "
@@ -76,7 +79,6 @@ def _sync_company_web_search_freeform(company_name: str) -> str:
         '  "company": "string",\n'
         '  "queries_planned": ["string"],\n'
         '  "official_website": [{"url": "string", "title": "string"}],\n'
-        '  "products": [{"url": "string", "title": "string"}],\n'
         '  "news": [{"url": "string", "title": "string", "published_at": "optional"}],\n'
         '  "case_studies": [{"url": "string", "title": "string"}],\n'
         '  "collected_at": "ISO timestamp"\n'
@@ -96,14 +98,13 @@ def _sync_company_web_search_freeform(company_name: str) -> str:
         "\n"
         "Your task NOW: Plan and execute search queries to collect URLs. Specifically find:\n"
         "- **REQUIRED**: Official homepage (must be the first query)\n"
-        "- Official product/solution pages\n"
         "- Customer case studies, testimonials, success stories (look for quotes, metrics)\n"
         "- Recent news (last 12 months): funding, partnerships, product launches\n"
         "- Third-party reviews, analyst reports, or industry coverage\n"
         "\n"
         "Search strategy:\n"
         "- FIRST: Search for the company's official website\n"
-        "- Use site:{official_domain} for official content\n"
+        "- Use site:{official_domain} for official content that is not surfaced on the homepage\n"
         "- Use company name + keywords like 'case study', 'customer story', 'announces', 'review'\n"
         "- Target high-authority domains: reuters.com, bloomberg.com, wsj.com, ft.com, techcrunch.com, etc.\n"
         "\n"
@@ -156,7 +157,7 @@ def _sync_company_web_search_structured(company_name: str) -> LLMCompanyWebSearc
         
         logger.info(
             f"Successfully collected {len(response.official_website)} official URLs, "
-            f"{len(response.products)} product URLs, {len(response.news)} news items, "
+            f"{len(response.news)} news items, "
             f"{len(response.case_studies)} case studies for {company_name}"
         )
         
