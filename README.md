@@ -181,6 +181,18 @@ curl -X POST http://localhost:8000/api/v1/llm/mappings/generate \
     "company_name": "Salesforce"
   }'
 # Note: Requires personas to be generated first. Products and personas are auto-loaded.
+
+# Run full pipeline (products → personas → mappings)
+curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "max_products": 10,
+    "generate_count": 5,
+    "use_llm_search": true,
+    "provider": "perplexity"
+  }'
+# Response includes generated products, personas, personas_with_mappings, and optional artifact file paths.
 ```
 
 ## Search Options
@@ -376,6 +388,7 @@ Interactive docs: http://localhost:8000/docs
 | `/api/v1/llm/products/generate` | POST | Generate product catalog       |
 | `/api/v1/llm/persona/generate` | POST | Generate buyer personas        |
 | `/api/v1/llm/mappings/generate` | POST | Generate pain-point to value-prop mappings |
+| `/api/v1/llm/pipeline/generate` | POST   | Run full pipeline (products → personas → mappings) |
 | `/api/v1/llm/test`          | GET    | Test LLM connectivity          |
 | `/api/v1/llm/config`        | GET    | Get LLM configuration          |
 | `/api/v1/llm/config`        | PATCH  | Update LLM configuration       |
