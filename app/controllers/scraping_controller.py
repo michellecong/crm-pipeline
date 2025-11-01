@@ -8,10 +8,11 @@ from ..services.llm_web_search_service import llm_company_web_search_structured
 from ..services.firecrawl_service import scrape_urls_async
 from ..services.content_processor import get_content_processor
 from ..services.data_store import get_data_store
+from ..services.search_service import search_company_async
 from datetime import datetime
 import logging
 from ..services.text_cleaning import strip_links
-from ..schemas.search import LLMCompanyWebSearchResponse
+from ..schemas.search import LLMCompanyWebSearchResponse, LLMCompanyWebItem, LLMCompanyWebNewsItem
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,39 @@ class ScrapingController:
                 add_url(item.url, 'case_study')
 
         return urls_to_scrape, url_types
+    
+    def _adapt_basic_search_to_llm_response(
+        self,
+        company_name: str,
+        basic: dict
+    ) -> LLMCompanyWebSearchResponse:
+        """
+        Adapt non-LLM search result dict into LLMCompanyWebSearchResponse
+        so the rest of the pipeline can stay unchanged.
+        """
+        official = basic.get("official_website") if isinstance(basic, dict) else None
+        news_items = (basic.get("news_articles") or []) if isinstance(basic, dict) else []
+        case_items = (basic.get("case_studies") or []) if isinstance(basic, dict) else []
+        collected_at = basic.get("search_timestamp") if isinstance(basic, dict) else None
+
+        return LLMCompanyWebSearchResponse(
+            company=company_name,
+            queries_planned=[],
+            official_website=[LLMCompanyWebItem(url=official)] if official else [],
+            news=[
+                LLMCompanyWebNewsItem(
+                    url=item.get("url", ""),
+                    title=item.get("title")
+                ) for item in news_items if item.get("url")
+            ],
+            case_studies=[
+                LLMCompanyWebItem(
+                    url=item.get("url", ""),
+                    title=item.get("title")
+                ) for item in case_items if item.get("url")
+            ],
+            collected_at=collected_at
+        )
     
     def _format_scraped_content(
         self, 
@@ -232,7 +266,9 @@ class ScrapingController:
         include_case_studies: bool = True,
         max_urls: int = 15,
         save_to_file: bool = False,
-        db: Optional[Session] = None
+        db: Optional[Session] = None,
+        use_llm_search: bool = True,
+        provider: str = "google"
     ) -> Dict:
         """
         Main business logic for scraping company data
@@ -252,14 +288,23 @@ class ScrapingController:
         
         # Step 1: Search for company information
         logger.info(f"Step 1/3: Searching for {company_name}...")
-        search_results = await llm_company_web_search_structured(
-            company_name=company_name
-        )
-        if search_results.queries_planned:
-            logger.info(
-                "LLM planned search queries: %s",
-                " | ".join(search_results.queries_planned)
+        if use_llm_search:
+            search_results = await llm_company_web_search_structured(
+                company_name=company_name
             )
+            if search_results.queries_planned:
+                logger.info(
+                    "LLM planned search queries: %s",
+                    " | ".join(search_results.queries_planned)
+                )
+        else:
+            basic_results = await search_company_async(
+                company_name=company_name,
+                include_news=include_news,
+                include_case_studies=include_case_studies,
+                provider=provider
+            )
+            search_results = self._adapt_basic_search_to_llm_response(company_name, basic_results)
         
         # Collect URLs to scrape
         urls_to_scrape, url_types = self._prepare_urls_for_scraping(
