@@ -4,6 +4,7 @@ from .routers.search import router as search_router
 from .routers.scraping import router as scraping_router
 from .routers.pdf import router as pdf_router
 from .routers.llm import router as llm_router
+from .routers.crm import router as crm_router
 from datetime import datetime
 import uvicorn
 from sqlalchemy.orm import Session
@@ -29,6 +30,7 @@ app.include_router(search_router, prefix="/api/v1", tags=["Search"])
 app.include_router(scraping_router, prefix="/api/v1", tags=["Data Scraping"])
 app.include_router(pdf_router, prefix="/api/v1", tags=["PDF Processing"])
 app.include_router(llm_router, prefix="/api/v1", tags=["LLM Service"])
+app.include_router(crm_router, prefix="/api/v1", tags=["CRM Service"])
 
 
 @app.on_event("startup")

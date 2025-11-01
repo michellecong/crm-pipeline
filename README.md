@@ -9,21 +9,18 @@ Data collection API for scraping company information from the web.
 Before installing dependencies, create and activate a virtual environment:
 
 **Mac/Linux:**
-
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
 **Windows (PowerShell):**
-
 ```powershell
 python -m venv venv
 venv\Scripts\activate
 ```
 
 ### 2. Install Dependencies
-
 ```bash
 pip3 install -r requirements.txt
 ```
@@ -31,7 +28,6 @@ pip3 install -r requirements.txt
 ### 3. Configure API Keys
 
 Create a `.env` file:
-
 ```bash
 # Google Custom Search (used for web search)
 GOOGLE_CSE_API_KEY=your_google_api_key
@@ -59,13 +55,11 @@ PERPLEXITY_API_KEY=your_perplexity_key_here
 - Perplexity: [perplexity.ai](https://www.perplexity.ai)
 
 ### 4. Run Server
-
 ```bash
 python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### 5. Use API
-
 ```bash
 # Search company (Google - default provider)
 curl -X POST http://localhost:8000/api/v1/search/company \
@@ -106,6 +100,33 @@ curl -X POST http://localhost:8000/api/v1/search/web \
   }'
 # Note: Uses OpenAI's LLM to intelligently plan and execute searches,
 # returning structured JSON with official website, products, news, and case studies.
+
+# Upload and parse CRM CSV file
+curl -X POST http://localhost:8000/api/v1/crm/parse \
+  -F "file=@/path/to/your/crm_export.csv"
+
+# Response format:
+# {
+#   "success": true,
+#   "data": {
+#     "full_content": "company_name  company_industry  deal_amount...",
+#     "summary": {
+#       "total_rows": 150,
+#       "total_columns": 28,
+#       "columns": ["company_name", "company_industry", ...],
+#       "preview": [...],
+#       "industry_distribution": {"Technology": 45, "Finance": 30, ...},
+#       "location_distribution": {"United States": 60, "Canada": 40, ...},
+#       "deal_amount_stats": {
+#         "mean": 65432.10,
+#         "median": 58000.00,
+#         "min": 25000.00,
+#         "max": 150000.00,
+#         "count": 150
+#       }
+#     }
+#   }
+# }
 
 # Generate product catalog from company data
 curl -X POST http://localhost:8000/api/v1/llm/products/generate \
@@ -176,6 +197,138 @@ The system provides multiple search methods:
 - **Output**: Structured JSON with guaranteed official website, products, news, and case studies
 - **Best for**: Complex research requiring intelligent query planning and data synthesis
 
+## CRM Data Upload & Analysis
+
+Upload and analyze CRM CSV files to extract customer insights for persona generation.
+
+### **Features**
+- Parse CSV files (max 20MB)
+- Automatic column detection (industry, location, job titles, deal stages, etc.)
+- Statistical analysis for numeric fields (deal amounts, company sizes)
+- Distribution analysis for categorical fields
+- Handles various CRM export formats (Salesforce, HubSpot, Pipedrive, etc.)
+
+### **Supported Column Types**
+The system automatically detects and analyzes:
+- **Industry/Sector**: Company industries and verticals
+- **Location**: Countries, regions, cities
+- **Job Titles/Functions**: Contact roles and positions
+- **Departments**: Sales, Marketing, IT, Operations, etc.
+- **Deal Stages**: Pipeline stages and statuses
+- **Deal Amounts**: Revenue, deal values (with statistics)
+- **Company Size**: Employee counts (with statistics)
+
+### **Example Usage**
+
+#### Upload CRM File
+```bash
+curl -X POST http://localhost:8000/api/v1/crm/parse \
+  -F "file=@salesforce_export.csv"
+```
+
+#### Example Response
+```json
+{
+  "success": true,
+  "data": {
+    "full_content": "company_name  company_industry  company_country...",
+    "summary": {
+      "total_rows": 300,
+      "total_columns": 28,
+      "columns": [
+        "company_name",
+        "company_industry",
+        "company_country",
+        "company_size",
+        "contact_function",
+        "deal_stage",
+        "deal_amount"
+      ],
+      "preview": [
+        {
+          "company_name": "Acme Corp",
+          "company_industry": "Technology",
+          "company_country": "United States",
+          "deal_amount": 50000
+        }
+      ],
+      "industry_distribution": {
+        "Technology": 120,
+        "Finance": 90,
+        "Healthcare": 60,
+        "Real Estate": 30
+      },
+      "location_distribution": {
+        "United States": 150,
+        "Canada": 80,
+        "United Kingdom": 70
+      },
+      "job_title_distribution": {
+        "VP of Sales": 45,
+        "Director of Marketing": 38,
+        "CTO": 30
+      },
+      "deal_stage_distribution": {
+        "Qualified To Buy": 82,
+        "Decision Maker Brought-In": 80,
+        "Presentation Scheduled": 73,
+        "Appointment Scheduled": 65
+      },
+      "deal_amount_stats": {
+        "mean": 65432.10,
+        "median": 58000.00,
+        "min": 25000.00,
+        "max": 150000.00,
+        "count": 300
+      },
+      "company_size_stats": {
+        "mean": 487.50,
+        "median": 420.00,
+        "min": 150.00,
+        "max": 920.00,
+        "count": 300
+      }
+    }
+  }
+}
+```
+
+### **File Requirements**
+- **Format**: CSV only
+- **Max Size**: 20MB
+- **Encoding**: UTF-8 (recommended)
+- **Headers**: First row should contain column names
+
+### **Common CRM Export Formats**
+
+The system automatically recognizes columns from:
+
+**Salesforce:**
+```csv
+Account Name,Industry,Employee Count,BillingCountry,Deal Amount,Stage
+```
+
+**HubSpot:**
+```csv
+Company,Company Industry,Number of Employees,Country,Deal Value,Deal Stage
+```
+
+**Pipedrive:**
+```csv
+Organization Name,Industry Sector,Size,Location,Value,Status
+```
+
+**Generic Format:**
+```csv
+company_name,company_industry,company_country,company_size,deal_amount,deal_stage
+```
+
+### **Use Cases**
+1. **Persona Generation**: Analyze actual customer data to create evidence-based buyer personas
+2. **Market Analysis**: Understand geographic distribution and industry concentration
+3. **Sales Intelligence**: Identify patterns in deal sizes, stages, and buyer titles
+4. **Segmentation**: Group customers by industry, size, or location
+
 ## Auto-Loading Features
 
 The system automatically loads previously generated data to streamline the workflow:
@@ -214,6 +367,7 @@ Interactive docs: http://localhost:8000/docs
 | `/api/v1/scrape/company` | POST   | Search and scrape content                      |
 | `/api/v1/scrape/saved`   | GET    | List saved data                                |
 | `/api/v1/pdf/process/`   | POST   | Process PDF and chunk text                     |
+| `/api/v1/crm/parse`      | POST   | Upload and parse CRM CSV file                  |
 
 ### LLM Service
 | Endpoint                     | Method | Description                    |
@@ -232,6 +386,15 @@ Scraped data is saved to `data/scraped/` as JSON files when `save_to_file: true`
 
 ## Testing
 
+### Test CRM Service
+```bash
+# Run CRM service tests
+pytest tests/test_crm_service.py -v
+
+# Run with coverage
+pytest tests/test_crm_service.py --cov=services.crm_service --cov-report=html
+```
+
 ### Test LLM Service (Mock - No API Key Required)
 ```bash
 python -m pytest tests/test_llm_mock.py -v
@@ -245,6 +408,30 @@ python tests/test_llm_connection.py
 ### Test All Services
 ```bash
 python -m pytest tests/ -v
+```
+
+### Test CRM Upload
+
+#### Basic CRM Upload
+```bash
+# Upload a CRM CSV file
+curl -X POST http://localhost:8000/api/v1/crm/parse \
+  -F "file=@tests/fixtures/mock_crm_data.csv"
+```
+
+#### Test with Different Files
+```bash
+# Test with Salesforce export
+curl -X POST http://localhost:8000/api/v1/crm/parse \
+  -F "file=@salesforce_export.csv"
+
+# Test with HubSpot export
+curl -X POST http://localhost:8000/api/v1/crm/parse \
+  -F "file=@hubspot_contacts.csv"
+
+# Test with Pipedrive export
+curl -X POST http://localhost:8000/api/v1/crm/parse \
+  -F "file=@pipedrive_deals.csv"
 ```
 
 ### Test Persona Generation
@@ -385,7 +572,6 @@ curl -X POST http://localhost:8000/api/v1/search/web \
 ## Troubleshooting
 
 **SSL Certificate Error (macOS)**:
-
 ```bash
 /Applications/Python\ 3.12/Install\ Certificates.command
 ```
@@ -401,6 +587,14 @@ curl -X POST http://localhost:8000/api/v1/search/web \
 - Test with: `GET /api/v1/llm/test`
 - Check API quota at https://platform.openai.com/usage
 
+**CRM Upload Issues**:
+
+- **File too large**: Maximum file size is 20MB. Filter your CRM export to include only recent data or essential columns
+- **Invalid format**: Only CSV files are supported. Export from CRM as CSV
+- **Empty results**: Check that CSV has proper headers and data rows
+- **Column not detected**: Ensure column names contain keywords like "industry", "country", "amount", etc.
+- **Special characters**: Use UTF-8 encoding when exporting from your CRM
+
 **Persona Generation Issues**:
 
 - **No scraped data**: The endpoint will automatically scrape company data if none exists
@@ -409,9 +603,7 @@ curl -X POST http://localhost:8000/api/v1/search/web \
 - **API errors**: Ensure all API keys (Google CSE, Firecrawl, OpenAI) are valid
 - **Token limits**: Increase `max_completion_tokens` if personas are truncated
 
-
 ## Project Structure
-
 ```
 crm-pipeline/
 ├── app/
@@ -419,18 +611,25 @@ crm-pipeline/
 │   ├── routers/                     # API endpoints
 │   │   ├── search.py               # Search & LLM web search endpoints
 │   │   ├── scraping.py             # Web scraping endpoints
-│   │   └── llm.py                  # LLM & persona generation endpoints
+│   │   ├── llm.py                  # LLM & persona generation endpoints
+│   │   └── crm_routes.py           # CRM upload & parsing endpoints
 │   ├── services/                    # Business logic
 │   │   ├── llm_web_search_service.py  # LLM-powered web search
 │   │   ├── search_service.py       # Traditional search (Google/Perplexity)
 │   │   ├── llm_service.py          # LLM text generation
-│   │   └── generator_service.py    # Persona generation
+│   │   ├── generator_service.py    # Persona generation
+│   │   └── crm_service.py          # CRM file parsing & analysis
 │   └── schemas/                     # Data models
-│       └── search.py               # Search & LLM web search schemas
+│       ├── search.py               # Search & LLM web search schemas
+│       └── crm_schemas.py          # CRM data schemas
 ├── data/
 │   ├── scraped/                     # Saved scraped data
 │   └── generated/                   # Generated personas
 ├── tests/                           # Tests
+│   ├── fixtures/
+│   │   └── mock_crm_data.csv       # Sample CRM data for testing
+│   ├── test_crm_service.py         # CRM service tests
+│   └── test_llm_mock.py            # LLM mock tests
 ├── test_llm_web_search.py          # LLM web search test script
 ├── requirements.txt                 # Dependencies
 └── .env                             # API keys (create this)
@@ -440,3 +639,4 @@ crm-pipeline/
 
 - Smart Proxy: ~$0.01/10 searches
 - Firecrawl: ~10 credits/10 URLs (500 free/month)
+- OpenAI API: Variable based on usage (see https://openai.com/pricing)
