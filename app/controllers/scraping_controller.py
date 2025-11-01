@@ -262,9 +262,9 @@ class ScrapingController:
     async def scrape_company(
         self,
         company_name: str,
+        max_urls: int = 10,
         include_news: bool = True,
         include_case_studies: bool = True,
-        max_urls: int = 15,
         save_to_file: bool = False,
         db: Optional[Session] = None,
         use_llm_search: bool = True,

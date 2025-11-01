@@ -370,7 +370,7 @@ Extracted key information:""")
             response = await self.llm_service.generate_async(
                 prompt=prompt,
                 system_message=system_message,
-                max_completion_tokens=4000,
+                max_completion_tokens=15000,
                 temperature=1
             )
             
