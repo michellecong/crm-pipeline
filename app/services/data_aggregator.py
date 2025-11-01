@@ -19,7 +19,7 @@ class DataAggregator:
     async def prepare_context(self, company_name: str, max_chars: int = 15000,
                              include_news: bool = True,
                              include_case_studies: bool = True,
-                             max_urls: int = 15,
+                             max_urls: int = 10,
                              use_llm_search: bool = False,
                              provider: str = "google") -> str:
         """Prepare context from pre-processed scraped data (cleaned and LLM-processed)"""

@@ -21,6 +21,10 @@ from ..schemas.mapping_schemas import (
     MappingGenerationResponse,
     PersonaWithMappings
 )
+from ..schemas.pipeline_schemas import (
+    PipelineGenerateRequest,
+    PipelineGenerateResponse
+)
 from ..services.llm_service import get_llm_service
 from ..services.generator_service import get_generator_service
 import logging
@@ -335,4 +339,90 @@ async def generate_mappings(request: MappingGenerateRequest):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Mapping generation failed: {str(e)}", exc_info=True)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@router.post(
+    "/llm/pipeline/generate",
+    response_model=PipelineGenerateResponse,
+    summary="Run full pipeline: products → personas → pain-point mappings",
+    description="Generate product catalog from scraped content, then personas using products + content, and finally pain-point mappings using personas."
+)
+async def generate_full_pipeline(request: PipelineGenerateRequest):
+    """
+    Pipeline:
+    1) Generate products from scraped content.
+    2) Generate personas using products + scraped content.
+    3) Generate pain-point mappings using personas (+ products).
+    """
+    try:
+        logger.info(f"[Pipeline] Starting for company: {request.company_name}")
+        generator_service = get_generator_service()
+
+        # Common search kwargs passed through to DataAggregator
+        extra_search_kwargs = {
+            "use_llm_search": getattr(request, "use_llm_search", None),
+            "provider": getattr(request, "provider", None)
+        }
+        extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+
+        # Step 1: Products
+        products_result = await generator_service.generate(
+            generator_type="products",
+            company_name=request.company_name,
+            max_products=request.max_products,
+            **extra_search_kwargs
+        )
+        if not products_result.get("success"):
+            raise ValueError("Product generation failed")
+        products_data = products_result["result"].get("products", [])
+        logger.info(f"[Pipeline] Products generated: {len(products_data)}")
+
+        # Step 2: Personas (explicitly pass products from step 1)
+        personas_result = await generator_service.generate(
+            generator_type="personas",
+            company_name=request.company_name,
+            products=products_data,
+            generate_count=request.generate_count,
+            **extra_search_kwargs
+        )
+        if not personas_result.get("success"):
+            raise ValueError("Persona generation failed")
+        personas_data = personas_result["result"].get("personas", [])
+        logger.info(f"[Pipeline] Personas generated: {len(personas_data)}")
+
+        # Step 3: Mappings (explicitly pass personas + products from earlier steps)
+        mappings_result = await generator_service.generate(
+            generator_type="mappings",
+            company_name=request.company_name,
+            products=products_data,
+            personas=personas_data,
+            **extra_search_kwargs
+        )
+        if not mappings_result.get("success"):
+            raise ValueError("Mapping generation failed")
+        mappings_data = mappings_result["result"].get("personas_with_mappings", [])
+        logger.info(
+            f"[Pipeline] Mappings generated for {len(mappings_data)} personas "
+            f"with {sum(len(p.get('mappings', [])) for p in mappings_data)} total mappings"
+        )
+
+        # Build typed response
+        from ..schemas.pipeline_schemas import PipelineArtifacts
+        response = PipelineGenerateResponse(
+            products=[Product(**p) for p in products_data],
+            personas=[BuyerPersona(**p) for p in personas_data],
+            personas_with_mappings=[PersonaWithMappings(**pm) for pm in mappings_data],
+            artifacts=PipelineArtifacts(
+                products_file=products_result.get("saved_filepath"),
+                personas_file=personas_result.get("saved_filepath"),
+                mappings_file=mappings_result.get("saved_filepath"),
+            ),
+        )
+        return response
+
+    except ValueError as e:
+        logger.error(f"[Pipeline] Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"[Pipeline] Failed: {str(e)}", exc_info=True)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

@@ -1,0 +1,28 @@
+from pydantic import BaseModel, Field
+from typing import List, Optional, Literal
+from .product_schemas import Product
+from .persona_schemas import BuyerPersona
+from .mapping_schemas import PersonaWithMappings
+
+
+class PipelineGenerateRequest(BaseModel):
+    company_name: str = Field(..., description="Company name to analyze", min_length=2)
+    max_products: int = Field(default=10, ge=3, le=15, description="Max products to extract")
+    generate_count: int = Field(default=5, ge=3, le=12, description="Number of personas to generate")
+    use_llm_search: Optional[bool] = Field(default=None, description="Use LLM-planned web search")
+    provider: Optional[Literal["google", "perplexity"]] = Field(default=None, description="Search provider")
+
+
+class PipelineArtifacts(BaseModel):
+    products_file: Optional[str] = None
+    personas_file: Optional[str] = None
+    mappings_file: Optional[str] = None
+
+
+class PipelineGenerateResponse(BaseModel):
+    products: List[Product]
+    personas: List[BuyerPersona]
+    personas_with_mappings: List[PersonaWithMappings]
+    artifacts: Optional[PipelineArtifacts] = None
+
+
