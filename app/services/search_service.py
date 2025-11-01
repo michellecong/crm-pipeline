@@ -94,9 +94,10 @@ class AsyncCompanySearchService:
         keywords = [
             f"{name} latest news",
         ]
-        # Exclude official domain from all queries to prioritize third-party sources
-        if official_domain:
-            keywords = [f"{kw} -site:{official_domain}" for kw in keywords]
+        # Previously excluded official domain to prioritize third-party sources.
+        # Commented out to include official site results in searches.
+        # if official_domain:
+        #     keywords = [f"{kw} -site:{official_domain}" for kw in keywords]
         results = await self._concurrent_keyword_search(keywords, settings.MAX_NEWS_RESULTS, per_domain_cap=1, provider=provider)
         return results
 
@@ -106,9 +107,10 @@ class AsyncCompanySearchService:
             f"{name} case study",
             f"{name} customer success story",
         ]
-        # Exclude official domain from all queries to prioritize third-party sources
-        if official_domain:
-            keywords = [f"{kw} -site:{official_domain}" for kw in keywords]
+        # Previously excluded official domain to prioritize third-party sources.
+        # Commented out to include official site results in searches.
+        # if official_domain:
+        #     keywords = [f"{kw} -site:{official_domain}" for kw in keywords]
         results = await self._concurrent_keyword_search(keywords, settings.MAX_CASE_STUDY_RESULTS, per_domain_cap=1, provider=provider)
         return results
 
