@@ -19,7 +19,9 @@ class DataAggregator:
     async def prepare_context(self, company_name: str, max_chars: int = 15000,
                              include_news: bool = True,
                              include_case_studies: bool = True,
-                             max_urls: int = 8) -> str:
+                             max_urls: int = 15,
+                             use_llm_search: bool = False,
+                             provider: str = "google") -> str:
         """Prepare context from pre-processed scraped data (cleaned and LLM-processed)"""
         # Load scraped data
         scraped_data = self.data_store.load_latest_scraped_data(company_name)
@@ -34,7 +36,9 @@ class DataAggregator:
                 include_news=include_news,
                 include_case_studies=include_case_studies,
                 max_urls=max_urls,
-                save_to_file=True
+                save_to_file=True,
+                use_llm_search=use_llm_search,
+                provider=provider
             )
         
         if not scraped_data:

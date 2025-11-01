@@ -159,6 +159,12 @@ async def generate_buyer_personas(request: PersonaGenerateRequest):
         generator_kwargs = {
             "generate_count": request.generate_count
         }
+        # Optional search controls
+        extra_search_kwargs = {
+            "use_llm_search": getattr(request, "use_llm_search", None),
+            "provider": getattr(request, "provider", None)
+        }
+        generator_kwargs.update({k: v for k, v in extra_search_kwargs.items() if v is not None})
         
         # Add products if provided
         if request.products:
@@ -223,10 +229,16 @@ async def generate_products(request: ProductGenerateRequest):
         generator_service = get_generator_service()
         
         # Generate products using the generator service
+        extra_search_kwargs = {
+            "use_llm_search": getattr(request, "use_llm_search", None),
+            "provider": getattr(request, "provider", None)
+        }
+        generator_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
         result = await generator_service.generate(
             generator_type="products",
             company_name=request.company_name,
-            max_products=request.max_products
+            max_products=request.max_products,
+            **generator_kwargs
         )
         
         if not result.get("success"):
@@ -286,9 +298,15 @@ async def generate_mappings(request: MappingGenerateRequest):
         generator_service = get_generator_service()
         
         # Generate mappings (auto-loads products + personas)
+        extra_search_kwargs = {
+            "use_llm_search": getattr(request, "use_llm_search", None),
+            "provider": getattr(request, "provider", None)
+        }
+        generator_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
         result = await generator_service.generate(
             generator_type="mappings",
-            company_name=request.company_name
+            company_name=request.company_name,
+            **generator_kwargs
         )
         
         if not result.get("success"):

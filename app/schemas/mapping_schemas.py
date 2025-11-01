@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import List
+from typing import List, Optional, Literal
 
 
 class PainPointMapping(BaseModel):
@@ -117,6 +117,15 @@ class MappingGenerateRequest(BaseModel):
         ...,
         description="Company name to generate mappings for",
         min_length=2
+    )
+    # Optional search behavior controls (used to collect web content when needed)
+    use_llm_search: Optional[bool] = Field(
+        default=None,
+        description="Use LLM-planned web search; if False, use selected provider. If omitted, system default is used."
+    )
+    provider: Optional[Literal["google", "perplexity"]] = Field(
+        default=None,
+        description="Search provider when not using LLM search"
     )
     
     class Config:
