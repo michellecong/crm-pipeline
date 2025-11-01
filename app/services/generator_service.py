@@ -71,7 +71,9 @@ class GeneratorService:
             kwargs.get('max_context_chars', 15000),
             kwargs.get('include_news', True),
             kwargs.get('include_case_studies', True),
-            kwargs.get('max_urls', 8)
+            kwargs.get('max_urls', 15),
+            kwargs.get('use_llm_search', False),
+            kwargs.get('provider', 'google')
         )
         
         logger.info(f"Prepared context length: {len(context)} chars for {company_name}")

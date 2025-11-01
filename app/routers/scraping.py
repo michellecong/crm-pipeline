@@ -29,7 +29,9 @@ async def scrape_company_data(request: ScrapeRequest, db: Session = Depends(get_
             include_case_studies=request.include_case_studies,
             max_urls=request.max_urls,
             save_to_file=request.save_to_file,
-            db=db
+            db=db,
+            use_llm_search=request.use_llm_search,
+            provider=request.provider
         )
         return ScrapeResponse(**result)
     

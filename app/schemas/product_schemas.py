@@ -3,7 +3,7 @@
 Pydantic schemas for product catalog generation
 """
 from pydantic import BaseModel, Field, field_validator
-from typing import List
+from typing import List, Optional, Literal
 
 class Product(BaseModel):
     """Individual product/service offering"""
@@ -92,6 +92,15 @@ class ProductGenerateRequest(BaseModel):
         ge=3,
         le=15,
         description="Maximum number of products to extract (3-15)"
+    )
+    # Optional search behavior controls (used to collect web content when needed)
+    use_llm_search: Optional[bool] = Field(
+        default=None,
+        description="Use LLM-planned web search; if False, use selected provider. If omitted, system default is used."
+    )
+    provider: Optional[Literal["google", "perplexity"]] = Field(
+        default=None,
+        description="Search provider when not using LLM search"
     )
     
     class Config:

@@ -3,7 +3,7 @@
 Pydantic schemas for scraping operations
 """
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Literal
 
 
 class ScrapeRequest(BaseModel):
@@ -11,8 +11,10 @@ class ScrapeRequest(BaseModel):
     company_name: str = Field(..., description="Target company name")
     include_news: bool = Field(default=True, description="Include news articles")
     include_case_studies: bool = Field(default=True, description="Include case studies")
-    max_urls: int = Field(default=20, description="Maximum URLs to scrape")
+    max_urls: int = Field(default=10, description="Maximum URLs to scrape")
     save_to_file: bool = Field(default=False, description="If True, save to file only (skip database)")
+    use_llm_search: bool = Field(default=True, description="Use LLM-planned web search; if False, use standard provider search")
+    provider: Literal["google", "perplexity"] = Field(default="google", description="Search provider when not using LLM")
 
 
 class ScrapedContent(BaseModel):
