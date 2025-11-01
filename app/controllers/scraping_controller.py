@@ -44,9 +44,6 @@ class ScrapingController:
         for item in search_results.official_website:
             add_url(item.url, 'website')
 
-        for item in search_results.products:
-            add_url(item.url, 'product')
-
         if include_news:
             for item in search_results.news:
                 add_url(item.url, 'news')
@@ -199,17 +196,14 @@ class ScrapingController:
             "official_website": official_url,
             "news_count": len(search_results.news),
             "case_studies_count": len(search_results.case_studies),
-            "product_count": len(search_results.products),
             "total_search_results": (
                 len(search_results.official_website)
-                + len(search_results.products)
                 + len(search_results.news)
                 + len(search_results.case_studies)
             ),
             "queries_planned": search_results.queries_planned,
             "collected_at": search_results.collected_at,
             "official_website_entries": [item.model_dump() for item in search_results.official_website],
-            "product_entries": [item.model_dump() for item in search_results.products],
             "news_entries": [item.model_dump() for item in search_results.news],
             "case_study_entries": [item.model_dump() for item in search_results.case_studies],
         }
@@ -261,6 +255,11 @@ class ScrapingController:
         search_results = await llm_company_web_search_structured(
             company_name=company_name
         )
+        if search_results.queries_planned:
+            logger.info(
+                "LLM planned search queries: %s",
+                " | ".join(search_results.queries_planned)
+            )
         
         # Collect URLs to scrape
         urls_to_scrape, url_types = self._prepare_urls_for_scraping(

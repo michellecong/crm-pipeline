@@ -60,7 +60,6 @@ class LLMCompanyWebSearchResponse(BaseModel):
     company: str
     queries_planned: List[str] = []
     official_website: List[LLMCompanyWebItem] = []
-    products: List[LLMCompanyWebItem] = []
     news: List[LLMCompanyWebNewsItem] = []
     case_studies: List[LLMCompanyWebItem] = []
     collected_at: Optional[str] = None
