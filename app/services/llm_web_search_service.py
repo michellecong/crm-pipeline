@@ -47,6 +47,41 @@ def _create_client(api_key: Optional[str]) -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
+def _log_token_usage(response, company_name: str, model: str) -> None:
+    """Log token usage from Responses API in a robust way."""
+    try:
+        usage = getattr(response, "usage", None)
+        if usage is None and hasattr(response, "to_dict"):
+            try:
+                usage = response.to_dict().get("usage")
+            except Exception:
+                usage = None
+
+        def _get(obj, key, default=None):
+            if obj is None:
+                return default
+            return obj.get(key, default) if isinstance(obj, dict) else getattr(obj, key, default)
+
+        total = _get(usage, "total_tokens") or _get(usage, "total")
+        input_tokens = _get(usage, "input_tokens") or _get(usage, "prompt_tokens")
+        output_tokens = _get(usage, "output_tokens") or _get(usage, "completion_tokens")
+
+        input_details = _get(usage, "input_token_details")
+        cache_creation = _get(input_details, "cache_creation")
+        cache_read = _get(input_details, "cache_read")
+
+        request_id = getattr(response, "id", None) or getattr(response, "response_id", None)
+
+        logger.info(
+            f"[LLM usage] company={company_name} model={model} request_id={request_id} "
+            f"total={total} input={input_tokens} output={output_tokens} "
+            f"cache_creation={cache_creation} cache_read={cache_read}"
+        )
+        logger.debug(f"[LLM usage raw] {usage}")
+    except Exception as e:
+        logger.debug(f"Token usage logging failed: {e}")
+
+
  
 
 
@@ -70,7 +105,6 @@ def _sync_company_web_search_freeform(company_name: str) -> str:
         "Highlight high-level sources that help understand the company's positioning and customer impact. "
         "\n"
         "Prefer high-authority sources. Include both official domain (with site: filter) "
-        "and reputable third-party sources (Bloomberg, Reuters, WSJ, TechCrunch, industry publications). "
         "\n\n"
         "**CRITICAL REQUIREMENTS:**\n"
         "1. You MUST find and include the official website URL\n"
@@ -106,7 +140,6 @@ def _sync_company_web_search_freeform(company_name: str) -> str:
         "- FIRST: Search for the company's official website\n"
         "- Use site:{official_domain} for official content that is not surfaced on the homepage\n"
         "- Use company name + keywords like 'case study', 'customer story', 'announces', 'review'\n"
-        "- Target high-authority domains: reuters.com, bloomberg.com, wsj.com, ft.com, techcrunch.com, etc.\n"
         "\n"
         "Return: Valid JSON with deduplicated URLs and descriptive titles. "
         "Avoid social media unless it's official press/case content.\n"
@@ -122,7 +155,7 @@ def _sync_company_web_search_freeform(company_name: str) -> str:
         ],
         tools=[{"type": "web_search"}]
     )
-
+    _log_token_usage(response, company_name, model)
     text = _extract_output_text(response)
     return text or ""
 
