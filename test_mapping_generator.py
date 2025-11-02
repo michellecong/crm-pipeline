@@ -35,7 +35,7 @@ def test_full_workflow():
     try:
         products_response = requests.post(
             f"{API_BASE}/llm/products/generate",
-            json={"company_name": COMPANY_NAME, "max_products": 5},
+            json={"company_name": COMPANY_NAME},
             timeout=120
         )
         products_response.raise_for_status()

@@ -132,8 +132,7 @@ curl -X POST http://localhost:8000/api/v1/crm/parse \
 curl -X POST http://localhost:8000/api/v1/llm/products/generate \
   -H "Content-Type: application/json" \
   -d '{
-    "company_name": "Salesforce",
-    "max_products": 10
+    "company_name": "Salesforce"
   }'
 
 # Response format:
@@ -196,7 +195,6 @@ curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
   -H "Content-Type: application/json" \
   -d '{
     "company_name": "Salesforce",
-    "max_products": 10,
     "generate_count": 5,
     "use_llm_search": true,
     "provider": "perplexity"
@@ -530,7 +528,6 @@ curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
   -H "Content-Type: application/json" \
   -d '{
     "company_name": "Salesforce",
-    "max_products": 10,
     "generate_count": 5
   }'
 # Response includes: products, personas, mappings, AND sequences

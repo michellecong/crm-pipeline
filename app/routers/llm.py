@@ -246,7 +246,6 @@ async def generate_products(request: ProductGenerateRequest):
         result = await generator_service.generate(
             generator_type="products",
             company_name=request.company_name,
-            max_products=request.max_products,
             **generator_kwargs
         )
         
@@ -375,7 +374,6 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         products_result = await generator_service.generate(
             generator_type="products",
             company_name=request.company_name,
-            max_products=request.max_products,
             **extra_search_kwargs
         )
         if not products_result.get("success"):

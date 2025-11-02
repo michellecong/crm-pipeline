@@ -22,7 +22,7 @@ def test_auto_load():
     
     products_response = requests.post(
         f"{API_BASE}/llm/products/generate",
-        json={"company_name": COMPANY_NAME, "max_products": 5},
+        json={"company_name": COMPANY_NAME},
         timeout=120
     )
     

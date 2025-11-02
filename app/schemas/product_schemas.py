@@ -57,8 +57,6 @@ class ProductCatalogResponse(BaseModel):
     def validate_products_list(cls, v):
         if not isinstance(v, list) or len(v) == 0:
             raise ValueError("products must be a non-empty array")
-        if len(v) > 15:
-            raise ValueError("products should not exceed 15 items (focus on core offerings)")
         return v
     
     class Config:
@@ -87,12 +85,6 @@ class ProductGenerateRequest(BaseModel):
         min_length=2
     )
     
-    max_products: int = Field(
-        default=10,
-        ge=3,
-        le=15,
-        description="Maximum number of products to extract (3-15)"
-    )
     # Optional search behavior controls (used to collect web content when needed)
     use_llm_search: Optional[bool] = Field(
         default=None,
@@ -106,8 +98,7 @@ class ProductGenerateRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "company_name": "Salesforce",
-                "max_products": 10
+                "company_name": "Salesforce"
             }
         }
 

@@ -53,8 +53,7 @@ async def test_product_generation():
         
         result = await generator_service.generate(
             generator_type="products",
-            company_name=company_name,
-            max_products=10
+            company_name=company_name
         )
         
         if not result.get("success"):

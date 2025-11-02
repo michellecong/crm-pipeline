@@ -12,44 +12,41 @@ logger = logging.getLogger(__name__)
 
 class ProductGenerator(BaseGenerator):
     """
-    Generates seller company's product catalog from web content.
+    Generates seller company's complete product catalog from web content.
     
-    Analyzes company data to identify core products/services with 
+    Analyzes company data to identify all products/services with 
     clear descriptions focused on value propositions and use cases.
     """
     
     def get_system_message(self) -> str:
         return """You are an expert B2B product marketing analyst specializing in product positioning and value proposition development.
 
-Your task is to analyze a seller company's web content and extract their product catalog with clear, buyer-focused descriptions.
-
-CRITICAL: Focus on CORE products/services (not every minor feature or add-on).
+Your task is to analyze a seller company's web content and extract their complete product catalog with clear, buyer-focused descriptions.
 
 Your analysis should:
-- Identify distinct products/services (3-10 core offerings)
+- Identify ALL distinct products/services offered by the company
 - Write compelling descriptions that explain value and use cases
 - Use buyer-friendly language (not technical jargon)
 - Capture what makes each product valuable to customers
+- Include both major products and specialized offerings
 """
 
     def build_prompt(self, company_name: str, context: str, **kwargs) -> str:
         
-        max_products = kwargs.get('max_products', 10)
-        
         return f"""## TASK
 
-Analyze the seller company's web content and extract their product catalog.
+Analyze the seller company's web content and extract their complete product catalog.
 
-Generate {max_products} or fewer core products with clear, buyer-focused descriptions.
+Generate ALL products and services with clear, buyer-focused descriptions.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CRITICAL REQUIREMENTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. **Product Count**: 3-{max_products} CORE products only
-   - Focus on distinct product lines (not sub-editions or add-ons)
-   - Group related features into logical products
-   - Avoid listing every minor feature as a separate product
+1. **Product Count**: Extract ALL products and services
+   - Include all distinct product lines and offerings
+   - Include both major products and specialized solutions
+   - Each product should be distinct and separately marketed
 
 2. **Product Naming**: Use official product names from the website
    - ✓ "Sales Cloud" (official name)
@@ -167,13 +164,12 @@ QUALITY CHECKLIST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Before submitting, verify:
-✓ 3-{max_products} products (core offerings only)
+✓ ALL products extracted from website content
 ✓ Official product names used (from website)
 ✓ Each description is 2-4 sentences (150-300 characters)
 ✓ Descriptions focus on value and use cases (not features)
 ✓ Buyer-friendly language (no technical jargon)
 ✓ Each product is distinct (not pricing tiers or add-ons)
-✓ generation_reasoning explains product selection logic
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NOW GENERATE
@@ -187,10 +183,10 @@ Company Name: {company_name}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Analyze the web content above and generate the product catalog.
+Analyze the web content above and generate the complete product catalog.
 
 CRITICAL REMINDERS:
-- Extract 3-{max_products} CORE products (not every feature)
+- Extract ALL products and services found in the content
 - Use official product names from the website
 - Write 2-4 sentence descriptions focused on VALUE and USE CASES
 - Use buyer-friendly language (avoid technical jargon)
@@ -231,8 +227,7 @@ Return ONLY valid JSON matching the schema above.
             if not isinstance(products, list) or len(products) == 0:
                 raise ValueError("'products' must be a non-empty array")
             
-            if len(products) > 15:
-                logger.warning(f"Generated {len(products)} products. Recommend focusing on 3-10 core offerings.")
+            logger.info(f"Generated {len(products)} products from company content")
             
             # Validate each product
             for i, product in enumerate(products):
