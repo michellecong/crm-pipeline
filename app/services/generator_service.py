@@ -3,6 +3,7 @@ from ..generators.base_generator import BaseGenerator
 from ..generators.persona_generator import PersonaGenerator
 from ..generators.product_generator import ProductGenerator
 from ..generators.mapping_generator import MappingGenerator
+from ..generators.outreach_generator import OutreachGenerator
 from .data_aggregator import DataAggregator
 from datetime import datetime
 import logging
@@ -17,7 +18,8 @@ class GeneratorService:
         self.generators: Dict[str, BaseGenerator] = {
             "personas": PersonaGenerator(),
             "products": ProductGenerator(),
-            "mappings": MappingGenerator()
+            "mappings": MappingGenerator(),
+            "outreach": OutreachGenerator()
         }
         self.data_aggregator = DataAggregator()
     
@@ -35,6 +37,8 @@ class GeneratorService:
         Auto-injects products if available and not explicitly provided.
         
         For mappings: Auto-injects products and personas if not provided.
+        
+        For outreach: Uses personas_with_mappings from kwargs directly.
         """
         generator = self.get_generator(generator_type)
         
@@ -66,22 +70,33 @@ class GeneratorService:
                     logger.warning("⚠️  No saved personas found. Cannot generate mappings without personas.")
                     raise ValueError("Personas are required for mapping generation. Please generate personas first.")
         
-        context = await self.data_aggregator.prepare_context(
-            company_name,
-            kwargs.get('max_context_chars', 15000),
-            kwargs.get('include_news', True),
-            kwargs.get('include_case_studies', True),
-            kwargs.get('max_urls', 10),
-            kwargs.get('use_llm_search', False),
-            kwargs.get('provider', 'google')
-        )
+        # For outreach, use minimal context (personas_with_mappings provides the data)
+        if generator_type == "outreach":
+            if "personas_with_mappings" not in kwargs:
+                raise ValueError("personas_with_mappings is required for outreach generation")
+            context = f"Generating outreach sequences for {company_name}"
+        else:
+            context = await self.data_aggregator.prepare_context(
+                company_name,
+                kwargs.get('max_context_chars', 15000),
+                kwargs.get('include_news', True),
+                kwargs.get('include_case_studies', True),
+                kwargs.get('max_urls', 10),
+                kwargs.get('use_llm_search', False),
+                kwargs.get('provider', 'google')
+            )
         
         logger.info(f"Prepared context length: {len(context)} chars for {company_name}")
         
         result = await generator.generate(company_name, context, **kwargs)
         
         # Check if generation was successful
-        success = bool(result.get('personas')) if generator_type == 'personas' else bool(result)
+        if generator_type == 'personas':
+            success = bool(result.get('personas'))
+        elif generator_type == 'outreach':
+            success = bool(result.get('sequences'))
+        else:
+            success = bool(result)
         
         # Save generated content to file
         saved_filepath = None
