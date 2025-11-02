@@ -19,15 +19,14 @@ def test_pdf_process_success():
     with open(test_pdf_path, "rb") as f:
         response = client.post(
             "/api/v1/pdf/process/",
-            files={"file": ("test.pdf", f, "application/pdf")},
-            params={"chunk_size": 500, "overlap": 50}
+            files={"file": ("test.pdf", f, "application/pdf")}
         )
     
     assert response.status_code == 200
     data = response.json()
     assert "filename" in data
-    assert "chunks" in data
-    assert data["chunk_stats"]["total_chunks"] > 0
+    assert "extracted_text" in data
+    assert len(data["extracted_text"]) > 0
 
 
 def test_pdf_process_invalid_file():
