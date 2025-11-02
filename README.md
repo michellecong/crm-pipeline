@@ -1,6 +1,6 @@
 # CRM Pipeline API
 
-Data collection API for scraping company information from the web.
+Comprehensive B2B sales intelligence platform that generates buyer personas, pain-point to value-proposition mappings, and multi-touch outreach sequences from company web data.
 
 ## Quick Start
 
@@ -182,7 +182,16 @@ curl -X POST http://localhost:8000/api/v1/llm/mappings/generate \
   }'
 # Note: Requires personas to be generated first. Products and personas are auto-loaded.
 
-# Run full pipeline (products → personas → mappings)
+# Generate outreach sequences (requires personas_with_mappings)
+curl -X POST http://localhost:8000/api/v1/outreach/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "personas_with_mappings": [...]
+  }'
+# Creates 4-6 touch sales cadences for each persona
+
+# Run full pipeline (products → personas → mappings → sequences)
 curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
   -H "Content-Type: application/json" \
   -d '{
@@ -192,7 +201,7 @@ curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
     "use_llm_search": true,
     "provider": "perplexity"
   }'
-# Response includes generated products, personas, personas_with_mappings, and optional artifact file paths.
+# Response includes generated products, personas, personas_with_mappings, sequences, and artifact file paths.
 ```
 
 ## Search Options
@@ -365,6 +374,168 @@ The system automatically loads previously generated data to streamline the workf
 👥 Loaded 3 personas from: salesforce_personas_2025-10-30.json
 ```
 
+## Outreach Sequences
+
+Generate multi-touch sales outreach sequences for each persona with pain point-value proposition mappings.
+
+### **Features**
+
+- **4-6 touch sequences** per persona
+- **Multi-channel strategy**: Email → LinkedIn → Email → Phone → Follow-up
+- **Personalized content**: References specific pain points and value propositions
+- **Timing optimization**: 2-3 day intervals, 10-21 day total duration
+- **Channel-specific guidelines**: Subject lines, content templates, execution hints
+
+### **Touch Types**
+
+- **Email**: Low commitment, high deliverability
+- **LinkedIn**: Social proof and credibility building
+- **Phone**: High-intent moments
+- **Video**: High effort, high impact (used sparingly)
+
+### **Example Usage**
+
+#### Generate Outreach Sequences
+```bash
+curl -X POST http://localhost:8000/api/v1/outreach/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "personas_with_mappings": [
+      {
+        "persona_name": "US Enterprise B2B SaaS - Revenue Leaders",
+        "target_decision_makers": ["VP Engineering", "Engineering Director"],
+        "industry": "SaaS",
+        "company_size_range": "200-800 employees",
+        "tier": "tier_1",
+        "mappings": [
+          {
+            "pain_point": "Regional sales leaders lack unified pipeline visibility",
+            "value_proposition": "Sales Cloud centralizes opportunities and activity"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+#### Expected Response Format
+```json
+{
+  "sequences": [
+    {
+      "name": "US Enterprise B2B SaaS - Revenue Leaders Outreach Sequence",
+      "persona_name": "US Enterprise B2B SaaS - Revenue Leaders",
+      "objective": "Secure discovery meeting with revenue leaders",
+      "total_touches": 5,
+      "duration_days": 14,
+      "touches": [
+        {
+          "sort_order": 1,
+          "touch_type": "email",
+          "timing_days": 0,
+          "objective": "Introduce pipeline visibility challenge",
+          "subject_line": "30% forecast accuracy boost for enterprise teams",
+          "content_suggestion": "Hi {first_name}, noticed enterprise SaaS teams...",
+          "hints": "Personalize with recent expansion news"
+        },
+        {
+          "sort_order": 2,
+          "touch_type": "linkedin",
+          "timing_days": 2,
+          "objective": "Share case study insight",
+          "subject_line": "How Similar Co improved pipeline visibility",
+          "content_suggestion": "Noticed your team is scaling operations...",
+          "hints": null
+        },
+        {
+          "sort_order": 3,
+          "touch_type": "email",
+          "timing_days": 5,
+          "objective": "Deep dive on value proposition",
+          "subject_line": "ROI: $500K saved through automation",
+          "content_suggestion": "Following up on pipeline visibility...",
+          "hints": "Include specific ROI data"
+        },
+        {
+          "sort_order": 4,
+          "touch_type": "phone",
+          "timing_days": 9,
+          "objective": "Direct meeting request",
+          "subject_line": null,
+          "content_suggestion": "Call to schedule 15-min discovery call...",
+          "hints": "Leave voicemail with clear next steps"
+        },
+        {
+          "sort_order": 5,
+          "touch_type": "email",
+          "timing_days": 14,
+          "objective": "Breakup email with new angle",
+          "subject_line": "Closing the loop on pipeline visibility",
+          "content_suggestion": "Understand if timing isn't right...",
+          "hints": "Keep door open for future"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### **Sequence Strategy by Tier**
+
+**tier_1 (Enterprise)**: 5-6 touches, 14-21 days
+- More nurture, build credibility slowly
+- 2+ LinkedIn touches (social proof critical)
+- Phone touch later (touch 5-6)
+
+**tier_2 (Mid-market)**: 5 touches, 12-14 days
+- Balanced approach
+- 1-2 LinkedIn touches
+- Phone touch at 4-5
+
+**tier_3 (SMB)**: 4 touches, 10 days
+- Faster, more direct
+- 1 LinkedIn touch
+- Phone touch at 4
+
+### **Best Practices**
+
+**Subject Lines (<60 chars):**
+- ✅ "30% better forecasts for 500-rep teams"
+- ✅ "How [Similar Co] cut CRM admin by 10hrs/week"
+- ✅ "Quick question about your Q4 pipeline"
+- ❌ "Important business opportunity"
+- ❌ "I'd love to connect"
+
+**Content Guidelines:**
+- Reference specific pain points from mappings
+- Provide value before asking
+- Keep language professional but conversational
+- Include social proof where relevant
+- Make the ask clear but not aggressive
+
+**Timing:**
+- Space touches 2-3 days apart
+- Avoid same-day follow-ups
+- Complete sequence in 10-21 days
+- Adjust based on role seniority (execs need more time)
+
+### **Integration with Pipeline**
+
+Outreach sequences are automatically generated in the full pipeline:
+
+```bash
+# Run full pipeline including sequences
+curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "max_products": 10,
+    "generate_count": 5
+  }'
+# Response includes: products, personas, mappings, AND sequences
+```
+
 ## API Documentation
 
 Interactive docs: http://localhost:8000/docs
@@ -388,12 +559,28 @@ Interactive docs: http://localhost:8000/docs
 | `/api/v1/llm/products/generate` | POST | Generate product catalog       |
 | `/api/v1/llm/persona/generate` | POST | Generate buyer personas        |
 | `/api/v1/llm/mappings/generate` | POST | Generate pain-point to value-prop mappings |
-| `/api/v1/llm/pipeline/generate` | POST   | Run full pipeline (products → personas → mappings) |
+| `/api/v1/llm/pipeline/generate` | POST   | Run full pipeline (products → personas → mappings → sequences) |
 | `/api/v1/llm/test`          | GET    | Test LLM connectivity          |
 | `/api/v1/llm/config`        | GET    | Get LLM configuration          |
 | `/api/v1/llm/config`        | PATCH  | Update LLM configuration       |
 
+### Outreach Sequences
+| Endpoint                     | Method | Description                    |
+| ---------------------------- | ------ | ------------------------------ |
+| `/api/v1/outreach/generate` | POST   | Generate multi-touch outreach sequences |
+
 ## Data Storage
+
+### **Generated Content Storage**
+
+All generated content is automatically saved to `data/generated/` with timestamped filenames:
+
+- **Products**: `{company}_products_{timestamp}.json`
+- **Personas**: `{company}_personas_{timestamp}.json`
+- **Mappings**: `{company}_mappings_{timestamp}.json`
+- **Outreach Sequences**: `{company}_outreach_{timestamp}.json`
+
+### **Scraped Data Storage**
 
 Scraped data is saved to `data/scraped/` as JSON files when `save_to_file: true`.
 
@@ -416,6 +603,12 @@ python -m pytest tests/test_llm_mock.py -v
 ### Test LLM Connection (Requires API Key)
 ```bash
 python tests/test_llm_connection.py
+```
+
+### Test Outreach Generation
+```bash
+# Run outreach tests
+python -m pytest tests/test_outreach.py -v
 ```
 
 ### Test All Services
@@ -582,6 +775,59 @@ curl -X POST http://localhost:8000/api/v1/search/web \
   -d '{"company_name": "Miro"}'
 ```
 
+### Test Outreach Generation
+
+#### Basic Outreach Generation
+```bash
+# Generate outreach sequences
+curl -X POST http://localhost:8000/api/v1/outreach/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "personas_with_mappings": [
+      {
+        "persona_name": "US Enterprise B2B SaaS - Revenue Leaders",
+        "target_decision_makers": ["VP Engineering"],
+        "industry": "SaaS",
+        "company_size_range": "200-800 employees",
+        "tier": "tier_1",
+        "mappings": [
+          {
+            "pain_point": "Pipeline visibility issues",
+            "value_proposition": "Centralized pipeline management"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+#### Expected Response Format
+```json
+{
+  "sequences": [
+    {
+      "name": "Revenue Leaders Outreach Sequence",
+      "persona_name": "US Enterprise B2B SaaS - Revenue Leaders",
+      "objective": "Secure discovery meeting with revenue leaders",
+      "total_touches": 5,
+      "duration_days": 14,
+      "touches": [
+        {
+          "sort_order": 1,
+          "touch_type": "email",
+          "timing_days": 0,
+          "objective": "Introduce pipeline visibility challenge",
+          "subject_line": "30% forecast accuracy boost",
+          "content_suggestion": "Hi {first_name}, noticed enterprise teams...",
+          "hints": "Personalize with recent news"
+        }
+      ]
+    }
+  ]
+}
+```
+
 ## Troubleshooting
 
 **SSL Certificate Error (macOS)**:
@@ -624,25 +870,38 @@ crm-pipeline/
 │   ├── routers/                     # API endpoints
 │   │   ├── search.py               # Search & LLM web search endpoints
 │   │   ├── scraping.py             # Web scraping endpoints
-│   │   ├── llm.py                  # LLM & persona generation endpoints
+│   │   ├── llm.py                  # LLM, persona, mapping & outreach generation endpoints
 │   │   └── crm_routes.py           # CRM upload & parsing endpoints
+│   ├── generators/                  # Content generators
+│   │   ├── base_generator.py       # Base class for all generators
+│   │   ├── product_generator.py    # Product catalog generation
+│   │   ├── persona_generator.py    # Buyer persona generation
+│   │   ├── mapping_generator.py    # Pain-point to value-prop mapping generation
+│   │   └── outreach_generator.py   # Outreach sequence generation
 │   ├── services/                    # Business logic
 │   │   ├── llm_web_search_service.py  # LLM-powered web search
 │   │   ├── search_service.py       # Traditional search (Google/Perplexity)
 │   │   ├── llm_service.py          # LLM text generation
-│   │   ├── generator_service.py    # Persona generation
+│   │   ├── generator_service.py    # Generator orchestration
 │   │   └── crm_service.py          # CRM file parsing & analysis
 │   └── schemas/                     # Data models
 │       ├── search.py               # Search & LLM web search schemas
+│       ├── product_schemas.py      # Product catalog schemas
+│       ├── persona_schemas.py      # Persona schemas
+│       ├── mapping_schemas.py      # Mapping schemas
+│       ├── outreach_schemas.py     # Outreach sequence schemas
+│       ├── pipeline_schemas.py     # Full pipeline schemas
 │       └── crm_schemas.py          # CRM data schemas
 ├── data/
 │   ├── scraped/                     # Saved scraped data
-│   └── generated/                   # Generated personas
+│   └── generated/                   # Generated content (products, personas, mappings, sequences)
 ├── tests/                           # Tests
 │   ├── fixtures/
 │   │   └── mock_crm_data.csv       # Sample CRM data for testing
 │   ├── test_crm_service.py         # CRM service tests
-│   └── test_llm_mock.py            # LLM mock tests
+│   ├── test_llm_mock.py            # LLM mock tests
+│   ├── test_outreach.py            # Outreach generation tests
+│   └── conftest.py                 # Shared test fixtures
 ├── test_llm_web_search.py          # LLM web search test script
 ├── requirements.txt                 # Dependencies
 └── .env                             # API keys (create this)

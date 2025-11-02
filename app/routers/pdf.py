@@ -2,7 +2,6 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from pathlib import Path
 import shutil
 from app.services.pdf_service import PDFService
-from app.services.chunking_service import ChunkingService
 from app.schemas.pdf_schema import PDFProcessResponse
 
 router = APIRouter(prefix="/pdf", tags=["PDF Processing"])
@@ -14,13 +13,12 @@ pdf_service = PDFService()
 
 
 @router.post("/process/", response_model=PDFProcessResponse)
-async def process_pdf(
-    file: UploadFile = File(...),
-    chunk_size: int = 500,
-    overlap: int = 50,
-    min_chunk_size: int = 200
-):
+async def process_pdf(file: UploadFile = File(...)):
+    """
+    Process PDF file and extract full text content.
     
+    Returns complete extracted text without chunking.
+    """
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files allowed")
     
@@ -32,26 +30,12 @@ async def process_pdf(
     try:
         extraction_result = pdf_service.extract_text(str(file_path))
         
-        chunker = ChunkingService(
-            chunk_size=chunk_size,
-            overlap=overlap,
-            min_chunk_size=min_chunk_size
-        )
-        chunks = chunker.chunk_text(extraction_result["extracted_text"])
-        chunk_stats = chunker.get_chunk_stats(chunks)
-        
         return {
             "filename": extraction_result["filename"],
             "page_count": extraction_result["page_count"],
             "total_text_length": extraction_result["text_length"],
             "metadata": extraction_result["metadata"],
-            "chunking_params": {
-                "chunk_size": chunk_size,
-                "overlap": overlap,
-                "min_chunk_size": min_chunk_size
-            },
-            "chunk_stats": chunk_stats,
-            "chunks": chunks
+            "extracted_text": extraction_result["extracted_text"]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")

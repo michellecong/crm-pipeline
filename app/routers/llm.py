@@ -25,6 +25,11 @@ from ..schemas.pipeline_schemas import (
     PipelineGenerateRequest,
     PipelineGenerateResponse
 )
+from ..schemas.outreach_schemas import (
+    OutreachGenerateRequest,
+    OutreachGenerationResponse,
+    OutreachSequence
+)
 from ..services.llm_service import get_llm_service
 from ..services.generator_service import get_generator_service
 import logging
@@ -344,8 +349,8 @@ async def generate_mappings(request: MappingGenerateRequest):
 @router.post(
     "/llm/pipeline/generate",
     response_model=PipelineGenerateResponse,
-    summary="Run full pipeline: products → personas → pain-point mappings",
-    description="Generate product catalog from scraped content, then personas using products + content, and finally pain-point mappings using personas."
+    summary="Run full pipeline: products → personas → mappings → sequences",
+    description="Generate product catalog from scraped content, then personas using products + content, pain-point mappings using personas, and finally outreach sequences."
 )
 async def generate_full_pipeline(request: PipelineGenerateRequest):
     """
@@ -353,6 +358,7 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
     1) Generate products from scraped content.
     2) Generate personas using products + scraped content.
     3) Generate pain-point mappings using personas (+ products).
+    4) Generate outreach sequences using personas_with_mappings (optional).
     """
     try:
         logger.info(f"[Pipeline] Starting for company: {request.company_name}")
@@ -406,16 +412,39 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             f"with {sum(len(p.get('mappings', [])) for p in mappings_data)} total mappings"
         )
 
+        # Step 4: Outreach Sequences (optional, can be generated separately)
+        sequences_data = []
+        sequences_file = None
+        
+        # Try to generate sequences if mappings are available
+        try:
+            logger.info("[Pipeline] Generating outreach sequences...")
+            sequences_result = await generator_service.generate(
+                generator_type="outreach",
+                company_name=request.company_name,
+                personas_with_mappings=mappings_data
+            )
+            if sequences_result.get("success"):
+                sequences_data = sequences_result["result"].get("sequences", [])
+                sequences_file = sequences_result.get("saved_filepath")
+                logger.info(f"[Pipeline] Generated {len(sequences_data)} outreach sequences")
+            else:
+                logger.warning("[Pipeline] Outreach sequence generation skipped (optional)")
+        except Exception as e:
+            logger.warning(f"[Pipeline] Outreach generation failed (optional): {str(e)}")
+        
         # Build typed response
         from ..schemas.pipeline_schemas import PipelineArtifacts
         response = PipelineGenerateResponse(
             products=[Product(**p) for p in products_data],
             personas=[BuyerPersona(**p) for p in personas_data],
             personas_with_mappings=[PersonaWithMappings(**pm) for pm in mappings_data],
+            sequences=[OutreachSequence(**s) for s in sequences_data] if sequences_data else None,
             artifacts=PipelineArtifacts(
                 products_file=products_result.get("saved_filepath"),
                 personas_file=personas_result.get("saved_filepath"),
                 mappings_file=mappings_result.get("saved_filepath"),
+                sequences_file=sequences_file,
             ),
         )
         return response
@@ -426,3 +455,53 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
     except Exception as e:
         logger.error(f"[Pipeline] Failed: {str(e)}", exc_info=True)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post(
+    "/outreach/generate",
+    response_model=OutreachGenerationResponse,
+    summary="Generate outreach sequences",
+    description="Generate multi-touch sales outreach sequences for personas with pain point-value proposition mappings"
+)
+async def generate_outreach_sequences(request: OutreachGenerateRequest):
+    """
+    Generate outreach sequences for all personas.
+    
+    Creates a 4-6 touch sales cadence for each persona, incorporating their specific
+    pain points and value propositions from the mapping stage.
+    """
+    try:
+        logger.info(f"Generating outreach sequences for {request.company_name}")
+        logger.info(f"Number of personas: {len(request.personas_with_mappings)}")
+        
+        # Get generator service
+        generator_service = get_generator_service()
+        
+        # Generate sequences using OutreachGenerator
+        result = await generator_service.generate(
+            generator_type="outreach",
+            company_name=request.company_name,
+            personas_with_mappings=request.personas_with_mappings
+        )
+        
+        if not result.get("success"):
+            raise ValueError("Outreach sequence generation failed")
+        
+        sequences_data = result["result"].get("sequences", [])
+        logger.info(f"Generated {len(sequences_data)} outreach sequences")
+        
+        # Validate and build response
+        sequences = [OutreachSequence(**seq) for seq in sequences_data]
+        
+        response = OutreachGenerationResponse(sequences=sequences)
+        return response
+        
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"Outreach generation failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Outreach generation failed: {str(e)}"
+        )
