@@ -36,6 +36,10 @@ from ..schemas.baseline_schemas import (
     BaselineGenerateRequest,
     BaselineGenerateResponse
 )
+from ..schemas.evaluation_schemas import (
+    PersonaEvaluationRequest,
+    PersonaEvaluationResponse
+)
 from ..services.llm_service import get_llm_service
 from ..services.generator_service import get_generator_service
 import logging
