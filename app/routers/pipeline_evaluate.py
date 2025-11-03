@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from ..schemas.pipeline_schemas import PipelineEvaluateRequest, PipelineEvaluateResponse
-from ..services.pipeline_validator import evaluate_pipeline_completeness
+from ..services.pipeline_completeness import evaluate_pipeline_completeness
 
 
 router = APIRouter()

@@ -193,7 +193,7 @@ def evaluate_pipeline_completeness(payload: Dict) -> PipelineCompletenessReport:
     products = payload.get("products") or []
     personas = payload.get("personas") or []
     mappings = payload.get("personas_with_mappings") or []
-    sequences = payload.get("sequences")  # may be None
+    sequences = payload.get("sequences") or []
 
     sections = {}
 
@@ -274,61 +274,60 @@ def evaluate_pipeline_completeness(payload: Dict) -> PipelineCompletenessReport:
     except Exception:
         pass
 
-    # Sequences (optional)
-    if sequences is not None:
-        s_total, s_valid, s_issues, s_missing, s_required, s_missing_map, s_blank_cnt, s_blank_map = _validate_list(sequences, OutreachSequence)
+    # Sequences (required)
+    s_total, s_valid, s_issues, s_missing, s_required, s_missing_map, s_blank_cnt, s_blank_map = _validate_list(sequences, OutreachSequence)
 
-        # Soft checks that complement model validation
-        for idx, seq in enumerate(sequences or []):
-            try:
-                total_touches = seq.get("total_touches")
-                touches = seq.get("touches") or []
-                if total_touches is not None and isinstance(total_touches, int):
-                    if total_touches != len(touches):
-                        s_issues.append(PipelineCompletenessIssue(
-                            path=f"sequences[{idx}].total_touches",
-                            message=f"total_touches ({total_touches}) does not match touches length ({len(touches)})",
-                            type="value_error.mismatch",
-                        ))
-
-                if touches:
-                    prev_order = 0
-                    for t in touches:
-                        so = t.get("sort_order", 0)
-                        if so != prev_order + 1:
-                            s_issues.append(PipelineCompletenessIssue(
-                                path=f"sequences[{idx}].touches[{so}]",
-                                message="sort_order must be sequential starting from 1",
-                                type="value_error",
-                            ))
-                            break
-                        prev_order = so
-            except Exception:
-                pass
-
-        sections["sequences"] = PipelineSectionReport(
-            name="sequences",
-            required=False,
-            present=len(sequences) > 0,
-            total_items=s_total,
-            valid_items=s_valid,
-            missing_required_errors=s_missing,
-            completeness_ratio=_ratio(s_valid, s_total),
-            errors=s_issues,
-            required_fields=s_required,
-            field_missing_counts=s_missing_map,
-            blank_required_errors=s_blank_cnt,
-            field_blank_counts=s_blank_map,
-        )
-
-        # Field completeness scores for sequences
+    # Soft checks that complement model validation
+    for idx, seq in enumerate(sequences):
         try:
-            s_scores, s_avg, s_rates = _compute_section_field_scores(sequences, OutreachSequence)
-            sections["sequences"].item_field_scores = s_scores
-            sections["sequences"].avg_field_score = s_avg
-            sections["sequences"].field_completion_rates = s_rates
+            total_touches = seq.get("total_touches")
+            touches = seq.get("touches") or []
+            if total_touches is not None and isinstance(total_touches, int):
+                if total_touches != len(touches):
+                    s_issues.append(PipelineCompletenessIssue(
+                        path=f"sequences[{idx}].total_touches",
+                        message=f"total_touches ({total_touches}) does not match touches length ({len(touches)})",
+                        type="value_error.mismatch",
+                    ))
+
+            if touches:
+                prev_order = 0
+                for t in touches:
+                    so = t.get("sort_order", 0)
+                    if so != prev_order + 1:
+                        s_issues.append(PipelineCompletenessIssue(
+                            path=f"sequences[{idx}].touches[{so}]",
+                            message="sort_order must be sequential starting from 1",
+                            type="value_error",
+                        ))
+                        break
+                    prev_order = so
         except Exception:
             pass
+
+    sections["sequences"] = PipelineSectionReport(
+        name="sequences",
+        required=True,
+        present=len(sequences) > 0,
+        total_items=s_total,
+        valid_items=s_valid,
+        missing_required_errors=s_missing,
+        completeness_ratio=_ratio(s_valid, s_total),
+        errors=s_issues,
+        required_fields=s_required,
+        field_missing_counts=s_missing_map,
+        blank_required_errors=s_blank_cnt,
+        field_blank_counts=s_blank_map,
+    )
+
+    # Field completeness scores for sequences
+    try:
+        s_scores, s_avg, s_rates = _compute_section_field_scores(sequences, OutreachSequence)
+        sections["sequences"].item_field_scores = s_scores
+        sections["sequences"].avg_field_score = s_avg
+        sections["sequences"].field_completion_rates = s_rates
+    except Exception:
+        pass
 
     # Cross-component checks
     cross_issues: List[PipelineCompletenessIssue] = []
@@ -345,16 +344,15 @@ def evaluate_pipeline_completeness(payload: Dict) -> PipelineCompletenessReport:
                 type="value_error.reference",
             ))
 
-    # sequence.persona_name must exist in personas (if sequences present)
-    if sequences is not None:
-        for idx, seq in enumerate(sequences or []):
-            name = seq.get("persona_name")
-            if name and name not in persona_names_from_personas:
-                cross_issues.append(PipelineCompletenessIssue(
-                    path=f"sequences[{idx}].persona_name",
-                    message=f"persona_name '{name}' not found in personas",
-                    type="value_error.reference",
-                ))
+    # sequence.persona_name must exist in personas
+    for idx, seq in enumerate(sequences):
+        name = seq.get("persona_name")
+        if name and name not in persona_names_from_personas:
+            cross_issues.append(PipelineCompletenessIssue(
+                path=f"sequences[{idx}].persona_name",
+                message=f"persona_name '{name}' not found in personas",
+                type="value_error.reference",
+            ))
 
     # Unique persona names in personas
     def _names(iterable):
@@ -374,17 +372,13 @@ def evaluate_pipeline_completeness(payload: Dict) -> PipelineCompletenessReport:
         issues=cross_issues,
     )
 
-    required_sections = ["products", "personas", "personas_with_mappings"]
+    required_sections = ["products", "personas", "personas_with_mappings", "sequences"]
     required_present = {k: sections[k].present for k in required_sections}
 
     # Scores
     req_ratios = [sections[k].completeness_ratio for k in required_sections]
     score_required_only = round(sum(req_ratios) / len(req_ratios), 4)
-
-    opt_ratios = req_ratios[:]
-    if "sequences" in sections:
-        opt_ratios.append(sections["sequences"].completeness_ratio)
-    score_including_optional = round(sum(opt_ratios) / len(opt_ratios), 4)
+    score_including_optional = score_required_only
 
     # Overall completeness
     is_complete = (
