@@ -2,6 +2,7 @@ from .base_generator import BaseGenerator
 from typing import Dict
 import json
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +256,47 @@ CRITICAL REMINDERS
 
 Generate now."""
     
+    def _fix_json_errors(self, json_str: str) -> str:
+        """
+        Fix common JSON errors that LLMs sometimes generate.
+        
+        Handles:
+        - Missing commas between array elements
+        - Empty objects in arrays (e.g., } { } )
+        - Trailing commas
+        - Other syntax issues
+        """
+        fixed = json_str
+        
+        # Step 1: Handle the specific case: } followed by empty object { }
+        # Pattern: } whitespace { whitespace }
+        # Replace with just } (removing the empty object, comma will be added in step 3 if needed)
+        fixed = re.sub(r'\}\s+\{\s*\}', '}', fixed)
+        fixed = re.sub(r'\}\s*\{\s*\}', '}', fixed)
+        
+        # Step 2: Remove standalone empty objects in arrays (not preceded by })
+        # Pattern: [ whitespace { whitespace } or , whitespace { whitespace }
+        fixed = re.sub(r'\[\s*\{\s*\}', '[', fixed)
+        fixed = re.sub(r',\s*\{\s*\}', '', fixed)
+        
+        # Step 3: Fix missing commas between objects in arrays
+        # Pattern: } followed by whitespace then { (not preceded by comma)
+        # This handles cases where objects are adjacent without comma separator
+        fixed = re.sub(r'\}\s+(\{)', r'},\1', fixed)
+        
+        # Step 4: Remove trailing commas before } or ]
+        fixed = re.sub(r',\s+([}\]])', r'\1', fixed)
+        fixed = re.sub(r',\s*([}\]])', r'\1', fixed)
+        
+        # Step 5: Fix double commas (can happen after our fixes)
+        fixed = re.sub(r',\s*,+', ',', fixed)
+        
+        # Step 6: Fix commas that appear in wrong positions (edge cases)
+        # Remove commas before opening braces in certain contexts
+        fixed = re.sub(r',\s*\{(\s*"[^"]*":)', r'{\1', fixed)
+        
+        return fixed
+    
     def parse_response(self, response: str) -> Dict:
         """
         Parse LLM response that contains all 4 outputs (products, personas, mappings, sequences).
@@ -282,8 +324,19 @@ Generate now."""
             
             cleaned_response = cleaned_response.strip()
             
-            # Parse JSON
-            data = json.loads(cleaned_response)
+            # Try to parse JSON, and if it fails, attempt to fix common errors
+            try:
+                data = json.loads(cleaned_response)
+            except json.JSONDecodeError:
+                logger.warning("Initial JSON parse failed, attempting to fix common errors...")
+                fixed_response = self._fix_json_errors(cleaned_response)
+                try:
+                    data = json.loads(fixed_response)
+                    logger.info("Successfully fixed JSON errors and parsed response")
+                except json.JSONDecodeError as fix_error:
+                    # If fixing didn't work, log the error and re-raise
+                    logger.error(f"Failed to parse even after fixing: {fix_error}")
+                    raise
             
             # Validate required keys
             required_keys = ["products", "personas", "personas_with_mappings", "sequences"]

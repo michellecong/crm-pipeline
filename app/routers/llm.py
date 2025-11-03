@@ -23,7 +23,8 @@ from ..schemas.mapping_schemas import (
 )
 from ..schemas.pipeline_schemas import (
     PipelineGenerateRequest,
-    PipelineGenerateResponse,
+    PipelineGenerateEnvelope,
+    PipelinePayload,
     PipelineArtifacts
 )
 from ..schemas.outreach_schemas import (
@@ -352,7 +353,7 @@ async def generate_mappings(request: MappingGenerateRequest):
 
 @router.post(
     "/llm/pipeline/generate",
-    response_model=PipelineGenerateResponse,
+    response_model=PipelineGenerateEnvelope,
     summary="Run full pipeline: products → personas → mappings → sequences",
     description="Generate product catalog from scraped content, then personas using products + content, pain-point mappings using personas, and finally outreach sequences."
 )
@@ -436,13 +437,20 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         except Exception as e:
             logger.warning(f"[Pipeline] Outreach generation failed (optional): {str(e)}")
         
-        # Build typed response
-        from ..schemas.pipeline_schemas import PipelineArtifacts
-        response = PipelineGenerateResponse(
-            products=[Product(**p) for p in products_data],
-            personas=[BuyerPersona(**p) for p in personas_data],
-            personas_with_mappings=[PersonaWithMappings(**pm) for pm in mappings_data],
-            sequences=[OutreachSequence(**s) for s in sequences_data] if sequences_data else None,
+        # Build typed lists
+        products_t = [Product(**p) for p in products_data]
+        personas_t = [BuyerPersona(**p) for p in personas_data]
+        mappings_t = [PersonaWithMappings(**pm) for pm in mappings_data]
+        sequences_t = [OutreachSequence(**s) for s in sequences_data] if sequences_data else []
+
+        # Return payload envelope (keep artifacts for convenience)
+        response = PipelineGenerateEnvelope(
+            payload=PipelinePayload(
+                products=products_t,
+                personas=personas_t,
+                personas_with_mappings=mappings_t,
+                sequences=sequences_t,
+            ),
             artifacts=PipelineArtifacts(
                 products_file=products_result.get("saved_filepath"),
                 personas_file=personas_result.get("saved_filepath"),
