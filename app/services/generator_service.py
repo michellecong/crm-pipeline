@@ -4,6 +4,7 @@ from ..generators.persona_generator import PersonaGenerator
 from ..generators.product_generator import ProductGenerator
 from ..generators.mapping_generator import MappingGenerator
 from ..generators.outreach_generator import OutreachGenerator
+from ..generators.baseline_generator import BaselineGenerator
 from .data_aggregator import DataAggregator
 from datetime import datetime
 import logging
@@ -19,7 +20,8 @@ class GeneratorService:
             "personas": PersonaGenerator(),
             "products": ProductGenerator(),
             "mappings": MappingGenerator(),
-            "outreach": OutreachGenerator()
+            "outreach": OutreachGenerator(),
+            "baseline": BaselineGenerator()
         }
         self.data_aggregator = DataAggregator()
     
@@ -95,6 +97,9 @@ class GeneratorService:
             success = bool(result.get('personas'))
         elif generator_type == 'outreach':
             success = bool(result.get('sequences'))
+        elif generator_type == 'baseline':
+            # Baseline returns all 4 outputs in one response
+            success = bool(result.get('products') and result.get('personas'))
         else:
             success = bool(result)
         
