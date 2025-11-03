@@ -605,6 +605,19 @@ curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
 # Response includes: products, personas, mappings, AND sequences
 ```
 
+# Evaluate pipeline completeness
+curl -X POST http://localhost:8000/api/v1/pipeline/evaluation/completeness \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": {
+      "products": [...],
+      "personas": [...],
+      "personas_with_mappings": [...],
+      "sequences": [...]
+    }
+  }'
+# Returns completeness report with validation results, scores, and issues for all sections
+
 ## API Documentation
 
 Interactive docs: http://localhost:8000/docs
@@ -638,6 +651,11 @@ Interactive docs: http://localhost:8000/docs
 | Endpoint                     | Method | Description                    |
 | ---------------------------- | ------ | ------------------------------ |
 | `/api/v1/outreach/generate` | POST   | Generate multi-touch outreach sequences |
+
+### Pipeline Evaluation
+| Endpoint                              | Method | Description                                         |
+| ------------------------------------- | ------ | --------------------------------------------------- |
+| `/api/v1/pipeline/evaluation/completeness` | POST   | Evaluate pipeline completeness (products, personas, mappings, sequences) |
 
 ## Data Storage
 
