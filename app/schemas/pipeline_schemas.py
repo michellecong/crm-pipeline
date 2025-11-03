@@ -1,5 +1,9 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict
+try:
+    from pydantic import ConfigDict
+except Exception:
+    ConfigDict = dict  # Fallback for environments pinning older pydantic
 from .product_schemas import Product
 from .persona_schemas import BuyerPersona
 from .mapping_schemas import PersonaWithMappings
@@ -27,4 +31,67 @@ class PipelineGenerateResponse(BaseModel):
     sequences: Optional[List[OutreachSequence]] = None
     artifacts: Optional[PipelineArtifacts] = None
 
+
+
+class PipelinePayload(BaseModel):
+    products: List[Product]
+    personas: List[BuyerPersona]
+    personas_with_mappings: List[PersonaWithMappings]
+    sequences: List[OutreachSequence] = Field(default_factory=list)
+
+
+class PipelineGenerateEnvelope(BaseModel):
+    payload: PipelinePayload
+    artifacts: Optional[PipelineArtifacts] = None
+
+
+
+# --- Completeness evaluation schemas ---
+
+class PipelineCompletenessIssue(BaseModel):
+    path: str
+    message: str
+    type: Optional[str] = None
+
+
+class PipelineSectionReport(BaseModel):
+    model_config = ConfigDict(ser_json_exclude_none=True)
+    name: str
+    required: bool = True
+    present: bool
+    total_items: int = 0
+    valid_items: int = 0
+    missing_required_errors: int = 0
+    completeness_ratio: float = 0.0
+    errors: List[PipelineCompletenessIssue] = []
+    required_fields: List[str] = []
+    field_missing_counts: Dict[str, int] = {}
+    blank_required_errors: int = 0
+    field_blank_counts: Dict[str, int] = {}
+    # Per-item field completeness scores and aggregates
+    item_field_scores: Optional[Dict[str, float]] = None
+    avg_field_score: Optional[float] = None
+    field_completion_rates: Optional[Dict[str, float]] = None
+
+
+class CrossComponentCheck(BaseModel):
+    passed: bool
+    issues: List[PipelineCompletenessIssue] = []
+
+
+class PipelineCompletenessReport(BaseModel):
+    is_complete: bool
+    required_sections_present: Dict[str, bool]
+    sections: Dict[str, PipelineSectionReport]
+    cross_component: CrossComponentCheck
+    score_required_only: float
+    score_including_optional: float
+
+
+class PipelineEvaluateRequest(BaseModel):
+    payload: Dict
+
+
+class PipelineEvaluateResponse(BaseModel):
+    report: PipelineCompletenessReport
 
