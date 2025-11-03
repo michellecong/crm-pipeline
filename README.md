@@ -200,6 +200,18 @@ curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
     "provider": "perplexity"
   }'
 # Response includes generated products, personas, personas_with_mappings, sequences, and artifact file paths.
+
+# Generate baseline (single-shot generation for comparison)
+curl -X POST http://localhost:8000/api/v1/llm/baseline/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "generate_count": 5,
+    "use_llm_search": true,
+    "provider": "google"
+  }'
+# Generates all 4 outputs (products, personas, mappings, sequences) in ONE LLM call
+# Useful for baseline comparison with multi-stage pipeline
 ```
 
 ## Search Options
@@ -371,6 +383,66 @@ The system automatically loads previously generated data to streamline the workf
 📦 Loaded 5 products from: salesforce_products_2025-10-30.json
 👥 Loaded 3 personas from: salesforce_personas_2025-10-30.json
 ```
+
+## Baseline vs Multi-Stage Pipeline
+
+The system provides two approaches to generate all 4 outputs (products, personas, mappings, sequences):
+
+### **Multi-Stage Pipeline** (`/llm/pipeline/generate`)
+
+**Architecture**: 4 sequential LLM calls with inter-stage data flow
+- **Call 1**: Generate products from web content
+- **Call 2**: Generate personas using products + web content
+- **Call 3**: Generate mappings using personas + products
+- **Call 4**: Generate sequences using personas_with_mappings
+
+**Advantages**:
+- ✅ Personas receive actual products JSON for context
+- ✅ Mappings receive actual personas + products for context
+- ✅ Each stage can be optimized independently
+- ✅ Better quality through explicit information flow
+
+**Use Case**: Production deployment, best quality output
+
+### **Baseline** (`/llm/baseline/generate`)
+
+**Architecture**: 1 consolidated LLM call with integrated prompt
+- **Single Call**: Generate all 4 outputs simultaneously
+
+**Advantages**:
+- ✅ Faster execution (1 API call vs 4)
+- ✅ Lower latency
+- ✅ Simpler architecture
+
+**Use Case**: Evaluation, comparison, testing, quick prototypes
+
+**Comparison**:
+
+| Aspect | Multi-Stage Pipeline | Baseline |
+|--------|---------------------|----------|
+| **API Calls** | 4 sequential calls | 1 call |
+| **Prompts** | 4 separate detailed prompts | 1 consolidated prompt |
+| **Information Flow** | Personas receive actual products JSON | Personas reference products in context |
+| **Generation Time** | ~4x longer | Faster |
+| **Quality** | Higher (explicit data flow) | Baseline |
+| **Max Tokens** | 10K per stage | 20K total |
+
+### **When to Use Each**
+
+**Use Pipeline when**:
+- Quality is priority
+- Need explicit inter-stage information flow
+- Production environment
+- Resources allow for multiple calls
+
+**Use Baseline when**:
+- Testing or evaluating performance
+- Speed is important
+- Comparing approaches
+- Developing prototypes
+- Token cost is a concern
+
+**Note**: Both endpoints accept identical input parameters and return the same output schema for fair comparison.
 
 ## Outreach Sequences
 
@@ -557,6 +629,7 @@ Interactive docs: http://localhost:8000/docs
 | `/api/v1/llm/persona/generate` | POST | Generate buyer personas        |
 | `/api/v1/llm/mappings/generate` | POST | Generate pain-point to value-prop mappings |
 | `/api/v1/llm/pipeline/generate` | POST   | Run full pipeline (products → personas → mappings → sequences) |
+| `/api/v1/llm/baseline/generate` | POST   | Baseline single-shot generation (all 4 outputs in one call) |
 | `/api/v1/llm/test`          | GET    | Test LLM connectivity          |
 | `/api/v1/llm/config`        | GET    | Get LLM configuration          |
 | `/api/v1/llm/config`        | PATCH  | Update LLM configuration       |
@@ -576,6 +649,7 @@ All generated content is automatically saved to `data/generated/` with timestamp
 - **Personas**: `{company}_personas_{timestamp}.json`
 - **Mappings**: `{company}_mappings_{timestamp}.json`
 - **Outreach Sequences**: `{company}_outreach_{timestamp}.json`
+- **Baseline**: `{company}_baseline_{timestamp}.json` (all 4 outputs in one file)
 
 ### **Scraped Data Storage**
 
@@ -606,6 +680,12 @@ python tests/test_llm_connection.py
 ```bash
 # Run outreach tests
 python -m pytest tests/test_outreach.py -v
+```
+
+### Test Baseline Generation
+```bash
+# Run baseline tests
+python -m pytest tests/test_baseline.py -v
 ```
 
 ### Test All Services
@@ -825,6 +905,37 @@ curl -X POST http://localhost:8000/api/v1/outreach/generate \
 }
 ```
 
+### Test Baseline Generation
+
+#### Basic Baseline Generation
+```bash
+# Generate all outputs in single call (baseline)
+curl -X POST http://localhost:8000/api/v1/llm/baseline/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "generate_count": 5
+  }'
+```
+
+#### Expected Response Format
+```json
+{
+  "products": [...],
+  "personas": [...],
+  "personas_with_mappings": [...],
+  "sequences": [...],
+  "artifacts": {
+    "products_file": null,
+    "personas_file": null,
+    "mappings_file": null,
+    "sequences_file": "data/generated/salesforce_baseline_2025-10-30T12-00-00.json"
+  }
+}
+```
+
+**Note**: All 4 outputs are generated in ONE call and saved to a single file.
+
 ## Troubleshooting
 
 **SSL Certificate Error (macOS)**:
@@ -874,7 +985,8 @@ crm-pipeline/
 │   │   ├── product_generator.py    # Product catalog generation
 │   │   ├── persona_generator.py    # Buyer persona generation
 │   │   ├── mapping_generator.py    # Pain-point to value-prop mapping generation
-│   │   └── outreach_generator.py   # Outreach sequence generation
+│   │   ├── outreach_generator.py   # Outreach sequence generation
+│   │   └── baseline_generator.py   # Baseline single-shot generation
 │   ├── services/                    # Business logic
 │   │   ├── llm_web_search_service.py  # LLM-powered web search
 │   │   ├── search_service.py       # Traditional search (Google/Perplexity)
@@ -888,6 +1000,7 @@ crm-pipeline/
 │       ├── mapping_schemas.py      # Mapping schemas
 │       ├── outreach_schemas.py     # Outreach sequence schemas
 │       ├── pipeline_schemas.py     # Full pipeline schemas
+│       ├── baseline_schemas.py     # Baseline generation schemas
 │       └── crm_schemas.py          # CRM data schemas
 ├── data/
 │   ├── scraped/                     # Saved scraped data
@@ -898,6 +1011,7 @@ crm-pipeline/
 │   ├── test_crm_service.py         # CRM service tests
 │   ├── test_llm_mock.py            # LLM mock tests
 │   ├── test_outreach.py            # Outreach generation tests
+│   ├── test_baseline.py            # Baseline generation tests
 │   └── conftest.py                 # Shared test fixtures
 ├── test_llm_web_search.py          # LLM web search test script
 ├── requirements.txt                 # Dependencies

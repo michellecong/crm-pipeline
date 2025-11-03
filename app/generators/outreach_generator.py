@@ -80,7 +80,7 @@ You understand that modern sales requires providing value before asking for anyt
         return f"""Create {len(personas_with_mappings)} B2B outreach sequences.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 CRITICAL RULES (MUST FOLLOW)
+CRITICAL RULES (MUST FOLLOW)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. Generate EXACTLY {len(personas_with_mappings)} sequences (one per persona)
@@ -91,7 +91,7 @@ You understand that modern sales requires providing value before asking for anyt
 6. Reference SPECIFIC pain points from persona mappings (not generic)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 OUTPUT STRUCTURE
+OUTPUT STRUCTURE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 {{
@@ -118,7 +118,7 @@ You understand that modern sales requires providing value before asking for anyt
 }}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚡ SEQUENCE STRATEGY BY TIER
+SEQUENCE STRATEGY BY TIER
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 tier_1 (Enterprise): 5-6 touches, 14-21 days
@@ -137,7 +137,7 @@ tier_3 (SMB): 4 touches, 10 days
   - Phone touch at 4
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ GOOD vs ❌ BAD EXAMPLES
+GOOD vs BAD EXAMPLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 SUBJECT LINES:
@@ -165,7 +165,7 @@ TOUCH 1 EXAMPLE (for reference):
 }}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 PERSONAS
+PERSONAS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {personas_section}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -178,17 +178,17 @@ TOUCH STRUCTURE TEMPLATE:
 - Touch 5-6 (Optional): New angle or breakup email
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚨 OUTPUT REQUIREMENTS
+OUTPUT REQUIREMENTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 CRITICAL: Return ONLY raw JSON. No markdown, no ```json blocks, no explanations.
 
-❌ WRONG:
+WRONG:
 ```json
 {{"sequences": [...]}}
 ```
 
-✅ CORRECT:
+CORRECT:
 {{"sequences": [...]}}
 
 Your response must start with {{ and end with }}
