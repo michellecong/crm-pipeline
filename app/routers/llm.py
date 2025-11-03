@@ -23,12 +23,17 @@ from ..schemas.mapping_schemas import (
 )
 from ..schemas.pipeline_schemas import (
     PipelineGenerateRequest,
-    PipelineGenerateResponse
+    PipelineGenerateResponse,
+    PipelineArtifacts
 )
 from ..schemas.outreach_schemas import (
     OutreachGenerateRequest,
     OutreachGenerationResponse,
     OutreachSequence
+)
+from ..schemas.baseline_schemas import (
+    BaselineGenerateRequest,
+    BaselineGenerateResponse
 )
 from ..services.llm_service import get_llm_service
 from ..services.generator_service import get_generator_service
@@ -452,6 +457,66 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"[Pipeline] Failed: {str(e)}", exc_info=True)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post(
+    "/llm/baseline/generate",
+    response_model=BaselineGenerateResponse,
+    summary="Baseline: Single-shot generation of all outputs",
+    description="Generate products, personas, mappings, and sequences in ONE LLM call (baseline comparison)"
+)
+async def generate_baseline(request: BaselineGenerateRequest):
+    """
+    Baseline single-shot generation for comparison with multi-stage pipeline.
+    Generates all 4 outputs in one LLM call without inter-stage information flow.
+    """
+    try:
+        logger.info(f"[Baseline] Starting for company: {request.company_name}")
+        generator_service = get_generator_service()
+        
+        # Common search kwargs passed through to DataAggregator
+        extra_search_kwargs = {
+            "use_llm_search": getattr(request, "use_llm_search", None),
+            "provider": getattr(request, "provider", None)
+        }
+        extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+        
+        # Prepare kwargs (aligned with pipeline)
+        generator_kwargs = {
+            "generate_count": request.generate_count
+        }
+        generator_kwargs.update(extra_search_kwargs)
+        
+        # Single generation call
+        result = await generator_service.generate(
+            generator_type="baseline",
+            company_name=request.company_name,
+            **generator_kwargs
+        )
+        
+        if not result.get("success"):
+            raise ValueError("Baseline generation failed")
+        
+        data = result["result"]
+        
+        # Build typed response
+        response = BaselineGenerateResponse(
+            products=[Product(**p) for p in data.get("products", [])],
+            personas=[BuyerPersona(**p) for p in data.get("personas", [])],
+            personas_with_mappings=[PersonaWithMappings(**pm) for pm in data.get("personas_with_mappings", [])],
+            sequences=[OutreachSequence(**s) for s in data.get("sequences", [])] if data.get("sequences") else None,
+            artifacts=PipelineArtifacts(sequences_file=result.get("saved_filepath"))
+        )
+        
+        logger.info(f"[Baseline] Generated: {len(response.products)} products, {len(response.personas)} personas")
+        return response
+        
+    except ValueError as e:
+        logger.error(f"[Baseline] Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"[Baseline] Failed: {str(e)}", exc_info=True)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
