@@ -568,3 +568,70 @@ async def generate_outreach_sequences(request: OutreachGenerateRequest):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Outreach generation failed: {str(e)}"
         )
+
+
+@router.post(
+    "/personas/evaluate",
+    response_model=PersonaEvaluationResponse,
+    summary="Evaluate persona diversity and quality",
+    description="Evaluate a set of personas using semantic diversity (embedding cosine distance), industry diversity, geographic diversity, and other quality metrics"
+)
+async def evaluate_personas(request: PersonaEvaluationRequest):
+    """
+    Evaluate personas for diversity and quality.
+    
+    Key Metrics:
+    - **Semantic Diversity (Metric 3)**: Uses embedding cosine distance to measure
+      semantic similarity between personas. Higher diversity = lower similarity.
+    - Industry Diversity: Count of unique industries
+    - Geographic Diversity: Count of unique locations
+    - Size Diversity: Coverage of company size ranges
+    - Tier Distribution: Balance across tier_1, tier_2, tier_3
+    - Completeness: Field completeness check
+    
+    Returns comprehensive evaluation with scores and recommendations.
+    """
+    try:
+        logger.info(f"Evaluating {len(request.personas)} personas")
+        
+        evaluator = get_persona_evaluator()
+        evaluation_result = evaluator.evaluate_personas(request.personas)
+        
+        # Check for errors
+        if "error" in evaluation_result:
+            raise ValueError(evaluation_result["error"])
+        
+        # Build response - convert nested dicts to Pydantic models
+        from ..schemas.evaluation_schemas import (
+            DiversityMetrics, IndustryDiversity, GeographicDiversity,
+            SizeDiversity, TierDistribution, Completeness
+        )
+        
+        response = PersonaEvaluationResponse(
+            persona_count=evaluation_result["persona_count"],
+            overall_score=evaluation_result["overall_score"],
+            semantic_diversity=DiversityMetrics(**evaluation_result["semantic_diversity"]),
+            industry_diversity=IndustryDiversity(**evaluation_result["industry_diversity"]),
+            geographic_diversity=GeographicDiversity(**evaluation_result["geographic_diversity"]),
+            size_diversity=SizeDiversity(**evaluation_result["size_diversity"]),
+            tier_distribution=TierDistribution(**evaluation_result["tier_distribution"]),
+            completeness=Completeness(**evaluation_result["completeness"]),
+            recommendations=evaluation_result["recommendations"]
+        )
+        
+        logger.info(
+            f"Evaluation complete: overall_score={response.overall_score:.3f}, "
+            f"semantic_diversity={response.semantic_diversity.diversity_score:.3f}"
+        )
+        
+        return response
+        
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"Persona evaluation failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Evaluation failed: {str(e)}"
+        )
