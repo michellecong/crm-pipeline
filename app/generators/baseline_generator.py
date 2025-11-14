@@ -76,14 +76,21 @@ Generate ALL four components in a single response:
 PART 1: PRODUCTS GENERATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Extract ALL products and services from the web content.
+Extract CORE COMMERCIAL PRODUCTS from the web content.
 
 **Requirements:**
 - Use official product names from website
 - 2-4 sentence descriptions (150-300 characters)
 - Focus on value propositions and use cases (not technical specs)
 - Structure: What it does → Who it helps → Key benefits
-- Include all distinct product lines and offerings
+- Include distinct purchasable product lines
+
+**Exclude:**
+- Developer tools (APIs, SDKs, frameworks)
+- Marketplaces and app stores
+- Professional services
+- Built-in features and tools
+- Pricing bundles and packages
 
 **Example Product:**
 {{
@@ -248,11 +255,12 @@ CRITICAL REMINDERS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. Generate all 4 parts in ONE response
-2. Personas should be based on products from Part 1
-3. Mappings should reference products by name
-4. Sequences should reference mappings from Part 3
-5. Follow all format requirements (lengths, required fields)
-6. Return ONLY valid JSON (no markdown, no ```json blocks)
+2. Extract ONLY core commercial products (exclude APIs, SDKs, marketplaces, services, developer tools)
+3. Personas should be based on products from Part 1
+4. Mappings should reference products by name
+5. Sequences should reference mappings from Part 3
+6. Follow all format requirements (lengths, required fields)
+7. Return ONLY valid JSON (no markdown, no ```json blocks)
 
 Generate now."""
     

@@ -21,32 +21,33 @@ class ProductGenerator(BaseGenerator):
     def get_system_message(self) -> str:
         return """You are an expert B2B product marketing analyst specializing in product positioning and value proposition development.
 
-Your task is to analyze a seller company's web content and extract their complete product catalog with clear, buyer-focused descriptions.
+Your task is to analyze a seller company's web content and extract their CORE COMMERCIAL PRODUCTS with clear, buyer-focused descriptions.
 
 Your analysis should:
-- Identify ALL distinct products/services offered by the company
+- Identify distinct core products that customers purchase
+- Focus on standalone commercial offerings with dedicated pricing
 - Write compelling descriptions that explain value and use cases
 - Use buyer-friendly language (not technical jargon)
-- Capture what makes each product valuable to customers
-- Include both major products and specialized offerings
+- Exclude developer tools, APIs, marketplaces, services, and built-in features
 """
 
     def build_prompt(self, company_name: str, context: str, **kwargs) -> str:
         
         return f"""## TASK
 
-Analyze the seller company's web content and extract their complete product catalog.
+Analyze the seller company's web content and extract their CORE COMMERCIAL PRODUCT CATALOG.
 
-Generate ALL products and services with clear, buyer-focused descriptions.
+Generate purchasable core products with clear, buyer-focused descriptions. Exclude APIs, developer tools, marketplaces, services, and built-in features.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CRITICAL REQUIREMENTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. **Product Count**: Extract ALL products and services
-   - Include all distinct product lines and offerings
-   - Include both major products and specialized solutions
-   - Each product should be distinct and separately marketed
+1. **Product Focus**: Extract ONLY core commercial products
+   - Include distinct product lines that customers purchase
+   - Focus on standalone offerings with dedicated pricing
+   - Exclude APIs, SDKs, marketplaces, services, developer tools, and built-in features
+   - Each product should be purchasable independently
 
 2. **Product Naming**: Use official product names from the website
    - ✓ "Sales Cloud" (official name)
@@ -118,6 +119,57 @@ PRODUCT IDENTIFICATION STRATEGY
 (These are pricing tiers, not separate products)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXCLUSION CRITERIA: CORE PRODUCTS ONLY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Focus ONLY on core commercial products that customers purchase.**
+
+**DO NOT include:**
+
+1. **Developer Tools & Technical Infrastructure**
+   ✗ APIs, SDKs, libraries, frameworks, developer tools
+   ✗ Examples: "REST API", "GraphQL API", "React SDK", "Hydrogen Framework", "Developer Tools"
+   
+2. **Marketplaces & Ecosystems**
+   ✗ App stores, marketplaces, partner programs
+   ✗ Examples: "App Marketplace", "Partner Program", "App Store"
+   
+3. **Professional Services**
+   ✗ Consulting, training, support services, customer success programs
+   ✗ Examples: "Professional Services", "Training Services", "Enterprise Support"
+   
+4. **Built-in Features/Tools**
+   ✗ Features that are part of a product, not standalone offerings
+   ✗ Examples: "Refunds", "Shipping Calculator", "Admin Dashboard", "Permissions Management"
+   
+5. **Pricing Bundles & Packages**
+   ✗ Bundled offerings or starter packages combining multiple products
+   ✗ Examples: "Starter Bundle", "Small Business Package", "Enterprise Suite"
+
+**Test: Is this a core product?**
+Ask these questions:
+- ✓ Does it have a dedicated product page with pricing?
+- ✓ Can customers purchase it independently?
+- ✓ Does it solve a specific business problem?
+- ✓ Would sales teams pitch it as a standalone solution?
+
+If the answer to any is NO, exclude it.
+
+**Examples of Correct Filtering:**
+
+✓ INCLUDE:
+- "Stripe Payments" (core product customers buy)
+- "HubSpot Marketing Hub" (standalone purchasable product)
+- "Shopify POS" (distinct hardware + software product)
+
+✗ EXCLUDE:
+- "Stripe API" (developer tool, not a product)
+- "HubSpot App Marketplace" (ecosystem, not a product)
+- "Shopify Shipping" (built-in feature, not standalone product)
+- "Professional Services" (service offering, not a product)
+- "Developer Tools" (technical infrastructure, not for end customers)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT JSON SCHEMA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -164,12 +216,14 @@ QUALITY CHECKLIST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Before submitting, verify:
-✓ ALL products extracted from website content
+✓ ONLY core commercial products included (no APIs, SDKs, marketplaces, services)
+✓ Each product is purchasable independently with dedicated pricing
 ✓ Official product names used (from website)
 ✓ Each description is 2-4 sentences (150-300 characters)
 ✓ Descriptions focus on value and use cases (not features)
 ✓ Buyer-friendly language (no technical jargon)
-✓ Each product is distinct (not pricing tiers or add-ons)
+✓ Each product is distinct (not pricing tiers, bundles, or add-ons)
+✓ No developer tools, services, or built-in features included
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NOW GENERATE
@@ -186,11 +240,13 @@ Company Name: {company_name}
 Analyze the web content above and generate the complete product catalog.
 
 CRITICAL REMINDERS:
-- Extract ALL products and services found in the content
+- Extract ONLY core commercial products (exclude APIs, SDKs, marketplaces, services, developer tools, features)
+- Focus on standalone purchasable products with dedicated pricing
 - Use official product names from the website
 - Write 2-4 sentence descriptions focused on VALUE and USE CASES
 - Use buyer-friendly language (avoid technical jargon)
-- Each product must be DISTINCT (not pricing tiers)
+- Each product must be DISTINCT (not pricing tiers or bundles)
+- Apply the exclusion criteria rigorously
 
 Return ONLY valid JSON matching the schema above.
 """
