@@ -27,8 +27,6 @@ Examples:
 
     def build_prompt(self, company_name: str, context: str, **kwargs) -> str:
         
-        generate_count = kwargs.get('generate_count', 5)
-        
         products = kwargs.get('products', [])
         crm_data = kwargs.get('crm_data', '')
         
@@ -91,11 +89,17 @@ CRITICAL REQUIREMENTS
    - tier_2: 40-50% (solid opportunities)
    - tier_3: 10-20% (opportunistic)
 
-5. **target_decision_makers**: 10-30+ industry-appropriate titles from master list
+5. **job_titles**: 10-30+ industry-appropriate target titles from master list
    - Match titles to how that industry actually buys
    - Retail → Marketing/Commerce leaders (NOT Sales VPs)
    - Healthcare → Revenue Cycle/Clinical leaders (NOT Enablement)
    - Manufacturing → Operations/Sales Ops (NOT Enablement/SDR)
+
+6. **excluded_job_titles**: 3-10+ titles to AVOID for this persona
+   - Helps sales teams filter out irrelevant contacts
+   - Include roles outside decision-making authority
+   - Include functions not aligned with product value
+   - Examples: HR roles for sales tech, IT roles for marketing tools
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PERSONA FIELDS
@@ -107,9 +111,16 @@ PERSONA FIELDS
 - Consider: deal size, product fit, sales cycle, accessibility, volume
 - Balance distribution across tiers
 
-**target_decision_makers** (array): 10-30+ job titles from master list below
+**job_titles** (array): 10-30+ target job titles from master list below
 - Include ALL title variations for matching coverage
 - Order by seniority: C-level → VP → Director → Manager
+- These are the PRIMARY targets for this persona
+
+**excluded_job_titles** (array): 3-10+ titles to AVOID for this persona
+- Roles outside decision-making authority for this product
+- Functions not aligned with product value (e.g., HR for sales tools)
+- Common false positives that waste sales time
+- Helps qualify leads and avoid dead ends
 
 **industry** (string): Single focused vertical (no combinations)
 
@@ -295,12 +306,23 @@ Logistics                  | Sales, Operations                 | Enablement, Mar
 - Mid-Market (200-800): 30% ATL, 70% BTL
 - Small (50-200): 10% ATL, 90% BTL
 
-**Title Selection Guidelines:**
+**Target Title Selection Guidelines (job_titles):**
 1. Include ALL variations: "VP of Sales", "Vice President of Sales", "Vice President Sales", "VP Sales"
 2. Include geographic variants: "Global Head", "Regional VP", "VP Americas"
 3. Include functional variants: "VP Enterprise Sales", "VP Commercial Sales"
 4. Typical count: 10-15 titles (Small), 15-22 (Mid-Market), 18-25 (Large), 20-27 (Enterprise)
 5. Order by seniority within the array
+
+**Excluded Title Selection Guidelines (excluded_job_titles):**
+1. Identify functions outside decision authority (e.g., HR, Legal, Finance for sales tools)
+2. Include adjacent roles that don't fit (e.g., Marketing for pure sales CRM, IT for business tools)
+3. List junior roles without budget authority (e.g., Coordinators, Assistants, Analysts, Specialists)
+4. Add technical roles for business products (e.g., Software Engineers, DevOps for non-developer tools)
+5. Common exclusions by product type:
+   - Sales/Revenue tools: HR, Legal, Marketing Ops, Product Managers, Engineers
+   - Marketing tools: Sales Ops, IT Directors, Finance, Legal
+   - Operations tools: Marketing, Sales Development, HR
+6. Typical count: 3-10 exclusions per persona
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT JSON SCHEMA
@@ -311,7 +333,8 @@ OUTPUT JSON SCHEMA
     {{
       "persona_name": "string (max 60 chars)",
       "tier": "tier_1 | tier_2 | tier_3",
-      "target_decision_makers": ["array", "of", "title", "strings"],
+      "job_titles": ["array", "of", "target", "title", "strings"],
+      "excluded_job_titles": ["array", "of", "titles", "to", "avoid"],
       "industry": "string (single vertical)",
       "company_size_range": "string (use standard thresholds: 50, 200, 500, 1000, 2000, 5000, 10000)",
       "company_type": "string",
@@ -331,13 +354,20 @@ EXAMPLE OUTPUT
     {{
       "persona_name": "CA Enterprise SaaS - Revenue Leaders",
       "tier": "tier_1",
-      "target_decision_makers": [
+      "job_titles": [
         "CRO", "Chief Revenue Officer", "Chief Sales Officer", "CSO",
         "VP of Sales", "Vice President of Sales", "Vice President Sales", "VP Sales", "SVP Sales",
         "VP Sales Enablement", "Vice President Sales Enablement", "VP of Sales Enablement",
         "Head of Sales Enablement", "Global Head of Sales Enablement",
         "VP Revenue Operations", "Vice President Revenue Operations", "VP of Revenue Operations", "VP RevOps",
         "Head of Revenue Operations", "VP GTM Operations"
+      ],
+      "excluded_job_titles": [
+        "VP of Marketing", "CMO", "Chief Marketing Officer",
+        "VP Product", "Chief Product Officer", "CPO",
+        "VP Engineering", "CTO", "Chief Technology Officer",
+        "Director of HR", "VP People", "Chief People Officer",
+        "Sales Coordinator", "Sales Operations Analyst"
       ],
       "industry": "B2B SaaS Platforms",
       "company_size_range": "2000-10000 employees",
@@ -348,12 +378,19 @@ EXAMPLE OUTPUT
     {{
       "persona_name": "UK Mid-Market Professional Services - Sales Directors",
       "tier": "tier_2",
-      "target_decision_makers": [
+      "job_titles": [
         "Director of Sales", "Director Sales", "Senior Director Sales", "Sr Director Sales",
         "Director Business Development", "Director of Business Development",
         "Manager of Sales", "Sales Manager", "Senior Sales Manager",
         "Manager Sales Development", "Sales Development Manager",
         "Director of Marketing", "Director Marketing"
+      ],
+      "excluded_job_titles": [
+        "VP of Engineering", "CTO",
+        "Director of HR", "HR Manager",
+        "Finance Director", "CFO",
+        "Legal Counsel", "General Counsel",
+        "Sales Support Specialist", "Business Analyst"
       ],
       "industry": "Management Consulting",
       "company_size_range": "50-500 employees",
@@ -364,12 +401,19 @@ EXAMPLE OUTPUT
     {{
       "persona_name": "DACH Large Manufacturing - Operations Leaders",
       "tier": "tier_1",
-      "target_decision_makers": [
+      "job_titles": [
         "VP of Sales", "Vice President of Sales", "VP Sales",
         "VP of Operations", "Vice President of Operations", "VP Operations",
         "Director of Sales", "Senior Director Sales", "Sales Director",
         "Director of Operations", "Senior Director Operations",
         "VP Revenue Operations", "Director Sales Operations"
+      ],
+      "excluded_job_titles": [
+        "VP Marketing", "CMO",
+        "Director of HR", "VP People",
+        "Software Engineer", "Engineering Manager",
+        "Product Manager", "Product Marketing Manager",
+        "Sales Support Coordinator", "Operations Analyst"
       ],
       "industry": "Manufacturing - Industrial Equipment",
       "company_size_range": "1000-5000 employees",
@@ -389,12 +433,14 @@ Before submitting, verify:
 ✓ persona_name ≤ 60 characters (count them!)
 ✓ industry is single vertical (not combined)
 ✓ Tier distribution balanced: tier_1 (30-40%), tier_2 (40-50%), tier_3 (10-20%)
-✓ target_decision_makers has 10-30+ titles matching industry
+✓ job_titles has 10-30+ titles matching industry buying patterns
+✓ excluded_job_titles has 3-10+ titles to avoid for this persona
 ✓ description includes all 4 metrics: team size, deal size, sales cycle, stakeholders
 ✓ company_size_range uses standard thresholds (50, 200, 500, 1000, 2000, 5000, 10000)
 ✓ company_size_range width matches buying behavior similarity (narrow for distinct, wide for similar)
 ✓ location uses appropriate geographic precision based on data (state/country/region/global)
-✓ Titles ordered by seniority (C-level → VP → Director → Manager)
+✓ job_titles ordered by seniority (C-level → VP → Director → Manager)
+✓ excluded_job_titles includes roles outside decision authority and unrelated functions
 ✓ Each persona differs in 2+ dimensions (industry, size, geography, function)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -420,7 +466,8 @@ CRITICAL:
 - ONE industry per persona
 - ALL 4 metrics in description
 - Balanced tier distribution
-- Industry-appropriate job titles
+- job_titles: 10-30+ industry-appropriate target titles
+- excluded_job_titles: 3-10+ titles to AVOID (roles outside decision authority)
 - company_size_range uses standard thresholds (narrow or wide based on buying behavior)
 - location precision based on available data (specific to general)
 
@@ -457,7 +504,8 @@ Return ONLY valid JSON.
         required_fields = [
             "persona_name",
             "tier", 
-            "target_decision_makers",
+            "job_titles",
+            "excluded_job_titles",
             "industry",
             "company_size_range",
             "company_type",
@@ -472,26 +520,47 @@ Return ONLY valid JSON.
         if persona["tier"] not in ["tier_1", "tier_2", "tier_3"]:
             raise ValueError(f"Persona {index} has invalid tier: {persona['tier']}")
         
-        if not isinstance(persona["target_decision_makers"], list):
+        # Validate job_titles
+        if not isinstance(persona["job_titles"], list):
             raise ValueError(
-                f"Persona {index}: target_decision_makers must be an array, "
-                f"got {type(persona['target_decision_makers'])}"
+                f"Persona {index}: job_titles must be an array, "
+                f"got {type(persona['job_titles'])}"
             )
         
-        if len(persona["target_decision_makers"]) == 0:
-            raise ValueError(f"Persona {index}: target_decision_makers cannot be empty")
+        if len(persona["job_titles"]) == 0:
+            raise ValueError(f"Persona {index}: job_titles cannot be empty")
         
-        for title in persona["target_decision_makers"]:
+        for title in persona["job_titles"]:
             if not isinstance(title, str):
                 raise ValueError(
-                    f"Persona {index}: all titles must be strings, got {type(title)}"
+                    f"Persona {index}: all job titles must be strings, got {type(title)}"
                 )
         
-        if len(persona["target_decision_makers"]) < 10:
+        if len(persona["job_titles"]) < 10:
             logger.warning(
                 f"Persona {index} '{persona['persona_name']}' has only "
-                f"{len(persona['target_decision_makers'])} titles. "
+                f"{len(persona['job_titles'])} job titles. "
                 f"Recommend 10-30+ for better matching coverage."
+            )
+        
+        # Validate excluded_job_titles
+        if not isinstance(persona["excluded_job_titles"], list):
+            raise ValueError(
+                f"Persona {index}: excluded_job_titles must be an array, "
+                f"got {type(persona['excluded_job_titles'])}"
+            )
+        
+        for title in persona["excluded_job_titles"]:
+            if not isinstance(title, str):
+                raise ValueError(
+                    f"Persona {index}: all excluded titles must be strings, got {type(title)}"
+                )
+        
+        if len(persona["excluded_job_titles"]) < 3:
+            logger.warning(
+                f"Persona {index} '{persona['persona_name']}' has only "
+                f"{len(persona['excluded_job_titles'])} excluded titles. "
+                f"Recommend 3-10+ for better lead qualification."
             )
         
         if not persona["persona_name"] or len(persona["persona_name"]) < 10:
@@ -499,7 +568,7 @@ Return ONLY valid JSON.
         
         logger.debug(
             f"Persona {index} validated: '{persona['persona_name']}' "
-            f"with {len(persona['target_decision_makers'])} titles"
+            f"with {len(persona['job_titles'])} job titles and {len(persona['excluded_job_titles'])} excluded titles"
         )
     
     def parse_response(self, response: str) -> Dict:
@@ -540,7 +609,7 @@ Return ONLY valid JSON.
                 
                 # Validate required fields
                 required_fields = [
-                    "persona_name", "tier", "target_decision_makers",
+                    "persona_name", "tier", "job_titles", "excluded_job_titles",
                     "industry", "company_size_range", "company_type",
                     "location", "description"
                 ]
@@ -553,24 +622,41 @@ Return ONLY valid JSON.
                 if persona["tier"] not in ["tier_1", "tier_2", "tier_3"]:
                     raise ValueError(f"Persona {i} invalid tier: {persona['tier']}")
                 
-                # Validate target_decision_makers is array
-                if not isinstance(persona["target_decision_makers"], list):
-                    raise ValueError(f"Persona {i}: target_decision_makers must be an array, got {type(persona['target_decision_makers'])}")
+                # Validate job_titles is array
+                if not isinstance(persona["job_titles"], list):
+                    raise ValueError(f"Persona {i}: job_titles must be an array, got {type(persona['job_titles'])}")
                 
-                if len(persona["target_decision_makers"]) == 0:
-                    raise ValueError(f"Persona {i}: target_decision_makers array is empty")
+                if len(persona["job_titles"]) == 0:
+                    raise ValueError(f"Persona {i}: job_titles array is empty")
                 
                 # Validate all titles are strings
-                for title in persona["target_decision_makers"]:
+                for title in persona["job_titles"]:
                     if not isinstance(title, str):
-                        raise ValueError(f"Persona {i}: all titles must be strings, got {type(title)}")
+                        raise ValueError(f"Persona {i}: all job titles must be strings, got {type(title)}")
                 
                 # Warning if too few titles
-                if len(persona["target_decision_makers"]) < 10:
+                if len(persona["job_titles"]) < 10:
                     logger.warning(
                         f"Persona {i} '{persona['persona_name']}' has only "
-                        f"{len(persona['target_decision_makers'])} titles. "
+                        f"{len(persona['job_titles'])} job titles. "
                         f"Recommend 10-30+ for better matching coverage."
+                    )
+                
+                # Validate excluded_job_titles is array
+                if not isinstance(persona["excluded_job_titles"], list):
+                    raise ValueError(f"Persona {i}: excluded_job_titles must be an array, got {type(persona['excluded_job_titles'])}")
+                
+                # Validate all excluded titles are strings
+                for title in persona["excluded_job_titles"]:
+                    if not isinstance(title, str):
+                        raise ValueError(f"Persona {i}: all excluded titles must be strings, got {type(title)}")
+                
+                # Warning if too few excluded titles
+                if len(persona["excluded_job_titles"]) < 3:
+                    logger.warning(
+                        f"Persona {i} '{persona['persona_name']}' has only "
+                        f"{len(persona['excluded_job_titles'])} excluded titles. "
+                        f"Recommend 3-10+ for better lead qualification."
                     )
                 
                 # Validate description length
@@ -579,7 +665,7 @@ Return ONLY valid JSON.
                 
                 logger.info(
                     f"Persona {i} validated: '{persona['persona_name']}' "
-                    f"({persona['tier']}, {len(persona['target_decision_makers'])} titles)"
+                    f"({persona['tier']}, {len(persona['job_titles'])} job titles, {len(persona['excluded_job_titles'])} excluded)"
                 )
             
             logger.info(f"Successfully validated {len(personas)} buyer personas")

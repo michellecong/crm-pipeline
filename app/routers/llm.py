@@ -42,6 +42,7 @@ from ..schemas.evaluation_schemas import (
 )
 from ..services.llm_service import get_llm_service
 from ..services.generator_service import get_generator_service
+from ..services.persona_evaluator import get_persona_evaluator
 import logging
 
 logger = logging.getLogger(__name__)
@@ -209,7 +210,7 @@ async def generate_buyer_personas(request: PersonaGenerateRequest):
         for i, persona in enumerate(response.personas):
             logger.info(
                 f"  Persona {i+1}: '{persona.persona_name}' "
-                f"({persona.tier.value}, {len(persona.target_decision_makers)} titles)"
+                f"({persona.tier.value}, {len(persona.job_titles)} titles)"
             )
         
         return response

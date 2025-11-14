@@ -181,7 +181,8 @@ class OutreachGenerateRequest(BaseModel):
                 "personas_with_mappings": [
                     {
                         "persona_name": "VP Engineering",
-                        "target_decision_makers": ["VP Engineering", "Engineering Director"],
+                        "job_titles": ["VP Engineering", "Engineering Director", "Director of Engineering"],
+                        "excluded_job_titles": ["HR Manager", "IT Support"],
                         "industry": "SaaS",
                         "company_size_range": "200-800 employees",
                         "tier": "tier_1",

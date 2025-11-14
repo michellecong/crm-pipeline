@@ -194,7 +194,7 @@ class PersonaEvaluator:
         - company_size_range
         - company_type
         - description (full)
-        - target_decision_makers (first 5 for brevity)
+        - job_titles (first 5 for brevity)
         """
         parts = []
         
@@ -210,9 +210,9 @@ class PersonaEvaluator:
         parts.append(f"Company Type: {persona.get('company_type', '')}")
         
         # Decision makers (sample)
-        decision_makers = persona.get('target_decision_makers', [])
-        if decision_makers:
-            sample = decision_makers[:5]  # First 5 for context
+        job_titles = persona.get('job_titles', [])
+        if job_titles:
+            sample = job_titles[:5]  # First 5 for context
             parts.append(f"Target Roles: {', '.join(sample)}")
         
         # Full description (most important for semantic meaning)
@@ -317,7 +317,7 @@ class PersonaEvaluator:
     def _calculate_completeness(self, personas: List[Dict]) -> Dict:
         """Calculate field completeness metrics."""
         required_fields = [
-            'persona_name', 'tier', 'target_decision_makers',
+            'persona_name', 'tier', 'job_titles', 'excluded_job_titles',
             'industry', 'company_size_range', 'company_type',
             'location', 'description'
         ]

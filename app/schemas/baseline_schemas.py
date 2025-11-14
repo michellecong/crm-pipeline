@@ -63,7 +63,8 @@ class BaselineGenerateResponse(BaseModel):
                     {
                         "persona_name": "US Enterprise SaaS - Revenue Leaders",
                         "tier": "tier_1",
-                        "target_decision_makers": ["CRO", "VP Sales"],
+                        "job_titles": ["CRO", "VP Sales", "Chief Revenue Officer", "VP of Sales"],
+                        "excluded_job_titles": ["HR Manager", "IT Director", "Customer Support Manager"],
                         "industry": "B2B SaaS",
                         "company_size_range": "2000-10000",
                         "company_type": "Large enterprise SaaS",

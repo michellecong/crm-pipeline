@@ -32,10 +32,16 @@ class BuyerPersona(BaseModel):
         description="Strategic priority tier"
     )
     
-    target_decision_makers: List[str] = Field(
+    job_titles: List[str] = Field(
         ...,
-        description="Array of job titles (10-30+ variations)",
+        description="Array of target job titles (10-30+ variations)",
         min_length=5
+    )
+    
+    excluded_job_titles: List[str] = Field(
+        ...,
+        description="Array of job titles to avoid (3-10+ roles not relevant to this persona)",
+        min_length=1
     )
     
     industry: str = Field(..., description="Industry vertical")
@@ -44,18 +50,30 @@ class BuyerPersona(BaseModel):
     location: str = Field(..., description="US state/region")
     description: str = Field(..., description="3-4 sentences", min_length=100)
     
-    @field_validator('target_decision_makers')
+    @field_validator('job_titles')
     @classmethod
-    def validate_titles_array(cls, v):
+    def validate_job_titles_array(cls, v):
         if not isinstance(v, list):
-            raise ValueError("target_decision_makers must be an array")
+            raise ValueError("job_titles must be an array")
         if len(v) == 0:
-            raise ValueError("target_decision_makers cannot be empty")
+            raise ValueError("job_titles cannot be empty")
         for title in v:
             if not isinstance(title, str):
-                raise ValueError(f"All titles must be strings, got {type(title)}")
-        if len(v) < 5:
-            logger.warning(f"Only {len(v)} titles. Recommend 10-30+")
+                raise ValueError(f"All job titles must be strings, got {type(title)}")
+        if len(v) < 10:
+            logger.warning(f"Only {len(v)} job titles. Recommend 10-30+ for better coverage")
+        return v
+    
+    @field_validator('excluded_job_titles')
+    @classmethod
+    def validate_excluded_titles_array(cls, v):
+        if not isinstance(v, list):
+            raise ValueError("excluded_job_titles must be an array")
+        for title in v:
+            if not isinstance(title, str):
+                raise ValueError(f"All excluded titles must be strings, got {type(title)}")
+        if len(v) < 3:
+            logger.warning(f"Only {len(v)} excluded titles. Recommend 3-10+ for better lead qualification")
         return v
     
     @field_validator('persona_name')
@@ -77,7 +95,8 @@ class BuyerPersona(BaseModel):
             "example": {
                 "persona_name": "California Mid-Market SaaS - Sales Leaders",
                 "tier": "tier_1",
-                "target_decision_makers": ["CRO", "VP of Sales", "VP Sales"],
+                "job_titles": ["CRO", "VP of Sales", "VP Sales", "Chief Revenue Officer", "Sales Director"],
+                "excluded_job_titles": ["HR Manager", "IT Director", "Customer Support Manager"],
                 "industry": "SaaS & Cloud Software",
                 "company_size_range": "200-800 employees",
                 "company_type": "B2B SaaS companies",
@@ -106,7 +125,8 @@ class PersonaGenerationResponse(BaseModel):
                 "personas": [{
                     "persona_name": "California Mid-Market SaaS - Sales Leaders",
                     "tier": "tier_1",
-                    "target_decision_makers": ["CRO", "VP Sales"],
+                    "job_titles": ["CRO", "VP Sales", "Chief Revenue Officer"],
+                    "excluded_job_titles": ["HR Manager", "IT Director"],
                     "industry": "SaaS",
                     "company_size_range": "200-800 employees",
                     "company_type": "B2B SaaS",
@@ -141,13 +161,7 @@ class PersonaGenerateRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "company_name": "Salesforce",
-                "generate_count": 5,
-                "products": [
-                    {
-                        "product_name": "Sales Cloud",
-                        "description": "Complete CRM platform for managing sales pipelines..."
-                    }
-                ]
+                "generate_count": 5
             }
         }
 
@@ -158,7 +172,8 @@ class PersonaCreate(BaseModel):
     pack_id: int
     persona_name: str
     tier: PersonaTier
-    target_decision_makers: List[str]
+    job_titles: List[str]
+    excluded_job_titles: List[str]
     industry: str
     company_size_range: str
     company_type: str
@@ -173,7 +188,8 @@ class PersonaDB(BaseModel):
     pack_id: int
     persona_name: str
     tier: PersonaTier
-    target_decision_makers: List[str]
+    job_titles: List[str]
+    excluded_job_titles: List[str]
     industry: str
     company_size_range: str
     company_type: str
@@ -181,9 +197,21 @@ class PersonaDB(BaseModel):
     description: str
     created_at: datetime
     
-    @field_validator('target_decision_makers', mode='before')
+    @field_validator('job_titles', mode='before')
     @classmethod
-    def parse_titles_from_db(cls, v):
+    def parse_job_titles_from_db(cls, v):
+        """Parse from JSON string if needed"""
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return [t.strip() for t in v.split(',')]
+        return v
+    
+    @field_validator('excluded_job_titles', mode='before')
+    @classmethod
+    def parse_excluded_titles_from_db(cls, v):
         """Parse from JSON string if needed"""
         if isinstance(v, str):
             import json

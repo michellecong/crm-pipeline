@@ -109,13 +109,15 @@ Generate 3-8 buyer company personas (market segments) based on the products abov
 **Requirements:**
 - persona_name: Max 60 chars, format "[Geography] [Size] [Industry] - [Function]"
 - tier: tier_1 (30-40%), tier_2 (40-50%), tier_3 (10-20%)
-- target_decision_makers: 10-30 job titles from this list:
+- job_titles: 10-30 TARGET job titles matching industry buying patterns
   * Sales: CRO, VP Sales, VP Revenue Operations, Director Sales
   * Enablement: VP Sales Enablement, Director Sales Enablement
   * Marketing: CMO, VP Marketing, Director Marketing
   * Healthcare: CAO, VP Revenue Cycle, Director Revenue Cycle
   * Retail: CMO, VP Digital Commerce, Director E-commerce
   * Financial: COO, VP Distribution, Director Sales Operations
+- excluded_job_titles: 3-10 titles to AVOID (roles outside decision authority)
+  * Examples: HR roles, Legal, Finance, junior roles, technical roles for business tools
 - industry: Single specific vertical
 - company_size_range: Use standard thresholds (50, 200, 500, 1000, 2000, 5000, 10000)
 - location: State/region/country/multi-country based on market
@@ -129,7 +131,8 @@ Generate 3-8 buyer company personas (market segments) based on the products abov
 {{
   "persona_name": "US Enterprise SaaS - Revenue Leaders",
   "tier": "tier_1",
-  "target_decision_makers": ["CRO", "VP Sales", "VP Revenue Operations", "Director Sales"],
+  "job_titles": ["CRO", "VP Sales", "VP Revenue Operations", "Director Sales", "VP Sales Enablement"],
+  "excluded_job_titles": ["VP Marketing", "VP Product", "VP Engineering", "Director HR", "Sales Coordinator"],
   "industry": "B2B SaaS Platforms",
   "company_size_range": "2000-10000 employees",
   "company_type": "Large enterprise SaaS vendors with global teams",
@@ -200,7 +203,8 @@ OUTPUT JSON SCHEMA
     {{
       "persona_name": "string (max 60 chars)",
       "tier": "tier_1 | tier_2 | tier_3",
-      "target_decision_makers": ["array of strings"],
+      "job_titles": ["array of target title strings"],
+      "excluded_job_titles": ["array of titles to avoid"],
       "industry": "string",
       "company_size_range": "string",
       "company_type": "string",

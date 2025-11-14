@@ -49,8 +49,8 @@ You understand that modern sales requires providing value before asking for anyt
                 mappings_text = "  No mappings available"
             
             # Get first 5 roles
-            roles = persona.get('target_decision_makers', [])[:5]
-            roles_count = len(persona.get('target_decision_makers', []))
+            roles = persona.get('job_titles', [])[:5]
+            roles_count = len(persona.get('job_titles', []))
             roles_text = ', '.join(roles)
             if roles_count > 5:
                 roles_text += f' (+{roles_count - 5} more)'
