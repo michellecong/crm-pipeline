@@ -12,12 +12,27 @@ logger = logging.getLogger(__name__)
 
 class ContentProcessor:
     """
-    Content processor - responsible for cleaning and preprocessing scraped content
+    Content processor - responsible for cleaning and preprocessing scraped content for B2B persona building
     
     Main functions:
     1. Rule-based cleaning: Remove useless information (image links, navigation, ads, etc.)
-    2. Batch LLM processing: Process multiple content items at once, extract key information
+    2. Batch LLM processing: Extract customer persona information using focused 6-category framework
     3. Smart truncation: Control content length while preserving important information
+    
+    Persona extraction categories:
+    1. Current Customers & Target Market (customer names, industries, sizes, markets)
+    2. Products & Services (descriptions, features, value proposition, use cases)
+    3. Customer Success Stories & Use Cases (testimonials, outcomes, roles)
+    4. Customer Pain Points & Needs (problems, requirements, challenges, goals)
+    5. Company Profile & Market Position (size, revenue, partnerships, awards)
+    6. Decision Makers & Key Personnel (executives, titles, backgrounds)
+    
+    Anti-hallucination measures:
+    - 7 critical anti-hallucination rules in system prompt
+    - Mandatory source citations for all facts
+    - Explicit "Not mentioned" for missing information
+    - Clear boundaries on what to extract
+    - Structured output format with validation checklist
     
     Recommended to use batch_process_content() method for batch processing, more efficient.
     """
@@ -226,12 +241,21 @@ class ContentProcessor:
     async def batch_process_content(self, content_batch: List[Dict], 
                                    company_name: str) -> List[Dict]:
         """
-        Batch process multiple content items (main processing method)
+        Batch process multiple content items for customer persona building (main processing method)
         
         This is the recommended content processing method, significantly improving efficiency through batch LLM calls:
         - 1 LLM call processes multiple content items
-        - Unified sales analysis framework
+        - Focused 6-category persona extraction framework
+        - Strong anti-hallucination measures (7 rules, citation requirements)
         - Significantly reduces API call costs
+        
+        Extracts:
+        1. Current Customers & Target Market (customer names, industries, sizes, markets)
+        2. Products & Services (descriptions, features, value proposition)
+        3. Customer Success Stories & Use Cases (testimonials, outcomes, roles)
+        4. Customer Pain Points & Needs (problems, requirements, challenges)
+        5. Company Profile & Market Position (size, revenue, partnerships, awards)
+        6. Decision Makers & Key Personnel (executives, titles, backgrounds)
         
         Args:
             content_batch: Content batch list, each element contains 
@@ -239,7 +263,7 @@ class ContentProcessor:
             company_name: Company name
             
         Returns:
-            Processed content list, each element contains processed content and statistics
+            Processed content list, each element contains processed persona content and statistics
         """
         if not content_batch:
             return []
@@ -296,73 +320,174 @@ class ContentProcessor:
     async def _batch_extract_with_llm(self, combined_content: str, 
                                      company_name: str, 
                                      content_mapping: Dict) -> List[Dict]:
-        """Use LLM batch extraction (main processing method)"""
-        system_message = """You are a professional B2B sales intelligence analyst, skilled at extracting the most valuable information for sales teams from web content.
+        """
+        Use LLM batch extraction focused on customer persona building.
+        
+        Anti-hallucination measures implemented:
+        - 7 critical anti-hallucination rules in system prompt
+        - Explicit "Not mentioned" requirements for all missing data
+        - Mandatory source citation requirements for all facts
+        - Focused 6-category persona framework (vs. original 14)
+        - Clear boundary instructions and validation checklist
+        - Structured output format with separator markers
+        
+        Note: Uses default temperature (1.0) as required by gpt-5-mini model.
+        Hallucination control achieved through strong prompt engineering.
+        """
+        system_message = """You are a B2B customer persona analyst specializing in extracting ONLY factual information from source documents.
 
-Your tasks:
-1. Extract company basic information (mission, vision, products, services, business model)
-2. Identify personnel information (executive names, positions, departments, decision makers, key contacts)
-3. Extract business information (partners, business development, financial data, company size, market position)
-4. Identify technology direction and industry trends
-5. Analyze company pain points and challenges
-6. Identify business needs and opportunities
-7. Discover problems and difficulties faced by the company
-8. Understand company development changes and transformation
-9. Pay attention to new policies and regulatory impacts
-10. Identify competitive landscape and market position
-11. Analyze customer success stories and failure lessons
-12. Understand budget cycles and procurement processes
-13. Identify technology upgrades and digital transformation needs
-14. Analyze industry regulations and compliance requirements
+CRITICAL ANTI-HALLUCINATION RULES (YOU MUST FOLLOW THESE):
+1. Extract ONLY information explicitly stated in the source text
+2. For each fact, include a direct quote or paraphrase from the source
+3. If information is not present in the text, you MUST write "Not mentioned"
+4. NEVER infer, assume, or generate information not in the source
+5. NEVER make up customer names, statistics, or quotes
+6. If you're uncertain about any information, mark it as "Uncertain: [your note]"
+7. Distinguish between what customers say vs. what the company claims
 
-Requirements:
-- Remove all useless information (image links, navigation, ads, duplicate content, technical error messages)
-- Maintain accuracy and completeness of information
-- Return concise, structured text with significant content compression
-- Focus on information most valuable for B2B sales and business development
-- Pay special attention to information that helps salespeople understand customer pain points and needs
-- For technical documents, extract core functions, APIs, product features and other key information
-- Remove redundant technical details, duplicate links, navigation elements
-- Compression ratio target: reduce content length by at least 30%
-- Extract information for each content item separately, maintaining clear structure"""
+PRIMARY GOAL: Extract factual intelligence to build accurate B2B customer personas.
 
-        # Dynamically build prompt
-        prompt_parts = [f"""Please extract the most valuable information for sales analysis from the following multiple content sources about {company_name}:
+EXTRACTION FRAMEWORK (6 Categories):
 
+1. CURRENT CUSTOMERS & TARGET MARKET
+   - Specific customer company names explicitly mentioned
+   - Industries and verticals served
+   - Company sizes (Enterprise/Mid-market/SMB)
+   - Geographic markets served
+   - Customer statistics and metrics
+   - Job roles of people at customer companies
+
+2. PRODUCTS & SERVICES
+   - Main products/services and their descriptions
+   - Key features and capabilities
+   - Product positioning and value proposition
+   - Use cases and applications
+   - How the product/service works
+
+3. CUSTOMER SUCCESS STORIES & USE CASES
+   - Customer testimonials and case studies
+   - Specific use cases and outcomes
+   - Problems solved for customers
+   - Results and metrics achieved
+   - Who at the customer company uses the product (roles/departments)
+
+4. CUSTOMER PAIN POINTS & NEEDS
+   - Problems customers face (as mentioned in content)
+   - Customer needs and requirements
+   - Challenges the product addresses
+   - Customer goals and objectives
+
+5. COMPANY PROFILE & MARKET POSITION
+   - Company size, revenue, employee count
+   - Market position and competitive advantages
+   - Key partnerships and integrations
+   - Industry recognition and awards
+   - Company history and milestones
+
+6. DECISION MAKERS & KEY PERSONNEL
+   - Executive team (names, titles)
+   - Key spokespeople and their backgrounds
+   - Leadership changes or announcements
+   - Relevant for understanding company direction
+
+VERIFICATION CHECKLIST before you output:
+✓ Every fact has a source quote or paraphrase
+✓ No information is inferred or assumed
+✓ Missing information is marked "Not mentioned"
+✓ Uncertain information is flagged
+✓ Customer quotes are in quotation marks"""
+
+        # Build prompt with focused 5-category persona framework
+        prompt_parts = [f"""Analyze the following web content about {company_name} and extract customer persona information for B2B sales intelligence.
+
+SOURCE CONTENT:
 {combined_content}
 
-Please extract the following key information for each content item separately and output in the order of content items:"""]
+INSTRUCTIONS:
+Extract the 6 categories below for each content item separately. Be precise, factual, and include source quotes.
+"""]
 
-        # Add analysis framework for each content item
+        # Add extraction template for each content item
         for i in range(len(content_mapping)):
             mapping = content_mapping[i]
             prompt_parts.append(f"""
-**Content Item {i+1} ({mapping['type']}) - {mapping['url']}:**
-1. **Company Basic Information**: Mission, vision, main products and services, business model
-2. **Personnel Information**: Executive names, positions, departments, decision makers, key contacts
-3. **Business Information**: Partners, business development, financial data, company size, market position
-4. **Technology Direction**: Technology focus, R&D direction, industry trends, tech stack
-5. **Pain Points and Challenges**: Main problems faced by the company, business pain points, technical challenges
-6. **Business Needs**: Business growth needs, efficiency improvement needs, cost control needs
-7. **Development Changes**: Company transformation, business expansion, strategic adjustments, organizational changes
-8. **Policy Impact**: New policies, regulatory changes, compliance requirements, industry standards
-9. **Competitive Landscape**: Competitors, market positioning, competitive advantages, threats
-10. **Success Cases**: Customer cases, project achievements, business accomplishments
-11. **Budget and Procurement**: Budget cycles, procurement processes, decision processes, supplier relationships
-12. **Digital Transformation**: Digital needs, technology upgrades, system integration needs
-13. **Industry Regulation**: Regulatory requirements, compliance challenges, industry standard changes
-14. **Market Opportunities**: Emerging markets, business opportunities, partnership opportunities""")
+
+═══════════════════════════════════════════════════════════
+**CONTENT ITEM {i+1}** ({mapping['type']})
+URL: {mapping['url']}
+═══════════════════════════════════════════════════════════
+
+1. **CURRENT CUSTOMERS & TARGET MARKET**
+   Extract ONLY if explicitly mentioned:
+   • Customer company names: [list with source quotes]
+   • Industries and company sizes: [with source quotes]
+   • Geographic markets: [regions with source quotes]
+   • Job roles at customer companies: [titles with source quotes]
+   • Customer statistics: [e.g., "85% of Fortune 100" with source quote]
+   
+   If no information found, write: "Not mentioned"
+
+2. **PRODUCTS & SERVICES**
+   Extract ONLY if explicitly mentioned:
+   • Main products/services: [descriptions with source quotes]
+   • Key features and capabilities: [with source quotes]
+   • Product positioning and value proposition: [with source quotes]
+   • Use cases and applications: [with source quotes]
+   
+   If no information found, write: "Not mentioned"
+
+3. **CUSTOMER SUCCESS STORIES & USE CASES**
+   Extract ONLY if explicitly mentioned:
+   • Customer testimonials and case studies: [with exact quotes and attribution]
+   • Specific use cases and outcomes: [with source quotes]
+   • Problems solved for customers: [with source quotes]
+   • Results and metrics achieved: [specific numbers with source quotes]
+   • User roles at customer companies: [titles/departments with source quotes]
+   
+   If no information found, write: "Not mentioned"
+
+4. **CUSTOMER PAIN POINTS & NEEDS**
+   Extract ONLY if explicitly mentioned:
+   • Problems customers face: [as mentioned in content with quotes]
+   • Customer needs and requirements: [with source quotes]
+   • Challenges the product addresses: [with source quotes]
+   • Customer goals and objectives: [with source quotes]
+   
+   If no information found, write: "Not mentioned"
+
+5. **COMPANY PROFILE & MARKET POSITION**
+   Extract ONLY if explicitly mentioned:
+   • Company size, revenue, employee count: [with source quotes]
+   • Market position and competitive advantages: [with source quotes]
+   • Key partnerships and integrations: [with source quotes]
+   • Industry recognition and awards: [with source quotes]
+   
+   If no information found, write: "Not mentioned"
+
+6. **DECISION MAKERS & KEY PERSONNEL**
+   Extract ONLY if explicitly mentioned:
+   • Executive team names and titles: [with source quotes]
+   • Key spokespeople and their backgrounds: [with source quotes]
+   • Leadership changes or announcements: [with source quotes]
+   
+   If no information found, write: "Not mentioned"
+""")
 
         prompt_parts.append("""
-Requirements:
-- Remove image links, navigation elements, duplicate content, ads
-- Maintain information accuracy and completeness
-- Return structured text for easy use by sales teams
-- Focus on information that helps understand customer pain points and needs
-- Pay special attention to sales opportunities and business development potential
-- Strictly output analysis results separately in the order of content items
 
-Extracted key information:""")
+═══════════════════════════════════════════════════════════
+FINAL REMINDERS BEFORE YOU RESPOND:
+═══════════════════════════════════════════════════════════
+✓ Extract information SEPARATELY for each content item in the order shown above
+✓ Include direct quotes (in "quotation marks") for every fact
+✓ Write "Not mentioned" for any category with no information in that content item
+✓ Do NOT infer or generate information not explicitly in the source
+✓ Do NOT mix information between different content items
+✓ Do NOT make up company names, statistics, or quotes
+✓ If uncertain about anything, mark it: "Uncertain: [explain why]"
+
+Now extract the persona information:
+""")
 
         prompt = "".join(prompt_parts)
 
@@ -370,20 +495,25 @@ Extracted key information:""")
             response = await self.llm_service.generate_async(
                 prompt=prompt,
                 system_message=system_message,
-                max_completion_tokens=15000,
-                temperature=1
+                max_completion_tokens=15000  # Adjusted for 6 categories (vs original 14)
+                # Using default temperature (1.0) as required by gpt-5-mini
+                # Hallucination control relies on strong prompt engineering:
+                # - 7 anti-hallucination rules in system message
+                # - Mandatory source citations
+                # - "Not mentioned" requirements
+                # - Structured output format with validation checklist
             )
             
             extracted_content = response.content.strip()
-            logger.info(f"Batch LLM extraction completed, extracted length: {len(extracted_content)}")
+            logger.info(f"Batch LLM persona extraction completed, extracted length: {len(extracted_content)}")
             
-            # Parse LLM output, assign corresponding analysis results to each content item
+            # Parse LLM output and assign to content items
             results = self._parse_batch_llm_output(extracted_content, content_mapping)
             
             return results
             
         except Exception as e:
-            logger.error(f"Batch LLM extraction failed: {str(e)}")
+            logger.error(f"Batch LLM persona extraction failed: {str(e)}")
             raise e
 
     def _parse_batch_llm_output(self, llm_output: str, content_mapping: Dict) -> List[Dict]:
