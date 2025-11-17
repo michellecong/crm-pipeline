@@ -39,6 +39,7 @@ class Settings:
     # Perplexity configuration
     PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
     PERPLEXITY_BASE_URL = "https://api.perplexity.ai"
+    PERPLEXITY_MODEL = os.getenv("PERPLEXITY_MODEL", "sonar")  # Default to sonar
 
     # Database configuration
     DATABASE_URL = os.getenv("DATABASE_URL")

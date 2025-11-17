@@ -20,6 +20,11 @@ class Product(BaseModel):
         min_length=50
     )
     
+    source_url: Optional[str] = Field(
+        default=None,
+        description="Official product page URL (from web search)"
+    )
+    
     @field_validator('product_name')
     @classmethod
     def validate_product_name(cls, v):
@@ -38,7 +43,8 @@ class Product(BaseModel):
         json_schema_extra = {
             "example": {
                 "product_name": "Sales Cloud",
-                "description": "Complete CRM platform for managing sales pipelines, forecasting revenue, and automating sales processes. Helps sales teams close deals faster with AI-powered insights, workflow automation, and mobile access. Scales from small teams to global enterprises with customizable features and deep integration capabilities."
+                "description": "Complete CRM platform for managing sales pipelines, forecasting revenue, and automating sales processes. Helps sales teams close deals faster with AI-powered insights, workflow automation, and mobile access. Scales from small teams to global enterprises with customizable features and deep integration capabilities.",
+                "source_url": "https://www.salesforce.com/products/sales-cloud"
             }
         }
 
@@ -63,14 +69,16 @@ class ProductCatalogResponse(BaseModel):
         json_schema_extra = {
             "example": {
                 "products": [
-                    {
-                        "product_name": "Sales Cloud",
-                        "description": "Complete CRM platform for managing sales pipelines..."
-                    },
-                    {
-                        "product_name": "Service Cloud",
-                        "description": "Customer service platform for support teams..."
-                    }
+                {
+                    "product_name": "Sales Cloud",
+                    "description": "Complete CRM platform for managing sales pipelines...",
+                    "source_url": "https://www.salesforce.com/products/sales-cloud"
+                },
+                {
+                    "product_name": "Service Cloud",
+                    "description": "Customer service platform for support teams...",
+                    "source_url": "https://www.salesforce.com/products/service-cloud"
+                }
                 ]
             }
         }

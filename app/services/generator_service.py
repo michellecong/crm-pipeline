@@ -72,8 +72,11 @@ class GeneratorService:
                     logger.warning("⚠️  No saved personas found. Cannot generate mappings without personas.")
                     raise ValueError("Personas are required for mapping generation. Please generate personas first.")
         
+        # For products, skip context preparation (uses Perplexity web search instead)
+        if generator_type == "products":
+            context = f"Generating products for {company_name} using web search"
         # For outreach, use minimal context (personas_with_mappings provides the data)
-        if generator_type == "outreach":
+        elif generator_type == "outreach":
             if "personas_with_mappings" not in kwargs:
                 raise ValueError("personas_with_mappings is required for outreach generation")
             context = f"Generating outreach sequences for {company_name}"
