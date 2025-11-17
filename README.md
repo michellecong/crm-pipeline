@@ -44,15 +44,17 @@ OPENAI_API_KEY=your_openai_key_here
 # OPENAI_TEMPERATURE=0.0
 # OPENAI_MAX_TOKENS=2000
 
-# Perplexity - for provider-based web search (optional if using Google only)
-# Set this to enable the Perplexity provider
+# Perplexity - for web search and product generation
+# Required for product generation (uses Perplexity for web search with citations)
 PERPLEXITY_API_KEY=your_perplexity_key_here
+# Optional: Perplexity model (default: sonar)
+# PERPLEXITY_MODEL=sonar
 ```
 
 **API Keys:**
 - Firecrawl: [firecrawl.dev](https://www.firecrawl.dev/) (Free: 500 credits/month)
 - OpenAI: [platform.openai.com](https://platform.openai.com/api-keys)
-- Perplexity: [perplexity.ai](https://www.perplexity.ai)
+- Perplexity: [perplexity.ai](https://www.perplexity.ai) (Required for product generation)
 
 ### 4. Run Server
 ```bash
@@ -128,7 +130,7 @@ curl -X POST http://localhost:8000/api/v1/crm/parse \
 #   }
 # }
 
-# Generate product catalog from company data
+# Generate product catalog using web search
 curl -X POST http://localhost:8000/api/v1/llm/products/generate \
   -H "Content-Type: application/json" \
   -d '{
@@ -140,10 +142,13 @@ curl -X POST http://localhost:8000/api/v1/llm/products/generate \
 #   "products": [
 #     {
 #       "product_name": "Sales Cloud",
-#       "description": "Complete CRM platform for managing sales pipelines..."
+#       "description": "Complete CRM platform for managing sales pipelines...",
+#       "source_url": "https://www.salesforce.com/products/sales-cloud"
 #     }
 #   ]
 # }
+# Note: Product generation uses Perplexity web search to find official product pages
+# and automatically includes source URLs for each product.
 
 # Generate personas (auto-loads products if available)
 curl -X POST http://localhost:8000/api/v1/llm/persona/generate \
@@ -638,7 +643,7 @@ Interactive docs: http://localhost:8000/docs
 | Endpoint                     | Method | Description                    |
 | ---------------------------- | ------ | ------------------------------ |
 | `/api/v1/llm/generate`      | POST   | Generate text with LLM         |
-| `/api/v1/llm/products/generate` | POST | Generate product catalog       |
+| `/api/v1/llm/products/generate` | POST | Generate product catalog (uses Perplexity web search) |
 | `/api/v1/llm/persona/generate` | POST | Generate buyer personas        |
 | `/api/v1/llm/mappings/generate` | POST | Generate pain-point to value-prop mappings |
 | `/api/v1/llm/pipeline/generate` | POST   | Run full pipeline (products → personas → mappings → sequences) |
@@ -657,13 +662,58 @@ Interactive docs: http://localhost:8000/docs
 | ------------------------------------- | ------ | --------------------------------------------------- |
 | `/api/v1/pipeline/evaluation/completeness` | POST   | Evaluate pipeline completeness (products, personas, mappings, sequences) |
 
+## Product Generation
+
+The product generation endpoint uses Perplexity's web search capabilities to find and extract product information directly from the company's official website.
+
+### Features
+
+- **Web Search Integration**: Uses Perplexity Sonar model for real-time web search
+- **Source URLs**: Each product includes the official product page URL (`source_url`)
+- **Comprehensive Coverage**: Generates 15-25+ products for large companies
+- **B2B Sales Focus**: Optimized for products that business decision-makers purchase
+- **Universal Compatibility**: Works with any company type (SaaS, hardware, manufacturing, services, etc.)
+
+### How It Works
+
+1. **Web Search**: Perplexity searches the company's official website and product pages
+2. **Product Extraction**: LLM extracts all major commercial products from search results
+3. **URL Matching**: Each product is matched with its official product page URL
+4. **Validation**: Products are validated for completeness and quality
+
+### Example Response
+
+```json
+{
+  "products": [
+    {
+      "product_name": "Sales Cloud",
+      "description": "Complete CRM platform for managing sales pipelines, forecasting revenue, and automating sales processes. Helps sales teams close deals faster with AI-powered insights, workflow automation, and mobile access.",
+      "source_url": "https://www.salesforce.com/products/sales-cloud"
+    },
+    {
+      "product_name": "Service Cloud",
+      "description": "Customer service platform that unifies support channels, automates case routing, and provides agents with complete customer context.",
+      "source_url": "https://www.salesforce.com/products/service-cloud"
+    }
+  ],
+  "model": "sonar"
+}
+```
+
+### Requirements
+
+- **PERPLEXITY_API_KEY**: Required for product generation
+- Product generation does not use scraped context data (uses web search instead)
+- Other generators (personas, mappings, outreach) continue to use OpenAI with scraped context
+
 ## Data Storage
 
 ### **Generated Content Storage**
 
 All generated content is automatically saved to `data/generated/` with timestamped filenames:
 
-- **Products**: `{company}_products_{timestamp}.json`
+- **Products**: `{company}_products_{timestamp}.json` (includes source_url for each product)
 - **Personas**: `{company}_personas_{timestamp}.json`
 - **Mappings**: `{company}_mappings_{timestamp}.json`
 - **Outreach Sequences**: `{company}_outreach_{timestamp}.json`
@@ -1000,7 +1050,7 @@ crm-pipeline/
 │   │   └── crm_routes.py           # CRM upload & parsing endpoints
 │   ├── generators/                  # Content generators
 │   │   ├── base_generator.py       # Base class for all generators
-│   │   ├── product_generator.py    # Product catalog generation
+│   │   ├── product_generator.py    # Product catalog generation (uses Perplexity web search)
 │   │   ├── persona_generator.py    # Buyer persona generation
 │   │   ├── mapping_generator.py    # Pain-point to value-prop mapping generation
 │   │   ├── outreach_generator.py   # Outreach sequence generation
@@ -1008,12 +1058,12 @@ crm-pipeline/
 │   ├── services/                    # Business logic
 │   │   ├── llm_web_search_service.py  # LLM-powered web search
 │   │   ├── search_service.py       # Traditional search (Google/Perplexity)
-│   │   ├── llm_service.py          # LLM text generation
+│   │   ├── llm_service.py          # LLM text generation (supports OpenAI and Perplexity)
 │   │   ├── generator_service.py    # Generator orchestration
 │   │   └── crm_service.py          # CRM file parsing & analysis
 │   └── schemas/                     # Data models
 │       ├── search.py               # Search & LLM web search schemas
-│       ├── product_schemas.py      # Product catalog schemas
+│       ├── product_schemas.py      # Product catalog schemas (includes source_url)
 │       ├── persona_schemas.py      # Persona schemas
 │       ├── mapping_schemas.py      # Mapping schemas
 │       ├── outreach_schemas.py     # Outreach sequence schemas
@@ -1030,6 +1080,7 @@ crm-pipeline/
 │   ├── test_llm_mock.py            # LLM mock tests
 │   ├── test_outreach.py            # Outreach generation tests
 │   ├── test_baseline.py            # Baseline generation tests
+│   ├── test_product_generator_perplexity.py  # Product generator with Perplexity tests
 │   └── conftest.py                 # Shared test fixtures
 ├── test_llm_web_search.py          # LLM web search test script
 ├── requirements.txt                 # Dependencies

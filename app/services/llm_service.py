@@ -6,8 +6,9 @@ Provides a clean interface for making requests and processing responses.
 """
 
 import asyncio
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Literal
 from openai import OpenAI
+import aiohttp
 import logging
 
 from ..config import settings
@@ -69,6 +70,7 @@ class LLMResponse:
         prompt_tokens: Number of tokens in the prompt
         completion_tokens: Number of tokens in the completion
         total_tokens: Total number of tokens used
+        citations: Optional list of citations/source URLs (from Perplexity)
     """
     
     def __init__(
@@ -78,7 +80,8 @@ class LLMResponse:
         finish_reason: str,
         prompt_tokens: int,
         completion_tokens: int,
-        total_tokens: int
+        total_tokens: int,
+        citations: Optional[List[Dict[str, str]]] = None
     ):
         self.content = content
         self.model = model
@@ -86,10 +89,11 @@ class LLMResponse:
         self.prompt_tokens = prompt_tokens
         self.completion_tokens = completion_tokens
         self.total_tokens = total_tokens
+        self.citations = citations or []
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert response to dictionary format."""
-        return {
+        result = {
             "content": self.content,
             "model": self.model,
             "finish_reason": self.finish_reason,
@@ -99,6 +103,9 @@ class LLMResponse:
                 "total_tokens": self.total_tokens
             }
         }
+        if self.citations:
+            result["citations"] = self.citations
+        return result
 
 
 class LLMService:
@@ -321,18 +328,21 @@ class LLMService:
         prompt: str,
         system_message: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_completion_tokens: Optional[int] = None
+        max_completion_tokens: Optional[int] = None,
+        provider: Literal["openai", "perplexity"] = "openai"
     ) -> LLMResponse:
         """
         Generate a completion from the language model (asynchronous).
         
         This async version wraps the synchronous OpenAI call to work with FastAPI.
+        Supports both OpenAI and Perplexity providers.
         
         Args:
             prompt: The text prompt to send to the model
             system_message: Optional system message to set context/behavior
             temperature: Override default temperature for this request
             max_completion_tokens: Override default max_completion_tokens for this request
+            provider: LLM provider to use ("openai" or "perplexity")
             
         Returns:
             LLMResponse object containing the generated text and metadata
@@ -342,12 +352,17 @@ class LLMService:
             >>> response = await service.generate_async("What is Python?")
             >>> print(response.content)
         """
-        # Run the synchronous generate method in a thread pool
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            lambda: self.generate(prompt, system_message, temperature, max_completion_tokens)
-        )
+        if provider == "perplexity":
+            return await self._generate_perplexity_async(
+                prompt, system_message, temperature, max_completion_tokens
+            )
+        else:
+            # Run the synchronous generate method in a thread pool
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(
+                None,
+                lambda: self.generate(prompt, system_message, temperature, max_completion_tokens)
+            )
     
     def update_config(self, **kwargs):
         """
@@ -374,6 +389,113 @@ class LLMService:
             Dictionary of current configuration settings
         """
         return self.config.to_dict()
+    
+    async def _generate_perplexity_async(
+        self,
+        prompt: str,
+        system_message: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_completion_tokens: Optional[int] = None
+    ) -> LLMResponse:
+        """
+        Generate a completion using Perplexity API (asynchronous).
+        
+        Args:
+            prompt: The text prompt to send to the model
+            system_message: Optional system message to set context/behavior
+            temperature: Override default temperature for this request
+            max_completion_tokens: Override default max_completion_tokens for this request
+            
+        Returns:
+            LLMResponse object containing the generated text, metadata, and citations
+            
+        Raises:
+            ValueError: If Perplexity API key is not configured
+            Exception: If API request fails
+        """
+        if not settings.PERPLEXITY_API_KEY:
+            raise ValueError(
+                "Perplexity API key is required for web search. "
+                "Set PERPLEXITY_API_KEY in .env file or environment variable."
+            )
+        
+        # Prepare messages
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        messages.append({"role": "user", "content": prompt})
+        
+        # Prepare request parameters
+        model = settings.PERPLEXITY_MODEL
+        params = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature if temperature is not None else self.config.temperature,
+            "max_tokens": max_completion_tokens if max_completion_tokens is not None else self.config.max_completion_tokens,
+        }
+        
+        # Send request to Perplexity API
+        url = f"{settings.PERPLEXITY_BASE_URL}/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {settings.PERPLEXITY_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            logger.debug(f"Sending request to Perplexity API with model: {model}")
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers, json=params) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+                    
+                    # Process Perplexity response
+                    choice = data["choices"][0]
+                    message = choice["message"]
+                    usage = data.get("usage", {})
+                    
+                    # Extract citations from Perplexity response
+                    citations = []
+                    if "citations" in message:
+                        citations = message["citations"]
+                    elif "citations" in data:
+                        citations = data["citations"]
+                    
+                    # Convert citations to standard format
+                    formatted_citations = []
+                    if citations:
+                        for citation in citations:
+                            if isinstance(citation, dict):
+                                formatted_citations.append({
+                                    "url": citation.get("url", ""),
+                                    "title": citation.get("title", "")
+                                })
+                            elif isinstance(citation, str):
+                                formatted_citations.append({"url": citation, "title": ""})
+                    
+                    llm_response = LLMResponse(
+                        content=message.get("content", ""),
+                        model=data.get("model", model),
+                        finish_reason=choice.get("finish_reason", "stop"),
+                        prompt_tokens=usage.get("prompt_tokens", 0),
+                        completion_tokens=usage.get("completion_tokens", 0),
+                        total_tokens=usage.get("total_tokens", 0),
+                        citations=formatted_citations
+                    )
+                    
+                    logger.info(
+                        f"Perplexity response processed: {llm_response.total_tokens} tokens used "
+                        f"(prompt: {llm_response.prompt_tokens}, completion: {llm_response.completion_tokens}), "
+                        f"{len(formatted_citations)} citations"
+                    )
+                    
+                    return llm_response
+                    
+        except aiohttp.ClientError as e:
+            logger.error(f"Perplexity API request failed: {str(e)}")
+            raise Exception(f"Perplexity API request failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"Unexpected error calling Perplexity API: {str(e)}")
+            raise
 
 
 # Singleton instance
