@@ -106,11 +106,32 @@ class BuyerPersona(BaseModel):
         }
 
 
+class DataSources(BaseModel):
+    """Data sources used in persona generation"""
+    
+    crm_data_used: bool = Field(..., description="Whether CRM data was used in generation")
+    crm_data_influence: str = Field(
+        ..., 
+        description="Explanation of how CRM data influenced specific persona fields (e.g., location, industry, job_titles). If CRM data was not used, explain why."
+    )
+    source_url: Optional[str] = Field(
+        default=None,
+        description=(
+            "Primary web content source URL used for generating personas "
+            "(e.g., official website, case study, or news article)"
+        )
+    )
+
+
 class PersonaGenerationResponse(BaseModel):
     """Response from persona generation"""
     
     personas: List[BuyerPersona] = Field(..., description="Generated personas")
-    generation_reasoning: str = Field(..., description="Explanation of selections")
+    generation_reasoning: str = Field(
+        ..., 
+        description="Explanation of persona selections, including whether CRM data was used and how it influenced the generation"
+    )
+    data_sources: DataSources = Field(..., description="Data sources used and their influence on generation")
     
     @field_validator('personas')
     @classmethod
@@ -133,7 +154,12 @@ class PersonaGenerationResponse(BaseModel):
                     "location": "California",
                     "description": "..."
                 }],
-                "generation_reasoning": "..."
+                "generation_reasoning": "Selected personas based on web content analysis and CRM data insights. CRM data showed 70% of customers in California, which informed the location field.",
+                "data_sources": {
+                    "crm_data_used": True,
+                    "crm_data_influence": "Location 'California' based on CRM data showing 70% of accounts in CA. Industry 'SaaS' matches top industry (45% of CRM accounts). Job titles include 'CRO' and 'VP Sales' which are top titles in CRM contact data.",
+                    "source_url": "https://www.example.com/about"
+                }
             }
         }
 

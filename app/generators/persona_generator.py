@@ -342,7 +342,12 @@ OUTPUT JSON SCHEMA
       "description": "string (must include: team size, deal size, sales cycle, stakeholder count)"
     }}
   ],
-  "generation_reasoning": "string"
+  "generation_reasoning": "string (MUST explain: 1) Which personas were selected and why, 2) Whether CRM data was used, 3) How CRM data influenced specific fields like location, industry, company_size_range, job_titles, etc.)",
+  "data_sources": {{
+    "crm_data_used": true/false,
+    "crm_data_influence": "string (explain which persona fields were influenced by CRM data, e.g., 'location based on 70% CA concentration, industry from top 3 industries, job_titles from contact analysis')",
+    "source_url": "string (optional: primary web content source URL used for generating personas, e.g., official website, case study, or news article URL)"
+  }}
 }}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -422,7 +427,12 @@ EXAMPLE OUTPUT
       "description": "Established DACH manufacturers with regional and global sales operations and complex multi-site production. 50-200 sales and technical sales staff. €200K-€800K annual platform investments with 6-9 month evaluation cycles involving 4-6 stakeholders (Vertriebsleiter, Betriebsleiter, IT, Einkauf). Decision-making emphasizes integration with SAP/ERP systems, technical precision, and long-term vendor partnerships. Strong fit for CRM with CPQ and industrial-grade integrations. Best engaged through technical workshops, German-language support commitments, and references from peer DACH manufacturers."
     }}
   ],
-  "generation_reasoning": "Selected diverse personas spanning geographies (California, UK, DACH), company sizes (50-500, 1000-5000, 2000-10000), and industries. Used specific geographies where industry concentration exists (CA for SaaS, DACH for manufacturing) and country-level for distributed markets (UK services). Company size ranges span multiple thresholds to reflect similar buying behaviors within each segment. Tier distribution balanced across strategic value."
+  "generation_reasoning": "Selected diverse personas spanning geographies (California, UK, DACH), company sizes (50-500, 1000-5000, 2000-10000), and industries. Used specific geographies where industry concentration exists (CA for SaaS, DACH for manufacturing) and country-level for distributed markets (UK services). Company size ranges span multiple thresholds to reflect similar buying behaviors within each segment. Tier distribution balanced across strategic value.",
+  "data_sources": {{
+    "crm_data_used": true,
+    "crm_data_influence": "Location 'California' based on CRM data showing 70% of accounts in CA. Industry 'B2B SaaS Platforms' matches top industry in CRM (45% of accounts). Company size range '2000-10000' reflects median company size of 3500 employees from CRM. Job titles include 'CRO' and 'VP Sales' which are top 3 titles in CRM contact data.",
+    "source_url": "https://www.example.com/about"
+  }}
 }}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -471,33 +481,24 @@ CRITICAL:
 - company_size_range uses standard thresholds (narrow or wide based on buying behavior)
 - location precision based on available data (specific to general)
 
+DATA SOURCE ATTRIBUTION (REQUIRED):
+- If CRM data was provided and used, you MUST:
+  1. Set "crm_data_used": true in data_sources
+  2. In "crm_data_influence", explicitly state which persona fields were influenced by CRM data
+  3. In "generation_reasoning", mention that CRM data informed the generation
+- If CRM data was NOT available or NOT used:
+  1. Set "crm_data_used": false
+  2. Set "crm_data_influence": "CRM data not available or not used"
+  3. In "generation_reasoning", state that personas were generated from web content and industry best practices only
+
+Examples of CRM data influence:
+- "Location 'California' based on CRM showing 65% accounts in CA"
+- "Industry 'B2B SaaS' matches top industry (40% of CRM accounts)"
+- "Company size '200-500' reflects median size of 350 employees from CRM"
+- "Job titles include 'VP Sales' and 'CRO' which are top 5 titles in CRM contacts"
+
 Return ONLY valid JSON.
 """
-    
-    def parse_response(self, response_text: str) -> Dict:
-        """
-        Parse and validate LLM response
-        """
-        try:
-            result = json.loads(response_text)
-            
-            if "personas" not in result:
-                raise ValueError("Response missing 'personas' key")
-            
-            personas = result["personas"]
-            
-            if not isinstance(personas, list) or len(personas) == 0:
-                raise ValueError("'personas' must be a non-empty array")
-            
-            for idx, persona in enumerate(personas):
-                self._validate_persona(persona, idx)
-            
-            logger.info(f"Successfully parsed {len(personas)} buyer personas")
-            return result
-            
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON response: {e}")
-            raise ValueError(f"Invalid JSON response: {e}")
     
     def _validate_persona(self, persona: Dict, index: int):
         """Validate individual persona structure"""
@@ -603,70 +604,46 @@ Return ONLY valid JSON.
             if not isinstance(personas, list) or len(personas) == 0:
                 raise ValueError("'personas' must be a non-empty array")
             
-            # Validate each persona
+            # Validate each persona using the helper method
             for i, persona in enumerate(personas):
                 logger.debug(f"Validating persona {i}: {persona.get('persona_name', 'Unknown')}")
+                self._validate_persona(persona, i)
+            
+            # Validate data_sources field
+            if "data_sources" not in data:
+                logger.warning("Response missing 'data_sources' field. Adding default values.")
+                data["data_sources"] = {
+                    "crm_data_used": False,
+                    "crm_data_influence": "CRM data not available or not used"
+                }
+            else:
+                data_sources = data["data_sources"]
+                if not isinstance(data_sources, dict):
+                    raise ValueError("data_sources must be an object")
                 
-                # Validate required fields
-                required_fields = [
-                    "persona_name", "tier", "job_titles", "excluded_job_titles",
-                    "industry", "company_size_range", "company_type",
-                    "location", "description"
-                ]
+                if "crm_data_used" not in data_sources:
+                    logger.warning("data_sources missing 'crm_data_used' field. Defaulting to False.")
+                    data_sources["crm_data_used"] = False
+                elif not isinstance(data_sources["crm_data_used"], bool):
+                    raise ValueError("data_sources.crm_data_used must be a boolean")
                 
-                for field in required_fields:
-                    if field not in persona or persona[field] is None:
-                        raise ValueError(f"Persona {i} missing required field: {field}")
+                if "crm_data_influence" not in data_sources:
+                    logger.warning("data_sources missing 'crm_data_influence' field. Adding default.")
+                    data_sources["crm_data_influence"] = "CRM data influence not specified"
+                elif not isinstance(data_sources["crm_data_influence"], str):
+                    raise ValueError("data_sources.crm_data_influence must be a string")
                 
-                # Validate tier
-                if persona["tier"] not in ["tier_1", "tier_2", "tier_3"]:
-                    raise ValueError(f"Persona {i} invalid tier: {persona['tier']}")
-                
-                # Validate job_titles is array
-                if not isinstance(persona["job_titles"], list):
-                    raise ValueError(f"Persona {i}: job_titles must be an array, got {type(persona['job_titles'])}")
-                
-                if len(persona["job_titles"]) == 0:
-                    raise ValueError(f"Persona {i}: job_titles array is empty")
-                
-                # Validate all titles are strings
-                for title in persona["job_titles"]:
-                    if not isinstance(title, str):
-                        raise ValueError(f"Persona {i}: all job titles must be strings, got {type(title)}")
-                
-                # Warning if too few titles
-                if len(persona["job_titles"]) < 10:
-                    logger.warning(
-                        f"Persona {i} '{persona['persona_name']}' has only "
-                        f"{len(persona['job_titles'])} job titles. "
-                        f"Recommend 10-30+ for better matching coverage."
-                    )
-                
-                # Validate excluded_job_titles is array
-                if not isinstance(persona["excluded_job_titles"], list):
-                    raise ValueError(f"Persona {i}: excluded_job_titles must be an array, got {type(persona['excluded_job_titles'])}")
-                
-                # Validate all excluded titles are strings
-                for title in persona["excluded_job_titles"]:
-                    if not isinstance(title, str):
-                        raise ValueError(f"Persona {i}: all excluded titles must be strings, got {type(title)}")
-                
-                # Warning if too few excluded titles
-                if len(persona["excluded_job_titles"]) < 3:
-                    logger.warning(
-                        f"Persona {i} '{persona['persona_name']}' has only "
-                        f"{len(persona['excluded_job_titles'])} excluded titles. "
-                        f"Recommend 3-10+ for better lead qualification."
-                    )
-                
-                # Validate description length
-                if len(persona["description"]) < 50:
-                    logger.warning(f"Persona {i} description is very short: {len(persona['description'])} chars")
-                
-                logger.info(
-                    f"Persona {i} validated: '{persona['persona_name']}' "
-                    f"({persona['tier']}, {len(persona['job_titles'])} job titles, {len(persona['excluded_job_titles'])} excluded)"
-                )
+                if data_sources["crm_data_used"]:
+                    logger.info(f"CRM data was used: {data_sources['crm_data_influence'][:100]}...")
+                else:
+                    logger.info("CRM data was not used in persona generation")
+            
+            # Validate generation_reasoning
+            if "generation_reasoning" not in data:
+                logger.warning("Response missing 'generation_reasoning' field")
+                data["generation_reasoning"] = "Persona generation completed"
+            elif not isinstance(data["generation_reasoning"], str):
+                raise ValueError("generation_reasoning must be a string")
             
             logger.info(f"Successfully validated {len(personas)} buyer personas")
             return data

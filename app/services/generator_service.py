@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 from ..generators.base_generator import BaseGenerator
 from ..generators.persona_generator import PersonaGenerator
 from ..generators.product_generator import ProductGenerator
@@ -6,6 +6,7 @@ from ..generators.mapping_generator import MappingGenerator
 from ..generators.outreach_generator import OutreachGenerator
 from ..generators.baseline_generator import BaselineGenerator
 from .data_aggregator import DataAggregator
+from .crm_data_loader import CRMDataLoader
 from datetime import datetime
 import logging
 
@@ -53,6 +54,20 @@ class GeneratorService:
             else:
                 logger.info("ℹ️  No saved products found. Generating personas from web content only.")
         
+        # Auto-inject CRM data for persona generation if not provided
+        crm_data_provided = False
+        if generator_type == "personas" and "crm_data" not in kwargs:
+            crm_data = self._load_crm_data()
+            if crm_data:
+                kwargs["crm_data"] = crm_data
+                crm_data_provided = True
+                logger.info("✅ Auto-loaded CRM data from crm-data folder")
+            else:
+                logger.info("ℹ️  No CRM data found in crm-data folder. Generating personas without CRM insights.")
+        elif generator_type == "personas" and kwargs.get("crm_data"):
+            crm_data_provided = True
+            logger.info("✅ Using provided CRM data for persona generation")
+        
         # Auto-inject products and personas for mapping generation if not provided
         if generator_type == "mappings":
             if "products" not in kwargs:
@@ -94,6 +109,25 @@ class GeneratorService:
         logger.info(f"Prepared context length: {len(context)} chars for {company_name}")
         
         result = await generator.generate(company_name, context, **kwargs)
+        
+        # For personas, verify that data_sources field is present and matches CRM data availability
+        if generator_type == 'personas':
+            if 'data_sources' in result:
+                reported_crm_usage = result['data_sources'].get('crm_data_used', False)
+                if crm_data_provided and not reported_crm_usage:
+                    logger.warning(
+                        "⚠️  CRM data was provided but LLM reported crm_data_used=false. "
+                        "This may indicate the LLM did not use the CRM data effectively."
+                    )
+                elif not crm_data_provided and reported_crm_usage:
+                    logger.warning(
+                        "⚠️  LLM reported crm_data_used=true but no CRM data was provided. "
+                        "This may indicate a mismatch in the response."
+                    )
+                else:
+                    logger.info(
+                        f"✅ Data source attribution matches: CRM data {'used' if reported_crm_usage else 'not used'}"
+                    )
         
         # Check if generation was successful
         if generator_type == 'personas':
@@ -207,6 +241,31 @@ class GeneratorService:
                     
         except Exception as e:
             logger.error(f"Failed to load personas from {latest_file}: {e}")
+            return None
+    
+    def _load_crm_data(self, crm_data_dir: str = "crm-data") -> Optional[str]:
+        """
+        Load CRM data from crm-data folder and return text summary for persona generation.
+        
+        Handles multiple CSV files with different structures automatically:
+        - Identifies file types (Account, Contact, Opportunity, etc.)
+        - Maps fields from different CRM systems (Salesforce, HubSpot, Pipedrive)
+        - Merges data and generates statistics
+        
+        Args:
+            crm_data_dir: Directory containing CRM CSV files
+            
+        Returns:
+            Text summary string for LLM, or None if no data found
+        """
+        try:
+            crm_summary = CRMDataLoader.load_crm_data_for_persona(crm_data_dir)
+            if crm_summary:
+                logger.info(f"📊 Loaded CRM data summary ({len(crm_summary)} chars)")
+                return crm_summary
+            return None
+        except Exception as e:
+            logger.warning(f"Failed to load CRM data: {e}")
             return None
     
     def _save_generated_content(self, generator_type: str, company_name: str, result: Dict) -> str:
