@@ -20,6 +20,9 @@ class BaselineGenerator(BaseGenerator):
         Override to increase max_completion_tokens for large response.
         Baseline needs more tokens since it generates all 4 outputs at once.
         """
+        import time
+        start_time = time.time()
+        
         try:
             from ..services.llm_service import get_llm_service
             llm_service = get_llm_service()
@@ -38,13 +41,13 @@ class BaselineGenerator(BaseGenerator):
             parsed_result = self.parse_response(response.content)
             parsed_result["model"] = response.model
             
-            # Add token usage information
-            parsed_result["_llm_usage"] = {
+            # Add token usage and timing information
+            parsed_result["usage"] = {
                 "prompt_tokens": response.prompt_tokens,
                 "completion_tokens": response.completion_tokens,
-                "total_tokens": response.total_tokens,
-                "model": response.model
+                "total_tokens": response.total_tokens
             }
+            parsed_result["generation_time_seconds"] = time.time() - start_time
             
             return parsed_result
             
@@ -57,7 +60,7 @@ class BaselineGenerator(BaseGenerator):
 
 Your task is to generate ALL four components in a single response:
 1. Products (5-15 products)
-2. Personas (as specified in the prompt)
+2. Personas (3-8 buyer personas)
 3. Pain Point-Value Proposition Mappings (5-7 per persona)
 4. Outreach Sequences (1 per persona, 4-6 touches each)
 
@@ -65,10 +68,9 @@ CRITICAL: Generate all outputs in ONE response. Do not split into multiple respo
     
     def build_prompt(self, company_name: str, context: str, **kwargs) -> str:
         # Use the consolidate prompt from the original function
-        generate_count = kwargs.get('generate_count', 5)
-        return self._get_baseline_prompt(company_name, context, generate_count)
+        return self._get_baseline_prompt(company_name, context)
     
-    def _get_baseline_prompt(self, company_name: str, context: str, generate_count: int = 5) -> str:
+    def _get_baseline_prompt(self, company_name: str, context: str) -> str:
         """Internal method containing the consolidated prompt"""
         return f"""You are an expert B2B sales intelligence analyst. Generate a complete sales intelligence package for the seller company based on their web content.
 
@@ -112,7 +114,7 @@ Extract CORE COMMERCIAL PRODUCTS from the web content.
 PART 2: PERSONAS GENERATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Generate EXACTLY {generate_count} buyer company personas (market segments) based on the products above.
+Generate 3-8 buyer company personas (market segments) based on the products above.
 
 **CRITICAL: Base personas on the products you generated in Part 1.**
 

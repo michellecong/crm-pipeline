@@ -3,8 +3,8 @@
 Pydantic schemas for baseline single-shot generation
 """
 from pydantic import BaseModel, Field
-from typing import Optional, List, Literal
-from .pipeline_schemas import Product, BuyerPersona, PersonaWithMappings, OutreachSequence, PipelineArtifacts, StageStats
+from typing import Optional, List, Literal, Dict, Any
+from .pipeline_schemas import Product, BuyerPersona, PersonaWithMappings, OutreachSequence, PipelineArtifacts
 
 
 class BaselineGenerateRequest(BaseModel):
@@ -41,6 +41,13 @@ class BaselineGenerateRequest(BaseModel):
         }
 
 
+class BaselineStatistics(BaseModel):
+    """Statistics for baseline execution"""
+    total_runtime_seconds: float = Field(..., description="Total baseline execution time in seconds")
+    total_tokens: int = Field(..., description="Total tokens used (includes content processing)")
+    token_breakdown: Dict[str, Any] = Field(..., description="Detailed token breakdown (prompt/completion/content_processing)")
+
+
 class BaselineGenerateResponse(BaseModel):
     """Response from baseline single-shot generation containing all 4 outputs"""
     
@@ -49,7 +56,7 @@ class BaselineGenerateResponse(BaseModel):
     personas_with_mappings: List[PersonaWithMappings]
     sequences: Optional[List[OutreachSequence]] = None
     artifacts: Optional[PipelineArtifacts] = None
-    stats: Optional[StageStats] = None
+    statistics: Optional[BaselineStatistics] = None
     
     class Config:
         json_schema_extra = {

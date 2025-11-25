@@ -21,10 +21,16 @@ class DataAggregator:
                              include_case_studies: bool = True,
                              max_urls: int = 10,
                              use_llm_search: bool = False,
-                             provider: str = "google") -> str:
-        """Prepare context from pre-processed scraped data (cleaned and LLM-processed)"""
+                             provider: str = "google") -> tuple[str, dict]:
+        """
+        Prepare context from pre-processed scraped data (cleaned and LLM-processed)
+        
+        Returns:
+            Tuple of (context string, content processing tokens dict)
+        """
         # Load scraped data
         scraped_data = self.data_store.load_latest_scraped_data(company_name)
+        content_processing_tokens = {}
         
         # Fallback to scraping if no cached data
         if not scraped_data:
@@ -40,6 +46,13 @@ class DataAggregator:
                 use_llm_search=use_llm_search,
                 provider=provider
             )
+            # Extract content processing tokens from fresh scraping
+            if scraped_data and 'content_processing_tokens' in scraped_data:
+                content_processing_tokens = scraped_data['content_processing_tokens']
+        else:
+            # For cached data, try to extract content processing tokens if available
+            if 'content_processing_tokens' in scraped_data:
+                content_processing_tokens = scraped_data['content_processing_tokens']
         
         if not scraped_data:
             raise ValueError(f"No scraped data found for {company_name}")
@@ -75,7 +88,7 @@ class DataAggregator:
                                    f"URL: {url}\n\n{markdown}")
                 char_count += len(content_parts[-1])
         
-        return "\n".join(content_parts)
+        return "\n".join(content_parts), content_processing_tokens
     
     def get_data_summary(self, company_name: str) -> Dict:
         """Get summary of available data"""

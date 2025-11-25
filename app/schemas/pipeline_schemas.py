@@ -24,25 +24,6 @@ class PipelineArtifacts(BaseModel):
     sequences_file: Optional[str] = None
 
 
-class StageStats(BaseModel):
-    """Statistics for a single pipeline stage"""
-    stage_name: str
-    duration_seconds: float
-    prompt_tokens: int = 0
-    completion_tokens: int = 0
-    total_tokens: int = 0
-    model: Optional[str] = None
-
-
-class PipelineStats(BaseModel):
-    """Aggregated statistics for the entire pipeline"""
-    stages: List[StageStats]
-    total_duration_seconds: float
-    total_prompt_tokens: int
-    total_completion_tokens: int
-    total_tokens: int
-
-
 class PipelineGenerateResponse(BaseModel):
     products: List[Product]
     personas: List[BuyerPersona]
@@ -59,10 +40,19 @@ class PipelinePayload(BaseModel):
     sequences: List[OutreachSequence] = Field(default_factory=list)
 
 
+class PipelineStatistics(BaseModel):
+    """Statistics for pipeline execution"""
+    total_runtime_seconds: float = Field(..., description="Total pipeline execution time in seconds")
+    step_runtimes: Dict[str, float] = Field(..., description="Runtime for each step (products, personas, mappings, sequences)")
+    total_tokens: int = Field(..., description="Total tokens used across all steps")
+    step_tokens: Dict[str, int] = Field(..., description="Token usage for each step")
+    token_breakdown: Dict[str, Dict[str, int]] = Field(..., description="Detailed token breakdown (prompt/completion) per step")
+
+
 class PipelineGenerateEnvelope(BaseModel):
     payload: PipelinePayload
     artifacts: Optional[PipelineArtifacts] = None
-    stats: Optional[PipelineStats] = None
+    statistics: Optional[PipelineStatistics] = None
 
 
 

@@ -88,6 +88,7 @@ class GeneratorService:
                     raise ValueError("Personas are required for mapping generation. Please generate personas first.")
         
         # For products, skip context preparation (uses Perplexity web search instead)
+        content_processing_tokens = {}
         if generator_type == "products":
             context = f"Generating products for {company_name} using web search"
         # For outreach, use minimal context (personas_with_mappings provides the data)
@@ -96,7 +97,7 @@ class GeneratorService:
                 raise ValueError("personas_with_mappings is required for outreach generation")
             context = f"Generating outreach sequences for {company_name}"
         else:
-            context = await self.data_aggregator.prepare_context(
+            context, content_processing_tokens = await self.data_aggregator.prepare_context(
                 company_name,
                 kwargs.get('max_context_chars', 15000),
                 kwargs.get('include_news', True),
@@ -105,6 +106,12 @@ class GeneratorService:
                 kwargs.get('use_llm_search', False),
                 kwargs.get('provider', 'google')
             )
+            if content_processing_tokens:
+                logger.info(
+                    f"Content processing used {content_processing_tokens.get('total_tokens', 0)} tokens "
+                    f"(prompt: {content_processing_tokens.get('prompt_tokens', 0)}, "
+                    f"completion: {content_processing_tokens.get('completion_tokens', 0)})"
+                )
         
         logger.info(f"Prepared context length: {len(context)} chars for {company_name}")
         
@@ -147,7 +154,7 @@ class GeneratorService:
                 generator_type, company_name, result
             )
         
-        return {
+        response_dict = {
             "success": success,
             "company_name": company_name,
             "generator_type": generator_type,
@@ -156,6 +163,12 @@ class GeneratorService:
             "generated_at": datetime.now().isoformat(),
             "saved_filepath": saved_filepath
         }
+        
+        # Add content processing tokens if available
+        if content_processing_tokens:
+            response_dict["content_processing_tokens"] = content_processing_tokens
+        
+        return response_dict
     
     def get_available_generators(self) -> list:
         """Get list of available generator types"""

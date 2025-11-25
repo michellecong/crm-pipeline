@@ -32,6 +32,9 @@ class BaseGenerator(ABC):
     
     async def generate(self, company_name: str, context: str, **kwargs) -> Dict:
         """Main generation method"""
+        import time
+        start_time = time.time()
+        
         try:
             prompt = self.build_prompt(company_name, context, **kwargs)
             system_message = self.get_system_message()
@@ -46,13 +49,13 @@ class BaseGenerator(ABC):
             parsed_result = self.parse_response(response.content)
             parsed_result["model"] = response.model
             
-            # Add token usage information
-            parsed_result["_llm_usage"] = {
+            # Add token usage and timing information
+            parsed_result["usage"] = {
                 "prompt_tokens": response.prompt_tokens,
                 "completion_tokens": response.completion_tokens,
-                "total_tokens": response.total_tokens,
-                "model": response.model
+                "total_tokens": response.total_tokens
             }
+            parsed_result["generation_time_seconds"] = time.time() - start_time
             
             return parsed_result
             

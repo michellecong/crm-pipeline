@@ -128,14 +128,15 @@ class ScrapingController:
         self, 
         scraped_content: list, 
         company_name: str
-    ) -> list:
+    ) -> tuple[list, dict]:
         """
         Batch process and clean scraped content with LLM
         
         Returns:
-            List of processed content items
+            Tuple of (processed content items, token usage dict)
         """
         content_processor = get_content_processor()
+        token_usage = {}
         
         # Collect all content for batch processing
         content_batch = []
@@ -154,6 +155,10 @@ class ScrapingController:
                 batch_processed = await content_processor.batch_process_content(
                     content_batch, company_name
                 )
+                
+                # Extract token usage from first item (all items have the same token usage)
+                if batch_processed and 'content_processing_tokens' in batch_processed[0]:
+                    token_usage = batch_processed[0]['content_processing_tokens']
                 
                 # Merge processed content back with original items
                 processed_items = {item['url']: item for item in batch_processed}
@@ -182,7 +187,7 @@ class ScrapingController:
         else:
             processed_content = scraped_content
         
-        return processed_content
+        return processed_content, token_usage
     
     def _fallback_clean_content(self, scraped_content: list, content_processor) -> list:
         """
@@ -329,8 +334,17 @@ class ScrapingController:
         
         # Step 3: Process and clean content
         logger.info("Step 3/3: Processing and cleaning scraped content...")
-        processed_content = await self._process_content_batch(scraped_content, company_name)
-        logger.info(f"Content processing completed for {len(processed_content)} items")
+        processed_content, content_processing_tokens = await self._process_content_batch(scraped_content, company_name)
+        
+        if content_processing_tokens:
+            logger.info(
+                f"Content processing completed for {len(processed_content)} items. "
+                f"Tokens used: {content_processing_tokens.get('total_tokens', 0)} "
+                f"(prompt: {content_processing_tokens.get('prompt_tokens', 0)}, "
+                f"completion: {content_processing_tokens.get('completion_tokens', 0)})"
+            )
+        else:
+            logger.info(f"Content processing completed for {len(processed_content)} items")
         
         # Save to database or file
         saved_filepath = None
@@ -343,6 +357,10 @@ class ScrapingController:
             processed_content=processed_content,
             saved_filepath=None
         )
+        
+        # Add content processing token usage to result
+        if content_processing_tokens:
+            result['content_processing_tokens'] = content_processing_tokens
 
         if db is not None or save_to_file:
             data_store = get_data_store(db=db)
