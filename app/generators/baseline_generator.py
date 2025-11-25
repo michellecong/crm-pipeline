@@ -20,6 +20,9 @@ class BaselineGenerator(BaseGenerator):
         Override to increase max_completion_tokens for large response.
         Baseline needs more tokens since it generates all 4 outputs at once.
         """
+        import time
+        start_time = time.time()
+        
         try:
             from ..services.llm_service import get_llm_service
             llm_service = get_llm_service()
@@ -37,6 +40,15 @@ class BaselineGenerator(BaseGenerator):
             
             parsed_result = self.parse_response(response.content)
             parsed_result["model"] = response.model
+            
+            # Add token usage and timing information
+            parsed_result["usage"] = {
+                "prompt_tokens": response.prompt_tokens,
+                "completion_tokens": response.completion_tokens,
+                "total_tokens": response.total_tokens
+            }
+            parsed_result["generation_time_seconds"] = time.time() - start_time
+            
             return parsed_result
             
         except Exception as e:

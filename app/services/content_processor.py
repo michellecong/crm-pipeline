@@ -505,10 +505,25 @@ Now extract the persona information:
             )
             
             extracted_content = response.content.strip()
-            logger.info(f"Batch LLM persona extraction completed, extracted length: {len(extracted_content)}")
+            
+            # Log token usage for content processing
+            token_usage = {
+                "prompt_tokens": response.prompt_tokens,
+                "completion_tokens": response.completion_tokens,
+                "total_tokens": response.total_tokens
+            }
+            logger.info(
+                f"Batch LLM persona extraction completed, extracted length: {len(extracted_content)}, "
+                f"tokens used: {token_usage['total_tokens']} "
+                f"(prompt: {token_usage['prompt_tokens']}, completion: {token_usage['completion_tokens']})"
+            )
             
             # Parse LLM output and assign to content items
             results = self._parse_batch_llm_output(extracted_content, content_mapping)
+            
+            # Add token usage to results metadata
+            for result in results:
+                result['content_processing_tokens'] = token_usage
             
             return results
             
