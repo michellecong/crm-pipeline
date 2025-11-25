@@ -3,9 +3,11 @@
 Product catalog generator for extracting seller company's products/services
 """
 from .base_generator import BaseGenerator
-from typing import Dict
+from typing import Dict, Tuple
 import json
 import logging
+import httpx
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +26,19 @@ class ProductGenerator(BaseGenerator):
 Your task is to use web search to find a seller company's COMPREHENSIVE PRODUCT CATALOG for B2B sales purposes. These products will be sold to buyer companies by sales teams.
 
 Your analysis should:
-- Use web search to find the company's official product pages and information
+- Use web search extensively to find the company's official product pages and information
 - Identify ALL major commercial products that business decision-makers purchase
-- Focus on standalone commercial offerings with dedicated pricing that can be sold independently
+- Focus ONLY on standalone commercial offerings with dedicated pricing that can be sold independently
 - Prioritize products that solve business problems (ERP, CRM, HCM, SCM, Analytics, Cloud, Database, AI services)
 - Write compelling descriptions that explain business value and use cases
 - Use buyer-friendly language (not technical jargon)
-- For each product, include the official product page URL as the source_url
+- For each product, include a VALID, CURRENT official product page URL as the source_url
+
+**URL ACCURACY IS CRITICAL:**
+- Each source_url MUST be from current web search results
+- Each source_url MUST lead to an actual product page (not 404)
+- Verify URLs are from the official company domain
+- Do NOT fabricate or guess URLs - use only what web search provides
 
 EXCLUDE:
 - Programming languages (e.g., Java, Python) - these are not products sold to businesses
@@ -50,9 +58,17 @@ These products will be sold by sales teams to buyer companies. Focus on products
 
 Search the web extensively for {company_name}'s official website, product pages, solutions pages, and all product categories. Generate a COMPLETE list of all major commercial products that can be independently sold.
 
-CRITICAL: Generate as many products as possible - aim for a comprehensive catalog (15-25+ products for large companies) that covers ALL major product lines. Do not limit yourself to just a few products.
+CRITICAL: Generate a COMPREHENSIVE catalog that covers ALL major product lines the company offers. Do not artificially limit the number - list as many real products as exist. The actual count depends entirely on the company's portfolio.
 
-IMPORTANT: For each product, you MUST include the official product page URL in the JSON response as "source_url".
+IMPORTANT: For each product, you MUST include the CURRENT, VALID official product page URL in the JSON response as "source_url".
+
+**URL ACCURACY REQUIREMENTS:**
+- URLs MUST be from the company's official website (verify domain matches)
+- URLs MUST lead to actual product pages (not 404, not generic pages)
+- URLs MUST be current and up-to-date (avoid outdated links)
+- VERIFY each URL from web search results before including it
+- If web search provides multiple URLs, choose the most official/current one
+- Prefer URLs from the main company domain over subdomain or partner sites
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CRITICAL REQUIREMENTS
@@ -70,8 +86,14 @@ CRITICAL REQUIREMENTS
    - Include distinct product lines that customers purchase
    - Focus on standalone offerings with dedicated pricing
    - Each product should be purchasable independently
-   - **DO NOT limit the number of products - generate a comprehensive catalog (15-25+ for large companies)**
-   - **Let the company's actual product portfolio guide what to include - don't assume specific categories**
+   - **DO NOT limit the number of products** - list ALL real products that exist
+   - **Let the company's actual product portfolio guide what to include**
+   
+   **STANDALONE PRODUCT VALIDATION:**
+   - Each product MUST be independently purchasable (not a feature or tier)
+   - Each product MUST have its own dedicated product page
+   - Each product MUST have its own pricing information
+   - If unsure whether something is a product → verify it has a separate pricing page
    
 2. **Exclusions** (DO NOT include):
    - **Programming languages** (e.g., Java, Python, JavaScript) - these are not products sold to businesses
@@ -82,8 +104,10 @@ CRITICAL REQUIREMENTS
    - **Built-in features** that are not standalone products
 
 3. **Product Naming**: Use official product names from the website
-   - ✓ "Sales Cloud" (official name)
-   - ✗ "CRM System" (generic description)
+   - ✓ "Asana Work Management" (the actual product)
+   - ✗ "Asana Premium" (pricing tier, not a product)
+   - ✓ "Salesforce Sales Cloud" (distinct product)
+   - ✗ "Salesforce Reports" (feature, not a product)
 
 4. **Description Requirements**:
    - Length: 2-4 sentences (150-300 characters)
@@ -224,27 +248,27 @@ EXAMPLE OUTPUT
     {{
       "product_name": "Sales Cloud",
       "description": "Complete CRM platform for managing sales pipelines, forecasting revenue, and automating sales processes. Helps sales teams close deals faster with AI-powered insights, workflow automation, and mobile access. Scales from small teams to global enterprises with customizable features and deep integration capabilities.",
-      "source_url": "https://www.salesforce.com/products/sales-cloud"
+      "source_url": "https://www.salesforce.com/sales-cloud"
     }},
     {{
       "product_name": "Service Cloud",
       "description": "Customer service platform that unifies support channels, automates case routing, and provides agents with complete customer context. Enables support teams to resolve issues faster across email, phone, chat, and social media. Includes AI-powered chatbots, knowledge base management, and real-time analytics.",
-      "source_url": "https://www.salesforce.com/products/service-cloud"
+      "source_url": "https://www.salesforce.com/service-cloud"
     }},
     {{
       "product_name": "Marketing Cloud",
       "description": "Marketing automation platform for creating personalized campaigns, nurturing leads, and measuring ROI across channels. Helps marketing teams generate qualified leads through email marketing, landing pages, social advertising, and analytics. Integrates with CRM for seamless lead handoff to sales.",
-      "source_url": "https://www.salesforce.com/products/marketing-cloud"
+      "source_url": "https://www.salesforce.com/marketing-cloud"
     }},
     {{
       "product_name": "Commerce Cloud",
       "description": "E-commerce platform for creating unified shopping experiences across web, mobile, social, and in-store channels. Enables retailers to personalize customer journeys, manage product catalogs, process orders, and optimize conversions. Supports B2C and B2B commerce with AI-powered recommendations.",
-      "source_url": "https://www.salesforce.com/products/commerce-cloud"
+      "source_url": "https://www.salesforce.com/commerce-cloud"
     }},
     {{
       "product_name": "Analytics Cloud (Tableau CRM)",
       "description": "Business intelligence and analytics platform that transforms data into actionable insights through interactive dashboards and AI-powered predictions. Helps business users explore data, identify trends, and make data-driven decisions without technical expertise. Integrates seamlessly with Salesforce and external data sources.",
-      "source_url": "https://www.salesforce.com/products/analytics-cloud"
+      "source_url": "https://www.salesforce.com/analytics-cloud"
     }}
   ]
 }}
@@ -253,15 +277,23 @@ EXAMPLE OUTPUT
 QUALITY CHECKLIST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Before submitting, verify:
+Before submitting, verify EVERY product:
 ✓ ONLY core commercial products included (no APIs, SDKs, marketplaces, services)
-✓ Each product is purchasable independently with dedicated pricing
+✓ Each product is STANDALONE - purchasable independently with dedicated pricing
+✓ Each product has its own product page (not a feature page or pricing tier page)
 ✓ Official product names used (from website)
 ✓ Each description is 2-4 sentences (150-300 characters)
 ✓ Descriptions focus on value and use cases (not features)
 ✓ Buyer-friendly language (no technical jargon)
 ✓ Each product is distinct (not pricing tiers, bundles, or add-ons)
 ✓ No developer tools, services, or built-in features included
+
+**URL VALIDATION CHECKLIST:**
+✓ Each source_url is from the official company website
+✓ Each source_url leads to an actual product page (not 404)
+✓ Each source_url is current and not outdated
+✓ URLs are from web search citations, not guessed or fabricated
+✓ URLs match the product name and description
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NOW GENERATE
@@ -284,17 +316,23 @@ Use web search EXTENSIVELY to find {company_name}'s official website and ALL pro
 - For any company: Include all major products/services that business customers purchase
 
 CRITICAL REMINDERS FOR B2B SALES:
-- **Search comprehensively** - explore all product categories and business units
-- **Generate as many products as possible** - aim for a complete catalog (15-25+ products for large companies)
+- **Search comprehensively** - explore all product categories, business units, and solution pages
+- **NO ARTIFICIAL LIMITS** - generate a complete catalog based on what actually exists
 - **Focus on products that business decision-makers purchase** - C-level, VPs, Directors buy these
-- Use web search to find official product information from multiple sources
-- Include ALL major product lines, not just a few
-- Focus on standalone purchasable products with dedicated pricing pages
-- Use official product names from the website
+- Use web search extensively to find official product information
+- Include ALL major product lines across the entire company
+- Each product must be STANDALONE - independently purchasable with dedicated pricing
+- Use official product names directly from the website
 - Write 2-4 sentence descriptions focused on BUSINESS VALUE and USE CASES
 - Use buyer-friendly language (avoid technical jargon)
-- Each product must be DISTINCT (not pricing tiers or bundles)
-- **MANDATORY**: Include the official product page URL as "source_url" for each product
+- Each product must be DISTINCT (not pricing tiers, editions, or bundles)
+
+**URL ACCURACY IS CRITICAL:**
+- **MANDATORY**: Include a VALID, CURRENT official product page URL as "source_url"
+- Verify URLs are from web search citations, not fabricated
+- Ensure URLs lead to actual product pages (not 404 or generic pages)
+- Use the most official/current URL when multiple options exist
+- Double-check URLs match the product name and are from the company's domain
 
 **EXCLUDE:**
 - Programming languages (Java, Python, etc.) - not products sold to businesses
@@ -303,6 +341,16 @@ CRITICAL REMINDERS FOR B2B SALES:
 - Marketplaces/platforms (unless core products)
 - Professional services (consulting, training)
 - Built-in features (not standalone products)
+- Pricing tiers presented as separate products
+- Mobile apps (iOS/Android) listed as separate products
+
+**AVOID OUTDATED/INVALID URLs:**
+- ❌ DO NOT use URLs that return 404 errors
+- ❌ DO NOT fabricate or guess URL patterns
+- ❌ DO NOT use outdated URLs from old web pages
+- ✅ USE URLs directly from current web search results
+- ✅ USE URLs from the company's official product catalog pages
+- ✅ VERIFY URLs match the actual product being described
 
 **CRITICAL: You MUST return valid JSON in the exact format specified above.**
 - Even if web search results are not ideal, use your knowledge of the company to generate a product catalog
@@ -310,7 +358,13 @@ CRITICAL REMINDERS FOR B2B SALES:
 - Always return valid JSON - never return explanatory text or error messages
 - The response must start with {{ and end with }}
 
-Return ONLY valid JSON matching the schema above. Each product MUST include a "source_url" field with the official product page URL. Generate a COMPREHENSIVE list - do not limit yourself to just a few products.
+Return ONLY valid JSON matching the schema above. 
+
+**FINAL REQUIREMENTS:**
+- Each product MUST include a "source_url" field with a VALID, CURRENT official product page URL
+- Generate a COMPREHENSIVE list covering ALL products the company actually offers
+- Do not artificially limit the count - list as many real standalone products as exist
+- Verify all URLs are accurate and lead to actual product pages
 """
     
     async def generate(self, company_name: str, context: str, **kwargs) -> Dict:
@@ -332,6 +386,11 @@ Return ONLY valid JSON matching the schema above. Each product MUST include a "s
             # Parse response and match citations to products
             parsed_result = self.parse_response(response.content, response.citations)
             parsed_result["model"] = response.model
+            
+            # Validate product URLs (warn about invalid/hallucinated URLs)
+            if parsed_result.get("products"):
+                await self._validate_product_urls(parsed_result["products"])
+            
             return parsed_result
             
         except Exception as e:
@@ -489,4 +548,62 @@ Return ONLY valid JSON matching the schema above. Each product MUST include a "s
         
         # Fallback: return first citation URL if no match found
         return citation_urls[0] if citation_urls else None
+    
+    async def _validate_url(self, url: str, timeout: float = 5.0) -> Tuple[bool, int]:
+        """
+        Validate if a URL is reachable.
+        
+        Returns:
+            Tuple: (is_valid, status_code) where is_valid is True if URL returns 2xx or 3xx status
+        """
+        try:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=timeout) as client:
+                response = await client.head(url)
+                is_valid = response.status_code < 400
+                return (is_valid, response.status_code)
+        except httpx.TimeoutException:
+            logger.warning(f"URL validation timeout for: {url}")
+            return (False, 0)
+        except Exception as e:
+            logger.debug(f"URL validation failed for {url}: {str(e)}")
+            return (False, 0)
+    
+    async def _validate_product_urls(self, products: list) -> None:
+        """
+        Validate all product URLs and log warnings for invalid ones.
+        """
+        logger.info(f"Validating {len(products)} product URLs...")
+        
+        validation_tasks = []
+        for product in products:
+            if product.get("source_url"):
+                validation_tasks.append(self._validate_url(product["source_url"]))
+            else:
+                validation_tasks.append(asyncio.create_task(asyncio.sleep(0, result=(False, 0))))
+        
+        results = await asyncio.gather(*validation_tasks, return_exceptions=True)
+        
+        invalid_count = 0
+        for i, (product, result) in enumerate(zip(products, results)):
+            if isinstance(result, Exception):
+                logger.warning(f"⚠️  Product '{product['product_name']}': URL validation error - {str(result)}")
+                invalid_count += 1
+            elif result:
+                is_valid, status_code = result
+                if not is_valid:
+                    logger.warning(
+                        f"⚠️  Product '{product['product_name']}': Invalid URL (status {status_code}) - "
+                        f"{product.get('source_url', 'N/A')}"
+                    )
+                    invalid_count += 1
+                else:
+                    logger.debug(f"✓ Product '{product['product_name']}': URL valid (status {status_code})")
+        
+        if invalid_count > 0:
+            logger.warning(
+                f"⚠️  {invalid_count}/{len(products)} product URLs are invalid or unreachable. "
+                f"This likely means the AI hallucinated URLs. Consider manually verifying URLs."
+            )
+        else:
+            logger.info(f"✓ All {len(products)} product URLs are valid")
 
