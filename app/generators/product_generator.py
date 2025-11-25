@@ -315,6 +315,9 @@ Return ONLY valid JSON matching the schema above. Each product MUST include a "s
     
     async def generate(self, company_name: str, context: str, **kwargs) -> Dict:
         """Main generation method - uses Perplexity web search instead of context"""
+        import time
+        start_time = time.time()
+        
         try:
             # For products, we don't use context - let Perplexity search the web
             prompt = self.build_prompt(company_name, "", **kwargs)
@@ -332,6 +335,15 @@ Return ONLY valid JSON matching the schema above. Each product MUST include a "s
             # Parse response and match citations to products
             parsed_result = self.parse_response(response.content, response.citations)
             parsed_result["model"] = response.model
+            
+            # Add token usage and timing information
+            parsed_result["usage"] = {
+                "prompt_tokens": response.prompt_tokens,
+                "completion_tokens": response.completion_tokens,
+                "total_tokens": response.total_tokens
+            }
+            parsed_result["generation_time_seconds"] = time.time() - start_time
+            
             return parsed_result
             
         except Exception as e:

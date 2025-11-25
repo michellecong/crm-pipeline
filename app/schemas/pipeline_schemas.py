@@ -40,9 +40,19 @@ class PipelinePayload(BaseModel):
     sequences: List[OutreachSequence] = Field(default_factory=list)
 
 
+class PipelineStatistics(BaseModel):
+    """Statistics for pipeline execution"""
+    total_runtime_seconds: float = Field(..., description="Total pipeline execution time in seconds")
+    step_runtimes: Dict[str, float] = Field(..., description="Runtime for each step (products, personas, mappings, sequences)")
+    total_tokens: int = Field(..., description="Total tokens used across all steps")
+    step_tokens: Dict[str, int] = Field(..., description="Token usage for each step")
+    token_breakdown: Dict[str, Dict[str, int]] = Field(..., description="Detailed token breakdown (prompt/completion) per step")
+
+
 class PipelineGenerateEnvelope(BaseModel):
     payload: PipelinePayload
     artifacts: Optional[PipelineArtifacts] = None
+    statistics: Optional[PipelineStatistics] = None
 
 
 

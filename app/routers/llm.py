@@ -370,9 +370,18 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
     3) Generate pain-point mappings using personas (+ products).
     4) Generate outreach sequences using personas_with_mappings (optional).
     """
+    import time
+    
     try:
+        pipeline_start_time = time.time()
         logger.info(f"[Pipeline] Starting for company: {request.company_name}")
         generator_service = get_generator_service()
+
+        # Track statistics
+        step_runtimes = {}
+        step_tokens = {}
+        token_breakdown = {}
+        content_processing_tokens = {}
 
         # Common search kwargs passed through to DataAggregator
         extra_search_kwargs = {
@@ -382,6 +391,7 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
 
         # Step 1: Products
+        step_start = time.time()
         products_result = await generator_service.generate(
             generator_type="products",
             company_name=request.company_name,
@@ -390,9 +400,20 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         if not products_result.get("success"):
             raise ValueError("Product generation failed")
         products_data = products_result["result"].get("products", [])
-        logger.info(f"[Pipeline] Products generated: {len(products_data)}")
+        
+        # Track step statistics
+        step_runtimes["products"] = time.time() - step_start
+        if "usage" in products_result["result"]:
+            usage = products_result["result"]["usage"]
+            step_tokens["products"] = usage["total_tokens"]
+            token_breakdown["products"] = usage
+        
+        # Track content processing tokens if available (products uses Perplexity, no content processing)
+        
+        logger.info(f"[Pipeline] Products generated: {len(products_data)} (Time: {step_runtimes['products']:.2f}s, Tokens: {step_tokens.get('products', 0)})")
 
         # Step 2: Personas (explicitly pass products from step 1)
+        step_start = time.time()
         personas_result = await generator_service.generate(
             generator_type="personas",
             company_name=request.company_name,
@@ -403,9 +424,22 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         if not personas_result.get("success"):
             raise ValueError("Persona generation failed")
         personas_data = personas_result["result"].get("personas", [])
-        logger.info(f"[Pipeline] Personas generated: {len(personas_data)}")
+        
+        # Track step statistics
+        step_runtimes["personas"] = time.time() - step_start
+        if "usage" in personas_result["result"]:
+            usage = personas_result["result"]["usage"]
+            step_tokens["personas"] = usage["total_tokens"]
+            token_breakdown["personas"] = usage
+        
+        # Track content processing tokens if available
+        if "content_processing_tokens" in personas_result and not content_processing_tokens:
+            content_processing_tokens = personas_result["content_processing_tokens"]
+        
+        logger.info(f"[Pipeline] Personas generated: {len(personas_data)} (Time: {step_runtimes['personas']:.2f}s, Tokens: {step_tokens.get('personas', 0)})")
 
         # Step 3: Mappings (explicitly pass personas + products from earlier steps)
+        step_start = time.time()
         mappings_result = await generator_service.generate(
             generator_type="mappings",
             company_name=request.company_name,
@@ -416,9 +450,22 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         if not mappings_result.get("success"):
             raise ValueError("Mapping generation failed")
         mappings_data = mappings_result["result"].get("personas_with_mappings", [])
+        
+        # Track step statistics
+        step_runtimes["mappings"] = time.time() - step_start
+        if "usage" in mappings_result["result"]:
+            usage = mappings_result["result"]["usage"]
+            step_tokens["mappings"] = usage["total_tokens"]
+            token_breakdown["mappings"] = usage
+        
+        # Track content processing tokens if available (usually collected in personas step)
+        if "content_processing_tokens" in mappings_result and not content_processing_tokens:
+            content_processing_tokens = mappings_result["content_processing_tokens"]
+        
         logger.info(
             f"[Pipeline] Mappings generated for {len(mappings_data)} personas "
-            f"with {sum(len(p.get('mappings', [])) for p in mappings_data)} total mappings"
+            f"with {sum(len(p.get('mappings', [])) for p in mappings_data)} total mappings "
+            f"(Time: {step_runtimes['mappings']:.2f}s, Tokens: {step_tokens.get('mappings', 0)})"
         )
 
         # Step 4: Outreach Sequences (optional, can be generated separately)
@@ -428,6 +475,7 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         # Try to generate sequences if mappings are available
         try:
             logger.info("[Pipeline] Generating outreach sequences...")
+            step_start = time.time()
             sequences_result = await generator_service.generate(
                 generator_type="outreach",
                 company_name=request.company_name,
@@ -436,11 +484,28 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             if sequences_result.get("success"):
                 sequences_data = sequences_result["result"].get("sequences", [])
                 sequences_file = sequences_result.get("saved_filepath")
-                logger.info(f"[Pipeline] Generated {len(sequences_data)} outreach sequences")
+                
+                # Track step statistics
+                step_runtimes["sequences"] = time.time() - step_start
+                if "usage" in sequences_result["result"]:
+                    usage = sequences_result["result"]["usage"]
+                    step_tokens["sequences"] = usage["total_tokens"]
+                    token_breakdown["sequences"] = usage
+                
+                logger.info(f"[Pipeline] Generated {len(sequences_data)} outreach sequences (Time: {step_runtimes.get('sequences', 0):.2f}s, Tokens: {step_tokens.get('sequences', 0)})")
             else:
                 logger.warning("[Pipeline] Outreach sequence generation skipped (optional)")
         except Exception as e:
             logger.warning(f"[Pipeline] Outreach generation failed (optional): {str(e)}")
+        
+        # Calculate total statistics
+        total_runtime = time.time() - pipeline_start_time
+        total_tokens = sum(step_tokens.values())
+        
+        # Add content processing tokens to total if available
+        if content_processing_tokens:
+            total_tokens += content_processing_tokens.get('total_tokens', 0)
+            token_breakdown['content_processing'] = content_processing_tokens
         
         # Build typed lists
         products_t = [Product(**p) for p in products_data]
@@ -448,7 +513,22 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         mappings_t = [PersonaWithMappings(**pm) for pm in mappings_data]
         sequences_t = [OutreachSequence(**s) for s in sequences_data] if sequences_data else []
 
-        # Return payload envelope (keep artifacts for convenience)
+        # Build statistics
+        from ..schemas.pipeline_schemas import PipelineStatistics
+        statistics = PipelineStatistics(
+            total_runtime_seconds=total_runtime,
+            step_runtimes=step_runtimes,
+            total_tokens=total_tokens,
+            step_tokens=step_tokens,
+            token_breakdown=token_breakdown
+        )
+
+        log_msg = f"[Pipeline] Completed in {total_runtime:.2f}s using {total_tokens} tokens"
+        if content_processing_tokens:
+            log_msg += f" (includes {content_processing_tokens.get('total_tokens', 0)} content processing tokens)"
+        logger.info(log_msg)
+
+        # Return payload envelope with statistics
         response = PipelineGenerateEnvelope(
             payload=PipelinePayload(
                 products=products_t,
@@ -462,6 +542,7 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
                 mappings_file=mappings_result.get("saved_filepath"),
                 sequences_file=sequences_file,
             ),
+            statistics=statistics
         )
         return response
 
@@ -484,7 +565,10 @@ async def generate_baseline(request: BaselineGenerateRequest):
     Baseline single-shot generation for comparison with multi-stage pipeline.
     Generates all 4 outputs in one LLM call without inter-stage information flow.
     """
+    import time
+    
     try:
+        baseline_start_time = time.time()
         logger.info(f"[Baseline] Starting for company: {request.company_name}")
         generator_service = get_generator_service()
         
@@ -513,16 +597,54 @@ async def generate_baseline(request: BaselineGenerateRequest):
         
         data = result["result"]
         
+        # Calculate statistics
+        total_runtime = time.time() - baseline_start_time
+        token_usage = data.get("usage", {})
+        
+        # Get content processing tokens from generator service result
+        content_processing_tokens = result.get("content_processing_tokens", {})
+        
+        # Calculate total tokens (baseline generation + content processing)
+        baseline_tokens = token_usage.get("total_tokens", 0)
+        content_proc_tokens = content_processing_tokens.get("total_tokens", 0)
+        total_tokens = baseline_tokens + content_proc_tokens
+        
+        # Build token breakdown
+        token_breakdown_dict = {
+            "prompt_tokens": token_usage.get("prompt_tokens", 0),
+            "completion_tokens": token_usage.get("completion_tokens", 0),
+            "total_tokens": token_usage.get("total_tokens", 0)
+        }
+        
+        # Add content processing tokens to breakdown if available
+        if content_processing_tokens:
+            token_breakdown_dict["content_processing"] = content_processing_tokens
+        
+        # Build statistics
+        from ..schemas.baseline_schemas import BaselineStatistics
+        statistics = BaselineStatistics(
+            total_runtime_seconds=total_runtime,
+            total_tokens=total_tokens,
+            token_breakdown=token_breakdown_dict
+        )
+        
+        log_msg = f"[Baseline] Completed in {total_runtime:.2f}s using {total_tokens} tokens "
+        log_msg += f"(baseline: {baseline_tokens}"
+        if content_proc_tokens > 0:
+            log_msg += f" + content processing: {content_proc_tokens}"
+        log_msg += f") - Generated: {len(data.get('products', []))} products, {len(data.get('personas', []))} personas"
+        logger.info(log_msg)
+        
         # Build typed response
         response = BaselineGenerateResponse(
             products=[Product(**p) for p in data.get("products", [])],
             personas=[BuyerPersona(**p) for p in data.get("personas", [])],
             personas_with_mappings=[PersonaWithMappings(**pm) for pm in data.get("personas_with_mappings", [])],
             sequences=[OutreachSequence(**s) for s in data.get("sequences", [])] if data.get("sequences") else None,
-            artifacts=PipelineArtifacts(sequences_file=result.get("saved_filepath"))
+            artifacts=PipelineArtifacts(sequences_file=result.get("saved_filepath")),
+            statistics=statistics
         )
         
-        logger.info(f"[Baseline] Generated: {len(response.products)} products, {len(response.personas)} personas")
         return response
         
     except ValueError as e:
