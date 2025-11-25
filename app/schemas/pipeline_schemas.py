@@ -24,6 +24,25 @@ class PipelineArtifacts(BaseModel):
     sequences_file: Optional[str] = None
 
 
+class StageStats(BaseModel):
+    """Statistics for a single pipeline stage"""
+    stage_name: str
+    duration_seconds: float
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    model: Optional[str] = None
+
+
+class PipelineStats(BaseModel):
+    """Aggregated statistics for the entire pipeline"""
+    stages: List[StageStats]
+    total_duration_seconds: float
+    total_prompt_tokens: int
+    total_completion_tokens: int
+    total_tokens: int
+
+
 class PipelineGenerateResponse(BaseModel):
     products: List[Product]
     personas: List[BuyerPersona]
@@ -43,6 +62,7 @@ class PipelinePayload(BaseModel):
 class PipelineGenerateEnvelope(BaseModel):
     payload: PipelinePayload
     artifacts: Optional[PipelineArtifacts] = None
+    stats: Optional[PipelineStats] = None
 
 
 

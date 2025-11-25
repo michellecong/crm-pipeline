@@ -4,7 +4,7 @@ Pydantic schemas for baseline single-shot generation
 """
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
-from .pipeline_schemas import Product, BuyerPersona, PersonaWithMappings, OutreachSequence, PipelineArtifacts
+from .pipeline_schemas import Product, BuyerPersona, PersonaWithMappings, OutreachSequence, PipelineArtifacts, StageStats
 
 
 class BaselineGenerateRequest(BaseModel):
@@ -49,6 +49,7 @@ class BaselineGenerateResponse(BaseModel):
     personas_with_mappings: List[PersonaWithMappings]
     sequences: Optional[List[OutreachSequence]] = None
     artifacts: Optional[PipelineArtifacts] = None
+    stats: Optional[StageStats] = None
     
     class Config:
         json_schema_extra = {

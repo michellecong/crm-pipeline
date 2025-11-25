@@ -29,6 +29,7 @@ Examples:
         
         products = kwargs.get('products', [])
         crm_data = kwargs.get('crm_data', '')
+        generate_count = kwargs.get('generate_count', 5)  # Default to 5 if not specified
         
         products_section = ""
         if products and len(products) > 0:
@@ -60,7 +61,7 @@ Examples:
 
 Generate buyer company personas (market segments) for the seller company. Each persona represents a distinct market segment with clear needs the seller's products can address.
 
-Generate 3-8 personas depending on market diversity.
+Generate EXACTLY {generate_count} diverse personas.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CRITICAL REQUIREMENTS

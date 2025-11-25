@@ -45,6 +45,15 @@ class BaseGenerator(ABC):
             
             parsed_result = self.parse_response(response.content)
             parsed_result["model"] = response.model
+            
+            # Add token usage information
+            parsed_result["_llm_usage"] = {
+                "prompt_tokens": response.prompt_tokens,
+                "completion_tokens": response.completion_tokens,
+                "total_tokens": response.total_tokens,
+                "model": response.model
+            }
+            
             return parsed_result
             
         except Exception as e:

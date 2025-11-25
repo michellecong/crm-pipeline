@@ -387,6 +387,14 @@ Return ONLY valid JSON matching the schema above.
             parsed_result = self.parse_response(response.content, response.citations)
             parsed_result["model"] = response.model
             
+            # Add token usage information
+            parsed_result["_llm_usage"] = {
+                "prompt_tokens": response.prompt_tokens,
+                "completion_tokens": response.completion_tokens,
+                "total_tokens": response.total_tokens,
+                "model": response.model
+            }
+            
             # Validate product URLs (warn about invalid/hallucinated URLs)
             if parsed_result.get("products"):
                 await self._validate_product_urls(parsed_result["products"])
@@ -443,13 +451,30 @@ Return ONLY valid JSON matching the schema above.
             try:
                 data = json.loads(cleaned_response)
             except json.JSONDecodeError as json_err:
-                logger.error(f"JSON parsing failed at position {json_err.pos}: {json_err.msg}")
-                logger.error(f"Problematic section: {cleaned_response[max(0, json_err.pos-100):json_err.pos+100]}")
-                raise ValueError(
-                    f"Invalid JSON format in LLM response. "
-                    f"Error: {json_err.msg} at position {json_err.pos}. "
-                    f"Please ensure the prompt explicitly requires valid JSON output."
-                )
+                # If "Extra data" error, try to extract just the JSON object
+                if "Extra data" in json_err.msg:
+                    logger.warning(f"Extra data found after JSON at position {json_err.pos}. Attempting to extract valid JSON only.")
+                    try:
+                        # Try to parse up to the error position
+                        valid_json = cleaned_response[:json_err.pos]
+                        data = json.loads(valid_json)
+                        logger.info("Successfully extracted valid JSON from response with trailing text")
+                    except:
+                        logger.error(f"JSON parsing failed at position {json_err.pos}: {json_err.msg}")
+                        logger.error(f"Problematic section: {cleaned_response[max(0, json_err.pos-100):json_err.pos+100]}")
+                        raise ValueError(
+                            f"Invalid JSON format in LLM response. "
+                            f"Error: {json_err.msg} at position {json_err.pos}. "
+                            f"Please ensure the prompt explicitly requires valid JSON output."
+                        )
+                else:
+                    logger.error(f"JSON parsing failed at position {json_err.pos}: {json_err.msg}")
+                    logger.error(f"Problematic section: {cleaned_response[max(0, json_err.pos-100):json_err.pos+100]}")
+                    raise ValueError(
+                        f"Invalid JSON format in LLM response. "
+                        f"Error: {json_err.msg} at position {json_err.pos}. "
+                        f"Please ensure the prompt explicitly requires valid JSON output."
+                    )
             
             # Validate structure
             if "products" not in data:

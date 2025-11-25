@@ -37,6 +37,15 @@ class BaselineGenerator(BaseGenerator):
             
             parsed_result = self.parse_response(response.content)
             parsed_result["model"] = response.model
+            
+            # Add token usage information
+            parsed_result["_llm_usage"] = {
+                "prompt_tokens": response.prompt_tokens,
+                "completion_tokens": response.completion_tokens,
+                "total_tokens": response.total_tokens,
+                "model": response.model
+            }
+            
             return parsed_result
             
         except Exception as e:
@@ -48,7 +57,7 @@ class BaselineGenerator(BaseGenerator):
 
 Your task is to generate ALL four components in a single response:
 1. Products (5-15 products)
-2. Personas (3-8 buyer personas)
+2. Personas (as specified in the prompt)
 3. Pain Point-Value Proposition Mappings (5-7 per persona)
 4. Outreach Sequences (1 per persona, 4-6 touches each)
 
@@ -56,9 +65,10 @@ CRITICAL: Generate all outputs in ONE response. Do not split into multiple respo
     
     def build_prompt(self, company_name: str, context: str, **kwargs) -> str:
         # Use the consolidate prompt from the original function
-        return self._get_baseline_prompt(company_name, context)
+        generate_count = kwargs.get('generate_count', 5)
+        return self._get_baseline_prompt(company_name, context, generate_count)
     
-    def _get_baseline_prompt(self, company_name: str, context: str) -> str:
+    def _get_baseline_prompt(self, company_name: str, context: str, generate_count: int = 5) -> str:
         """Internal method containing the consolidated prompt"""
         return f"""You are an expert B2B sales intelligence analyst. Generate a complete sales intelligence package for the seller company based on their web content.
 
@@ -102,7 +112,7 @@ Extract CORE COMMERCIAL PRODUCTS from the web content.
 PART 2: PERSONAS GENERATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Generate 3-8 buyer company personas (market segments) based on the products above.
+Generate EXACTLY {generate_count} buyer company personas (market segments) based on the products above.
 
 **CRITICAL: Base personas on the products you generated in Part 1.**
 

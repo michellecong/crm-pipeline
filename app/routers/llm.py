@@ -370,9 +370,16 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
     3) Generate pain-point mappings using personas (+ products).
     4) Generate outreach sequences using personas_with_mappings (optional).
     """
+    import time
+    from ..schemas.pipeline_schemas import StageStats, PipelineStats
+    
     try:
         logger.info(f"[Pipeline] Starting for company: {request.company_name}")
         generator_service = get_generator_service()
+        
+        # Track stats for each stage
+        stage_stats = []
+        pipeline_start_time = time.time()
 
         # Common search kwargs passed through to DataAggregator
         extra_search_kwargs = {
@@ -382,17 +389,37 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
 
         # Step 1: Products
+        stage_start_time = time.time()
         products_result = await generator_service.generate(
             generator_type="products",
             company_name=request.company_name,
             **extra_search_kwargs
         )
+        stage_duration = time.time() - stage_start_time
+        
         if not products_result.get("success"):
             raise ValueError("Product generation failed")
+        
         products_data = products_result["result"].get("products", [])
-        logger.info(f"[Pipeline] Products generated: {len(products_data)}")
+        usage = products_result["result"].get("_llm_usage", {})
+        
+        # Track stats
+        stage_stats.append(StageStats(
+            stage_name="products",
+            duration_seconds=round(stage_duration, 2),
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+            total_tokens=usage.get("total_tokens", 0),
+            model=usage.get("model")
+        ))
+        
+        logger.info(
+            f"[Pipeline] Products generated: {len(products_data)} "
+            f"({stage_duration:.2f}s, {usage.get('total_tokens', 0)} tokens)"
+        )
 
         # Step 2: Personas (explicitly pass products from step 1)
+        stage_start_time = time.time()
         personas_result = await generator_service.generate(
             generator_type="personas",
             company_name=request.company_name,
@@ -400,12 +427,31 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             generate_count=request.generate_count,
             **extra_search_kwargs
         )
+        stage_duration = time.time() - stage_start_time
+        
         if not personas_result.get("success"):
             raise ValueError("Persona generation failed")
+        
         personas_data = personas_result["result"].get("personas", [])
-        logger.info(f"[Pipeline] Personas generated: {len(personas_data)}")
+        usage = personas_result["result"].get("_llm_usage", {})
+        
+        # Track stats
+        stage_stats.append(StageStats(
+            stage_name="personas",
+            duration_seconds=round(stage_duration, 2),
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+            total_tokens=usage.get("total_tokens", 0),
+            model=usage.get("model")
+        ))
+        
+        logger.info(
+            f"[Pipeline] Personas generated: {len(personas_data)} "
+            f"({stage_duration:.2f}s, {usage.get('total_tokens', 0)} tokens)"
+        )
 
         # Step 3: Mappings (explicitly pass personas + products from earlier steps)
+        stage_start_time = time.time()
         mappings_result = await generator_service.generate(
             generator_type="mappings",
             company_name=request.company_name,
@@ -413,12 +459,29 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             personas=personas_data,
             **extra_search_kwargs
         )
+        stage_duration = time.time() - stage_start_time
+        
         if not mappings_result.get("success"):
             raise ValueError("Mapping generation failed")
+        
         mappings_data = mappings_result["result"].get("personas_with_mappings", [])
+        usage = mappings_result["result"].get("_llm_usage", {})
+        
+        # Track stats
+        stage_stats.append(StageStats(
+            stage_name="mappings",
+            duration_seconds=round(stage_duration, 2),
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+            total_tokens=usage.get("total_tokens", 0),
+            model=usage.get("model")
+        ))
+        
+        total_mappings = sum(len(p.get('mappings', [])) for p in mappings_data)
         logger.info(
             f"[Pipeline] Mappings generated for {len(mappings_data)} personas "
-            f"with {sum(len(p.get('mappings', [])) for p in mappings_data)} total mappings"
+            f"with {total_mappings} total mappings "
+            f"({stage_duration:.2f}s, {usage.get('total_tokens', 0)} tokens)"
         )
 
         # Step 4: Outreach Sequences (optional, can be generated separately)
@@ -428,15 +491,33 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         # Try to generate sequences if mappings are available
         try:
             logger.info("[Pipeline] Generating outreach sequences...")
+            stage_start_time = time.time()
             sequences_result = await generator_service.generate(
                 generator_type="outreach",
                 company_name=request.company_name,
                 personas_with_mappings=mappings_data
             )
+            stage_duration = time.time() - stage_start_time
+            
             if sequences_result.get("success"):
                 sequences_data = sequences_result["result"].get("sequences", [])
                 sequences_file = sequences_result.get("saved_filepath")
-                logger.info(f"[Pipeline] Generated {len(sequences_data)} outreach sequences")
+                usage = sequences_result["result"].get("_llm_usage", {})
+                
+                # Track stats
+                stage_stats.append(StageStats(
+                    stage_name="outreach",
+                    duration_seconds=round(stage_duration, 2),
+                    prompt_tokens=usage.get("prompt_tokens", 0),
+                    completion_tokens=usage.get("completion_tokens", 0),
+                    total_tokens=usage.get("total_tokens", 0),
+                    model=usage.get("model")
+                ))
+                
+                logger.info(
+                    f"[Pipeline] Generated {len(sequences_data)} outreach sequences "
+                    f"({stage_duration:.2f}s, {usage.get('total_tokens', 0)} tokens)"
+                )
             else:
                 logger.warning("[Pipeline] Outreach sequence generation skipped (optional)")
         except Exception as e:
@@ -447,6 +528,25 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         personas_t = [BuyerPersona(**p) for p in personas_data]
         mappings_t = [PersonaWithMappings(**pm) for pm in mappings_data]
         sequences_t = [OutreachSequence(**s) for s in sequences_data] if sequences_data else []
+
+        # Calculate total stats
+        pipeline_duration = time.time() - pipeline_start_time
+        total_prompt_tokens = sum(s.prompt_tokens for s in stage_stats)
+        total_completion_tokens = sum(s.completion_tokens for s in stage_stats)
+        total_tokens = sum(s.total_tokens for s in stage_stats)
+        
+        pipeline_stats = PipelineStats(
+            stages=stage_stats,
+            total_duration_seconds=round(pipeline_duration, 2),
+            total_prompt_tokens=total_prompt_tokens,
+            total_completion_tokens=total_completion_tokens,
+            total_tokens=total_tokens
+        )
+        
+        logger.info(
+            f"[Pipeline] Complete: {pipeline_duration:.2f}s total, "
+            f"{total_tokens} tokens"
+        )
 
         # Return payload envelope (keep artifacts for convenience)
         response = PipelineGenerateEnvelope(
@@ -462,6 +562,7 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
                 mappings_file=mappings_result.get("saved_filepath"),
                 sequences_file=sequences_file,
             ),
+            stats=pipeline_stats
         )
         return response
 
@@ -484,6 +585,9 @@ async def generate_baseline(request: BaselineGenerateRequest):
     Baseline single-shot generation for comparison with multi-stage pipeline.
     Generates all 4 outputs in one LLM call without inter-stage information flow.
     """
+    import time
+    from ..schemas.pipeline_schemas import StageStats
+    
     try:
         logger.info(f"[Baseline] Starting for company: {request.company_name}")
         generator_service = get_generator_service()
@@ -501,17 +605,30 @@ async def generate_baseline(request: BaselineGenerateRequest):
         }
         generator_kwargs.update(extra_search_kwargs)
         
-        # Single generation call
+        # Single generation call with timing
+        start_time = time.time()
         result = await generator_service.generate(
             generator_type="baseline",
             company_name=request.company_name,
             **generator_kwargs
         )
+        duration = time.time() - start_time
         
         if not result.get("success"):
             raise ValueError("Baseline generation failed")
         
         data = result["result"]
+        usage = data.get("_llm_usage", {})
+        
+        # Calculate stats
+        stats = StageStats(
+            stage_name="baseline",
+            duration_seconds=round(duration, 2),
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+            total_tokens=usage.get("total_tokens", 0),
+            model=usage.get("model")
+        )
         
         # Build typed response
         response = BaselineGenerateResponse(
@@ -519,10 +636,14 @@ async def generate_baseline(request: BaselineGenerateRequest):
             personas=[BuyerPersona(**p) for p in data.get("personas", [])],
             personas_with_mappings=[PersonaWithMappings(**pm) for pm in data.get("personas_with_mappings", [])],
             sequences=[OutreachSequence(**s) for s in data.get("sequences", [])] if data.get("sequences") else None,
-            artifacts=PipelineArtifacts(sequences_file=result.get("saved_filepath"))
+            artifacts=PipelineArtifacts(sequences_file=result.get("saved_filepath")),
+            stats=stats
         )
         
-        logger.info(f"[Baseline] Generated: {len(response.products)} products, {len(response.personas)} personas")
+        logger.info(
+            f"[Baseline] Generated: {len(response.products)} products, {len(response.personas)} personas "
+            f"({duration:.2f}s, {usage.get('total_tokens', 0)} tokens)"
+        )
         return response
         
     except ValueError as e:
