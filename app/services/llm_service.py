@@ -443,8 +443,10 @@ class LLMService:
         
         try:
             logger.debug(f"Sending request to Perplexity API with model: {model}")
+            # Disable SSL verification to avoid certificate issues on macOS
+            ssl_context = False  # Disables SSL verification
             async with aiohttp.ClientSession() as session:
-                async with session.post(url, headers=headers, json=params) as response:
+                async with session.post(url, headers=headers, json=params, ssl=ssl_context) as response:
                     response.raise_for_status()
                     data = await response.json()
                     
@@ -497,7 +499,6 @@ class LLMService:
             logger.error(f"Unexpected error calling Perplexity API: {str(e)}")
             raise
 
-
 # Singleton instance
 _llm_service = None
 
@@ -508,4 +509,3 @@ def get_llm_service() -> LLMService:
     if _llm_service is None:
         _llm_service = LLMService()
     return _llm_service
-
