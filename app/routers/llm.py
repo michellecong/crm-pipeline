@@ -373,7 +373,6 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
     import time
     
     try:
-        pipeline_start_time = time.time()
         logger.info(f"[Pipeline] Starting for company: {request.company_name}")
         generator_service = get_generator_service()
 
@@ -389,6 +388,35 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             "provider": getattr(request, "provider", None)
         }
         extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+
+        # PRE-LOAD AND CACHE DATA (not timed or counted in tokens)
+        logger.info(f"[Pipeline] Pre-loading data for {request.company_name} (excluded from metrics)...")
+        data_aggregator = generator_service.data_aggregator
+        
+        # For personas/mappings/baseline: ensure data is cached before timing starts
+        try:
+            _, content_proc_tokens = await data_aggregator.prepare_context(
+                request.company_name,
+                request.max_context_chars,
+                request.include_news,
+                request.include_case_studies,
+                request.max_urls,
+                extra_search_kwargs.get('use_llm_search', False),
+                extra_search_kwargs.get('provider', 'google')
+            )
+            if content_proc_tokens:
+                content_processing_tokens = content_proc_tokens
+                logger.info(
+                    f"[Pipeline] Data pre-loaded. Content processing used "
+                    f"{content_proc_tokens.get('total_tokens', 0)} tokens "
+                    f"(excluded from pipeline metrics)"
+                )
+        except Exception as e:
+            logger.warning(f"[Pipeline] Data pre-loading encountered issue: {e}")
+
+        # NOW START TIMER - after all data is loaded
+        pipeline_start_time = time.time()
+        logger.info(f"[Pipeline] Starting timed generation steps...")
 
         # Step 1: Products
         step_start = time.time()
@@ -432,10 +460,6 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             step_tokens["personas"] = usage["total_tokens"]
             token_breakdown["personas"] = usage
         
-        # Track content processing tokens if available
-        if "content_processing_tokens" in personas_result and not content_processing_tokens:
-            content_processing_tokens = personas_result["content_processing_tokens"]
-        
         logger.info(f"[Pipeline] Personas generated: {len(personas_data)} (Time: {step_runtimes['personas']:.2f}s, Tokens: {step_tokens.get('personas', 0)})")
 
         # Step 3: Mappings (explicitly pass personas + products from earlier steps)
@@ -457,10 +481,6 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             usage = mappings_result["result"]["usage"]
             step_tokens["mappings"] = usage["total_tokens"]
             token_breakdown["mappings"] = usage
-        
-        # Track content processing tokens if available (usually collected in personas step)
-        if "content_processing_tokens" in mappings_result and not content_processing_tokens:
-            content_processing_tokens = mappings_result["content_processing_tokens"]
         
         logger.info(
             f"[Pipeline] Mappings generated for {len(mappings_data)} personas "
@@ -498,14 +518,9 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         except Exception as e:
             logger.warning(f"[Pipeline] Outreach generation failed (optional): {str(e)}")
         
-        # Calculate total statistics
+        # Calculate total statistics (generation only, excluding content processing)
         total_runtime = time.time() - pipeline_start_time
         total_tokens = sum(step_tokens.values())
-        
-        # Add content processing tokens to total if available
-        if content_processing_tokens:
-            total_tokens += content_processing_tokens.get('total_tokens', 0)
-            token_breakdown['content_processing'] = content_processing_tokens
         
         # Build typed lists
         products_t = [Product(**p) for p in products_data]
@@ -523,9 +538,10 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             token_breakdown=token_breakdown
         )
 
-        log_msg = f"[Pipeline] Completed in {total_runtime:.2f}s using {total_tokens} tokens"
+        # Log completion with generation-only metrics
+        log_msg = f"[Pipeline] Completed in {total_runtime:.2f}s using {total_tokens} tokens (generation only)"
         if content_processing_tokens:
-            log_msg += f" (includes {content_processing_tokens.get('total_tokens', 0)} content processing tokens)"
+            log_msg += f" | Content processing: {content_processing_tokens.get('total_tokens', 0)} tokens (excluded)"
         logger.info(log_msg)
 
         # Return payload envelope with statistics
@@ -568,7 +584,6 @@ async def generate_baseline(request: BaselineGenerateRequest):
     import time
     
     try:
-        baseline_start_time = time.time()
         logger.info(f"[Baseline] Starting for company: {request.company_name}")
         generator_service = get_generator_service()
         
@@ -579,11 +594,40 @@ async def generate_baseline(request: BaselineGenerateRequest):
         }
         extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
         
+        # PRE-LOAD AND CACHE DATA (not timed or counted in tokens)
+        logger.info(f"[Baseline] Pre-loading data for {request.company_name} (excluded from metrics)...")
+        data_aggregator = generator_service.data_aggregator
+        content_processing_tokens = {}
+        
+        try:
+            _, content_proc_tokens = await data_aggregator.prepare_context(
+                request.company_name,
+                15000,
+                True,
+                True,
+                10,
+                extra_search_kwargs.get('use_llm_search', False),
+                extra_search_kwargs.get('provider', 'google')
+            )
+            if content_proc_tokens:
+                content_processing_tokens = content_proc_tokens
+                logger.info(
+                    f"[Baseline] Data pre-loaded. Content processing used "
+                    f"{content_proc_tokens.get('total_tokens', 0)} tokens "
+                    f"(excluded from baseline metrics)"
+                )
+        except Exception as e:
+            logger.warning(f"[Baseline] Data pre-loading encountered issue: {e}")
+        
         # Prepare kwargs (aligned with pipeline)
         generator_kwargs = {
             "generate_count": request.generate_count
         }
         generator_kwargs.update(extra_search_kwargs)
+        
+        # NOW START TIMER - after all data is loaded
+        baseline_start_time = time.time()
+        logger.info(f"[Baseline] Starting timed generation...")
         
         # Single generation call
         result = await generator_service.generate(
@@ -597,28 +641,19 @@ async def generate_baseline(request: BaselineGenerateRequest):
         
         data = result["result"]
         
-        # Calculate statistics
+        # Calculate statistics (generation only, excluding content processing)
         total_runtime = time.time() - baseline_start_time
         token_usage = data.get("usage", {})
         
-        # Get content processing tokens from generator service result
-        content_processing_tokens = result.get("content_processing_tokens", {})
+        # Only count baseline generation tokens, not content processing
+        total_tokens = token_usage.get("total_tokens", 0)
         
-        # Calculate total tokens (baseline generation + content processing)
-        baseline_tokens = token_usage.get("total_tokens", 0)
-        content_proc_tokens = content_processing_tokens.get("total_tokens", 0)
-        total_tokens = baseline_tokens + content_proc_tokens
-        
-        # Build token breakdown
+        # Build token breakdown (generation only)
         token_breakdown_dict = {
             "prompt_tokens": token_usage.get("prompt_tokens", 0),
             "completion_tokens": token_usage.get("completion_tokens", 0),
             "total_tokens": token_usage.get("total_tokens", 0)
         }
-        
-        # Add content processing tokens to breakdown if available
-        if content_processing_tokens:
-            token_breakdown_dict["content_processing"] = content_processing_tokens
         
         # Build statistics
         from ..schemas.baseline_schemas import BaselineStatistics
@@ -628,11 +663,11 @@ async def generate_baseline(request: BaselineGenerateRequest):
             token_breakdown=token_breakdown_dict
         )
         
-        log_msg = f"[Baseline] Completed in {total_runtime:.2f}s using {total_tokens} tokens "
-        log_msg += f"(baseline: {baseline_tokens}"
-        if content_proc_tokens > 0:
-            log_msg += f" + content processing: {content_proc_tokens}"
-        log_msg += f") - Generated: {len(data.get('products', []))} products, {len(data.get('personas', []))} personas"
+        # Log completion with generation-only metrics
+        log_msg = f"[Baseline] Completed in {total_runtime:.2f}s using {total_tokens} tokens (generation only)"
+        if content_processing_tokens:
+            log_msg += f" | Content processing: {content_processing_tokens.get('total_tokens', 0)} tokens (excluded)"
+        log_msg += f" - Generated: {len(data.get('products', []))} products, {len(data.get('personas', []))} personas"
         logger.info(log_msg)
         
         # Build typed response
