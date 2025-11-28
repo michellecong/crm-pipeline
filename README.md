@@ -449,6 +449,90 @@ The system provides two approaches to generate all 4 outputs (products, personas
 
 **Note**: Both endpoints accept identical input parameters and return the same output schema for fair comparison.
 
+## 2-Stage Baseline Design
+
+The **2-Stage Baseline** (`/llm/two-stage/generate`) is an experimental approach designed for fair architectural comparison with the multi-stage pipeline.
+
+### **Architecture**
+
+**2-Stage Process**:
+- **Stage 1**: Generate products (same as pipeline)
+- **Stage 2**: Generate personas + mappings + sequences in **ONE consolidated LLM call**
+
+**Key Design Principle**: Complete prompt parity with the 3-stage pipeline
+- ✅ **Same prompt content** as `persona_generator.py`, `mapping_generator.py`, and `outreach_generator.py`
+- ✅ **Same examples, validation rules, and quality requirements**
+- ✅ **Only architectural difference**: 3 outputs generated in 1 LLM call instead of 3 separate calls
+
+This allows comparison of:
+1. **Multi-stage with explicit data flow** (Pipeline)
+2. **Consolidated generation with full guidance** (2-Stage)
+
+### **Technical Details**
+
+**Prompt Integration**:
+- Consolidates all three prompts (personas, mappings, outreach) into a single comprehensive prompt
+- Maintains all original instructions, examples, and validation rules
+- Organized into three parts: "PART 1: PERSONA GENERATION", "PART 2: MAPPINGS GENERATION", "PART 3: SEQUENCES GENERATION"
+
+**Output Format**:
+- Same JSON schema as pipeline: `personas`, `personas_with_mappings`, `sequences`
+- All outputs generated in a single response for consistency
+
+### **Usage**
+
+```bash
+# Generate using 2-stage baseline
+curl -X POST http://localhost:8000/api/v1/llm/two-stage/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "generate_count": 5,
+    "use_llm_search": true
+  }'
+```
+
+**Response Format**:
+```json
+{
+  "personas": [...],
+  "personas_with_mappings": [...],
+  "sequences": [...],
+  "generation_reasoning": "...",
+  "data_sources": {...},
+  "model": "gpt-5-mini-2025-08-07",
+  "usage": {
+    "prompt_tokens": 11330,
+    "completion_tokens": 8896,
+    "total_tokens": 20226
+  },
+  "generation_time_seconds": 141.45
+}
+```
+
+### **Comparison with Pipeline**
+
+| Aspect | Multi-Stage Pipeline | 2-Stage Baseline |
+|--------|---------------------|------------------|
+| **API Calls** | 4 calls | 2 calls |
+| **Stage 2 Calls** | 3 separate calls | 1 consolidated call |
+| **Prompt Content** | 4 separate prompts | Products + 1 consolidated prompt |
+| **Information Flow** | Explicit JSON passing | Context-based (same prompt content) |
+| **Generation Time** | ~4x longer | ~2x faster |
+| **Quality** | Highest (explicit data flow) | High (full guidance parity) |
+| **Consistency** | High (sequential refinement) | Very High (single response) |
+
+**Advantages**:
+- ✅ Faster than pipeline (2 calls vs 4)
+- ✅ Better consistency (personas, mappings, sequences generated together)
+- ✅ Full guidance parity (same prompt content as pipeline)
+- ✅ Fair comparison baseline (isolates architectural impact)
+
+**Limitations**:
+- ⚠️ No explicit JSON passing between stages (relies on context)
+- ⚠️ Larger token usage per call (15K vs 10K per stage)
+- ⚠️ Less flexibility for stage-specific optimization
+
 ## Outreach Sequences
 
 Generate multi-touch sales outreach sequences for each persona with pain point-value proposition mappings.
