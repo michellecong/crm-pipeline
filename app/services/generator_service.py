@@ -5,6 +5,7 @@ from ..generators.product_generator import ProductGenerator
 from ..generators.mapping_generator import MappingGenerator
 from ..generators.outreach_generator import OutreachGenerator
 from ..generators.baseline_generator import BaselineGenerator
+from ..generators.two_stage_generator import TwoStageGenerator
 from .data_aggregator import DataAggregator
 from .crm_data_loader import CRMDataLoader
 from datetime import datetime
@@ -22,7 +23,8 @@ class GeneratorService:
             "products": ProductGenerator(),
             "mappings": MappingGenerator(),
             "outreach": OutreachGenerator(),
-            "baseline": BaselineGenerator()
+            "baseline": BaselineGenerator(),
+            "two_stage": TwoStageGenerator()
         }
         self.data_aggregator = DataAggregator()
     
@@ -67,6 +69,19 @@ class GeneratorService:
         elif generator_type == "personas" and kwargs.get("crm_data"):
             crm_data_provided = True
             logger.info("✅ Using provided CRM data for persona generation")
+        
+        # Auto-inject CRM data for two_stage generation (includes persona generation)
+        if generator_type == "two_stage" and "crm_data" not in kwargs:
+            crm_data = self._load_crm_data()
+            if crm_data:
+                kwargs["crm_data"] = crm_data
+                crm_data_provided = True
+                logger.info("✅ Auto-loaded CRM data for two-stage generation")
+            else:
+                logger.info("ℹ️  No CRM data found. Generating two-stage output without CRM insights.")
+        elif generator_type == "two_stage" and kwargs.get("crm_data"):
+            crm_data_provided = True
+            logger.info("✅ Using provided CRM data for two-stage generation")
         
         # Auto-inject products and personas for mapping generation if not provided
         if generator_type == "mappings":
@@ -117,8 +132,8 @@ class GeneratorService:
         
         result = await generator.generate(company_name, context, **kwargs)
         
-        # For personas, verify that data_sources field is present and matches CRM data availability
-        if generator_type == 'personas':
+        # For personas and two_stage, verify that data_sources field is present and matches CRM data availability
+        if generator_type == 'personas' or generator_type == 'two_stage':
             if 'data_sources' in result:
                 reported_crm_usage = result['data_sources'].get('crm_data_used', False)
                 if crm_data_provided and not reported_crm_usage:
@@ -144,6 +159,9 @@ class GeneratorService:
         elif generator_type == 'baseline':
             # Baseline returns all 4 outputs in one response
             success = bool(result.get('products') and result.get('personas'))
+        elif generator_type == 'two_stage':
+            # Two-stage returns personas, personas_with_mappings, and sequences
+            success = bool(result.get('personas') and result.get('personas_with_mappings') and result.get('sequences'))
         else:
             success = bool(result)
         
@@ -292,7 +310,11 @@ class GeneratorService:
         
         # Generate filename
         timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-        filename = f"{company_name.lower().replace(' ', '_')}_{generator_type}_{timestamp}.json"
+        # Special handling for two_stage generator type
+        if generator_type == "two_stage":
+            filename = f"{company_name.lower().replace(' ', '_')}_two_stage_{timestamp}.json"
+        else:
+            filename = f"{company_name.lower().replace(' ', '_')}_{generator_type}_{timestamp}.json"
         filepath = generated_dir / filename
         
         # Prepare data to save

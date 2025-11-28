@@ -36,6 +36,10 @@ from ..schemas.baseline_schemas import (
     BaselineGenerateRequest,
     BaselineGenerateResponse
 )
+from ..schemas.two_stage_schemas import (
+    TwoStageGenerateRequest,
+    TwoStageGenerateResponse
+)
 from ..schemas.evaluation_schemas import (
     PersonaEvaluationRequest,
     PersonaEvaluationResponse
@@ -652,6 +656,141 @@ async def generate_baseline(request: BaselineGenerateRequest):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"[Baseline] Failed: {str(e)}", exc_info=True)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post(
+    "/llm/two-stage/generate",
+    response_model=TwoStageGenerateResponse,
+    summary="Two-stage baseline: Products (Stage 1) + Consolidated Personas/Mappings/Sequences (Stage 2)",
+    description="Generate products in Stage 1, then personas, mappings, and sequences in one consolidated Stage 2 call"
+)
+async def generate_two_stage(request: TwoStageGenerateRequest):
+    """
+    Two-stage baseline generation for ablation study.
+    
+    Stage 1: Products generation (reuses ProductGenerator)
+    Stage 2: Personas + Mappings + Sequences (consolidated in one call)
+    
+    This validates optimal number of stages by testing intermediate configurations.
+    """
+    import time
+    
+    try:
+        two_stage_start_time = time.time()
+        logger.info(f"[Two-Stage] Starting for company: {request.company_name}")
+        generator_service = get_generator_service()
+        
+        # Common search kwargs passed through to DataAggregator
+        extra_search_kwargs = {
+            "use_llm_search": getattr(request, "use_llm_search", None),
+            "provider": getattr(request, "provider", None)
+        }
+        extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+        
+        # Stage 1: Products (reuse existing ProductGenerator)
+        stage1_start = time.time()
+        logger.info("[Two-Stage] Stage 1: Generating products...")
+        products_result = await generator_service.generate(
+            generator_type="products",
+            company_name=request.company_name,
+            **extra_search_kwargs
+        )
+        if not products_result.get("success"):
+            raise ValueError("Product generation failed in Stage 1")
+        products_data = products_result["result"].get("products", [])
+        stage1_runtime = time.time() - stage1_start
+        stage1_tokens = products_result["result"].get("usage", {}).get("total_tokens", 0)
+        
+        logger.info(f"[Two-Stage] Stage 1 complete: {len(products_data)} products (Time: {stage1_runtime:.2f}s, Tokens: {stage1_tokens})")
+        
+        # Stage 2: Personas + Mappings + Sequences (consolidated)
+        stage2_start = time.time()
+        logger.info("[Two-Stage] Stage 2: Generating personas, mappings, and sequences...")
+        consolidated_result = await generator_service.generate(
+            generator_type="two_stage",
+            company_name=request.company_name,
+            products=products_data,  # Pass Stage 1 output
+            generate_count=request.generate_count,
+            **extra_search_kwargs
+        )
+        if not consolidated_result.get("success"):
+            raise ValueError("Consolidated generation failed in Stage 2")
+        
+        consolidated_data = consolidated_result["result"]
+        personas_data = consolidated_data.get("personas", [])
+        mappings_data = consolidated_data.get("personas_with_mappings", [])
+        sequences_data = consolidated_data.get("sequences", [])
+        stage2_runtime = time.time() - stage2_start
+        stage2_tokens = consolidated_result["result"].get("usage", {}).get("total_tokens", 0)
+        
+        logger.info(
+            f"[Two-Stage] Stage 2 complete: {len(personas_data)} personas, "
+            f"{len(mappings_data)} personas_with_mappings, {len(sequences_data)} sequences "
+            f"(Time: {stage2_runtime:.2f}s, Tokens: {stage2_tokens})"
+        )
+        
+        # Calculate total statistics
+        total_runtime = time.time() - two_stage_start_time
+        total_tokens = stage1_tokens + stage2_tokens
+        
+        # Get content processing tokens if available
+        content_processing_tokens = consolidated_result.get("content_processing_tokens", {})
+        if content_processing_tokens:
+            content_proc_tokens = content_processing_tokens.get("total_tokens", 0)
+            total_tokens += content_proc_tokens
+            stage2_tokens += content_proc_tokens
+        
+        # Build token breakdown
+        token_breakdown = {
+            "stage1": products_result["result"].get("usage", {}),
+            "stage2": consolidated_result["result"].get("usage", {})
+        }
+        if content_processing_tokens:
+            token_breakdown["content_processing"] = content_processing_tokens
+        
+        # Build statistics
+        from ..schemas.two_stage_schemas import TwoStageStatistics
+        statistics = TwoStageStatistics(
+            total_runtime_seconds=total_runtime,
+            stage1_runtime_seconds=stage1_runtime,
+            stage2_runtime_seconds=stage2_runtime,
+            total_tokens=total_tokens,
+            stage1_tokens=stage1_tokens,
+            stage2_tokens=stage2_tokens,
+            token_breakdown=token_breakdown
+        )
+        
+        log_msg = f"[Two-Stage] Completed in {total_runtime:.2f}s using {total_tokens} tokens "
+        log_msg += f"(Stage 1: {stage1_tokens}, Stage 2: {stage2_tokens})"
+        logger.info(log_msg)
+        
+        # Build artifacts using PipelineArtifacts (aligned with pipeline design)
+        # Note: personas, mappings, and sequences are all in the two_stage_file
+        artifacts = PipelineArtifacts(
+            products_file=products_result.get("saved_filepath"),
+            personas_file=None,  # Contained in two_stage_file
+            mappings_file=None,  # Contained in two_stage_file
+            sequences_file=consolidated_result.get("saved_filepath")  # Contains personas, mappings, sequences
+        )
+        
+        # Build typed response
+        response = TwoStageGenerateResponse(
+            products=[Product(**p) for p in products_data],
+            personas=[BuyerPersona(**p) for p in personas_data],
+            personas_with_mappings=[PersonaWithMappings(**pm) for pm in mappings_data],
+            sequences=[OutreachSequence(**s) for s in sequences_data],
+            artifacts=artifacts,
+            statistics=statistics
+        )
+        
+        return response
+        
+    except ValueError as e:
+        logger.error(f"[Two-Stage] Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"[Two-Stage] Failed: {str(e)}", exc_info=True)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
