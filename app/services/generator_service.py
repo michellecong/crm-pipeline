@@ -6,6 +6,7 @@ from ..generators.mapping_generator import MappingGenerator
 from ..generators.outreach_generator import OutreachGenerator
 from ..generators.baseline_generator import BaselineGenerator
 from ..generators.two_stage_generator import TwoStageGenerator
+from ..generators.three_stage_generator import ThreeStageGenerator
 from .data_aggregator import DataAggregator
 from .crm_data_loader import CRMDataLoader
 from datetime import datetime
@@ -24,7 +25,8 @@ class GeneratorService:
             "mappings": MappingGenerator(),
             "outreach": OutreachGenerator(),
             "baseline": BaselineGenerator(),
-            "two_stage": TwoStageGenerator()
+            "two_stage": TwoStageGenerator(),
+            "three_stage": ThreeStageGenerator()
         }
         self.data_aggregator = DataAggregator()
     
@@ -310,9 +312,11 @@ class GeneratorService:
         
         # Generate filename
         timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-        # Special handling for two_stage generator type
+        # Special handling for two_stage and three_stage generator types
         if generator_type == "two_stage":
             filename = f"{company_name.lower().replace(' ', '_')}_two_stage_{timestamp}.json"
+        elif generator_type == "three_stage":
+            filename = f"{company_name.lower().replace(' ', '_')}_three_stage_{timestamp}.json"
         else:
             filename = f"{company_name.lower().replace(' ', '_')}_{generator_type}_{timestamp}.json"
         filepath = generated_dir / filename
@@ -324,6 +328,17 @@ class GeneratorService:
             "generated_at": datetime.now().isoformat(),
             "result": result
         }
+        
+        # Add pipeline description for multi-stage generators
+        if generator_type == "two_stage":
+            data_to_save["pipeline_description"] = "Two-Stage Pipeline: Stage 1 (Products) → Stage 2 (Personas + Mappings + Sequences)"
+            data_to_save["pipeline_stages"] = 2
+        elif generator_type == "three_stage":
+            data_to_save["pipeline_description"] = "Three-Stage Pipeline: Stage 1 (Products) → Stage 2 (Personas) → Stage 3 (Mappings + Sequences)"
+            data_to_save["pipeline_stages"] = 3
+        elif generator_type == "baseline":
+            data_to_save["pipeline_description"] = "Baseline Single-Shot: All outputs generated in one LLM call"
+            data_to_save["pipeline_stages"] = 1
         
         # Save to file
         with open(filepath, 'w', encoding='utf-8') as f:

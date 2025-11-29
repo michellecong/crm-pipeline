@@ -40,6 +40,10 @@ from ..schemas.two_stage_schemas import (
     TwoStageGenerateRequest,
     TwoStageGenerateResponse
 )
+from ..schemas.three_stage_schemas import (
+    ThreeStageGenerateRequest,
+    ThreeStageGenerateResponse
+)
 from ..schemas.evaluation_schemas import (
     PersonaEvaluationRequest,
     PersonaEvaluationResponse
@@ -826,6 +830,192 @@ async def generate_two_stage(request: TwoStageGenerateRequest):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"[Two-Stage] Failed: {str(e)}", exc_info=True)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post(
+    "/llm/three-stage/generate",
+    response_model=ThreeStageGenerateResponse,
+    summary="Three-stage pipeline: Products (Stage 1) + Personas (Stage 2) + Mappings+Sequences (Stage 3)",
+    description="Generate products in Stage 1, personas in Stage 2, then mappings and sequences consolidated in Stage 3"
+)
+async def generate_three_stage(request: ThreeStageGenerateRequest):
+    """
+    Three-stage pipeline generation for ablation study.
+    
+    Stage 1: Products generation (reuses ProductGenerator)
+    Stage 2: Personas generation (reuses PersonaGenerator with Stage 1 products)
+    Stage 3: Mappings + Sequences consolidated (uses ThreeStageGenerator)
+    
+    This validates optimal number of stages by testing intermediate configurations.
+    """
+    import time
+    
+    try:
+        three_stage_start_time = time.time()
+        logger.info(f"[Three-Stage] Starting for company: {request.company_name}")
+        generator_service = get_generator_service()
+        
+        # Track statistics
+        step_runtimes = {}
+        step_tokens = {}
+        token_breakdown = {}
+        content_processing_tokens = {}
+        
+        # Common search kwargs passed through to DataAggregator
+        extra_search_kwargs = {
+            "use_llm_search": getattr(request, "use_llm_search", None),
+            "provider": getattr(request, "provider", None)
+        }
+        extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+        
+        # PRE-LOAD AND CACHE DATA (not timed or counted in tokens)
+        logger.info(f"[Three-Stage] Pre-loading data for {request.company_name} (excluded from metrics)...")
+        data_aggregator = generator_service.data_aggregator
+        
+        try:
+            _, content_proc_tokens = await data_aggregator.prepare_context(
+                request.company_name,
+                15000,
+                True,
+                True,
+                10,
+                extra_search_kwargs.get('use_llm_search', False),
+                extra_search_kwargs.get('provider', 'google')
+            )
+            if content_proc_tokens:
+                content_processing_tokens = content_proc_tokens
+                logger.info(
+                    f"[Three-Stage] Data pre-loaded. Content processing used "
+                    f"{content_proc_tokens.get('total_tokens', 0)} tokens "
+                    f"(excluded from three-stage metrics)"
+                )
+        except Exception as e:
+            logger.warning(f"[Three-Stage] Data pre-loading encountered issue: {e}")
+        
+        # NOW START TIMER - after all data is loaded
+        pipeline_start_time = time.time()
+        logger.info(f"[Three-Stage] Starting timed generation steps...")
+        
+        # Stage 1: Products (reuse existing ProductGenerator)
+        stage1_start = time.time()
+        logger.info("[Three-Stage] Stage 1: Generating products...")
+        products_result = await generator_service.generate(
+            generator_type="products",
+            company_name=request.company_name,
+            **extra_search_kwargs
+        )
+        if not products_result.get("success"):
+            raise ValueError("Product generation failed in Stage 1")
+        products_data = products_result["result"].get("products", [])
+        stage1_runtime = time.time() - stage1_start
+        stage1_tokens = products_result["result"].get("usage", {}).get("total_tokens", 0)
+        
+        logger.info(f"[Three-Stage] Stage 1 complete: {len(products_data)} products (Time: {stage1_runtime:.2f}s, Tokens: {stage1_tokens})")
+        
+        # Stage 2: Personas (reuse existing PersonaGenerator with products from Stage 1)
+        stage2_start = time.time()
+        logger.info("[Three-Stage] Stage 2: Generating personas...")
+        personas_result = await generator_service.generate(
+            generator_type="personas",
+            company_name=request.company_name,
+            products=products_data,  # Pass Stage 1 output
+            generate_count=request.generate_count,
+            **extra_search_kwargs
+        )
+        if not personas_result.get("success"):
+            raise ValueError("Persona generation failed in Stage 2")
+        personas_data = personas_result["result"].get("personas", [])
+        stage2_runtime = time.time() - stage2_start
+        stage2_tokens = personas_result["result"].get("usage", {}).get("total_tokens", 0)
+        
+        logger.info(
+            f"[Three-Stage] Stage 2 complete: {len(personas_data)} personas "
+            f"(Time: {stage2_runtime:.2f}s, Tokens: {stage2_tokens})"
+        )
+        
+        # Stage 3: Mappings + Sequences consolidated
+        stage3_start = time.time()
+        logger.info("[Three-Stage] Stage 3: Generating mappings and sequences...")
+        consolidated_result = await generator_service.generate(
+            generator_type="three_stage",
+            company_name=request.company_name,
+            products=products_data,  # Pass Stage 1 output
+            personas=personas_data,  # Pass Stage 2 output
+            **extra_search_kwargs
+        )
+        if not consolidated_result.get("success"):
+            raise ValueError("Consolidated generation failed in Stage 3")
+        
+        consolidated_data = consolidated_result["result"]
+        mappings_data = consolidated_data.get("personas_with_mappings", [])
+        sequences_data = consolidated_data.get("sequences", [])
+        stage3_runtime = time.time() - stage3_start
+        stage3_tokens = consolidated_result["result"].get("usage", {}).get("total_tokens", 0)
+        
+        logger.info(
+            f"[Three-Stage] Stage 3 complete: {len(mappings_data)} personas_with_mappings, "
+            f"{len(sequences_data)} sequences "
+            f"(Time: {stage3_runtime:.2f}s, Tokens: {stage3_tokens})"
+        )
+        
+        # Calculate total statistics (generation only, excluding content processing)
+        total_runtime = time.time() - pipeline_start_time
+        total_tokens = stage1_tokens + stage2_tokens + stage3_tokens
+        
+        # Build token breakdown
+        token_breakdown = {
+            "stage1": products_result["result"].get("usage", {}),
+            "stage2": personas_result["result"].get("usage", {}),
+            "stage3": consolidated_result["result"].get("usage", {})
+        }
+        
+        # Build statistics
+        from ..schemas.three_stage_schemas import ThreeStageStatistics
+        statistics = ThreeStageStatistics(
+            total_runtime_seconds=total_runtime,
+            stage1_runtime_seconds=stage1_runtime,
+            stage2_runtime_seconds=stage2_runtime,
+            stage3_runtime_seconds=stage3_runtime,
+            total_tokens=total_tokens,
+            stage1_tokens=stage1_tokens,
+            stage2_tokens=stage2_tokens,
+            stage3_tokens=stage3_tokens,
+            token_breakdown=token_breakdown
+        )
+        
+        # Log completion with generation-only metrics
+        log_msg = f"[Three-Stage] Completed in {total_runtime:.2f}s using {total_tokens} tokens (generation only)"
+        if content_processing_tokens:
+            log_msg += f" | Content processing: {content_processing_tokens.get('total_tokens', 0)} tokens (excluded)"
+        log_msg += f" - Stage 1: {stage1_tokens}, Stage 2: {stage2_tokens}, Stage 3: {stage3_tokens}"
+        logger.info(log_msg)
+        
+        # Build artifacts using PipelineArtifacts
+        artifacts = PipelineArtifacts(
+            products_file=products_result.get("saved_filepath"),
+            personas_file=personas_result.get("saved_filepath"),
+            mappings_file=None,  # Contained in sequences_file
+            sequences_file=consolidated_result.get("saved_filepath")  # Contains mappings + sequences
+        )
+        
+        # Build typed response
+        response = ThreeStageGenerateResponse(
+            products=[Product(**p) for p in products_data],
+            personas=[BuyerPersona(**p) for p in personas_data],
+            personas_with_mappings=[PersonaWithMappings(**pm) for pm in mappings_data],
+            sequences=[OutreachSequence(**s) for s in sequences_data],
+            artifacts=artifacts,
+            statistics=statistics
+        )
+        
+        return response
+        
+    except ValueError as e:
+        logger.error(f"[Three-Stage] Validation error: {str(e)}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"[Three-Stage] Failed: {str(e)}", exc_info=True)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
