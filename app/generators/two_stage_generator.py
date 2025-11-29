@@ -1048,6 +1048,10 @@ Return ONLY valid JSON."""
                 f"{len(data['sequences'])} sequences"
             )
             
+            # Add metadata about generation method
+            data["generation_method"] = "Two-Stage Pipeline"
+            data["stage_description"] = "Stage 2: Consolidated Personas + Mappings + Sequences"
+            
             return data
             
         except json.JSONDecodeError as e:

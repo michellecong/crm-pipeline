@@ -394,6 +394,10 @@ Generate now."""
                 f"{len(data['sequences'])} sequences"
             )
             
+            # Add metadata about generation method
+            data["generation_method"] = "Baseline Single-Shot"
+            data["stage_description"] = "All outputs generated in one LLM call"
+            
             return data
             
         except json.JSONDecodeError as e:
