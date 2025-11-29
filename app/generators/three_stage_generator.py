@@ -515,14 +515,23 @@ PART 2 (Sequences):
     def parse_response(self, response: str) -> Dict:
         """Parse JSON response from LLM"""
         try:
-            # Extract JSON from markdown code blocks if present
-            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-            else:
-                json_str = response.strip()
+            logger.debug(f"RAW LLM RESPONSE: {response[:2000]}")
             
-            data = json.loads(json_str)
+            # Clean markdown code block markers (same approach as MappingGenerator)
+            cleaned_response = response.strip()
+            
+            if cleaned_response.startswith('```json'):
+                cleaned_response = cleaned_response[7:]
+            elif cleaned_response.startswith('```'):
+                cleaned_response = cleaned_response[3:]
+            
+            if cleaned_response.endswith('```'):
+                cleaned_response = cleaned_response[:-3]
+            
+            cleaned_response = cleaned_response.strip()
+            
+            # Parse JSON
+            data = json.loads(cleaned_response)
             
             # Validate required fields
             if "personas_with_mappings" not in data:
