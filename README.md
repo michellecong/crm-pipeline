@@ -449,6 +449,93 @@ The system provides two approaches to generate all 4 outputs (products, personas
 
 **Note**: Both endpoints accept identical input parameters and return the same output schema for fair comparison.
 
+## 3-Stage Pipeline Design
+
+The **3-Stage Pipeline** (`/llm/three-stage/generate`) consolidates the final two stages of the 4-stage pipeline into a single LLM call for ablation study purposes.
+
+### **Architecture**
+
+**3-Stage Process**:
+- **Stage 1**: Generate products (same as 4-stage pipeline)
+- **Stage 2**: Generate personas using products (same as 4-stage pipeline)
+- **Stage 3**: Generate mappings + sequences in **ONE consolidated LLM call**
+
+**Key Design Principle**: Tests whether consolidating the final two stages (mappings and outreach) improves consistency while maintaining explicit data flow from earlier stages.
+
+### **Usage**
+
+```bash
+# Generate using 3-stage pipeline
+curl -X POST http://localhost:8000/api/v1/llm/three-stage/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Salesforce",
+    "generate_count": 5,
+    "use_llm_search": true,
+    "provider": "perplexity"
+  }'
+```
+
+**Response Format**:
+```json
+{
+  "products": [...],
+  "personas": [...],
+  "personas_with_mappings": [...],
+  "sequences": [...],
+  "artifacts": {
+    "products_file": "data/generated/salesforce_products_2025-11-28.json",
+    "personas_file": "data/generated/salesforce_personas_2025-11-28.json",
+    "mappings_file": null,
+    "sequences_file": "data/generated/salesforce_three_stage_2025-11-28.json"
+  },
+  "statistics": {
+    "total_runtime_seconds": 95.3,
+    "stage1_runtime_seconds": 18.5,
+    "stage2_runtime_seconds": 32.1,
+    "stage3_runtime_seconds": 44.7,
+    "total_tokens": 18450,
+    "stage1_tokens": 4200,
+    "stage2_tokens": 6150,
+    "stage3_tokens": 8100,
+    "token_breakdown": {...}
+  }
+}
+```
+
+### **Advantages**
+
+- ✅ Faster than 4-stage pipeline (3 calls vs 4)
+- ✅ Better consistency between mappings and sequences (generated together)
+- ✅ Maintains explicit product and persona data flow
+- ✅ Sequences can reference mappings in the same generation context
+- ✅ Suitable for ablation studies comparing stage consolidation strategies
+
+### **Use Cases**
+
+- **Ablation Studies**: Compare impact of consolidating final stages
+- **Performance Optimization**: Balance between speed and quality
+- **Consistency Testing**: Evaluate if co-generating mappings and sequences improves alignment
+- **Research**: Study optimal number of pipeline stages for different outputs
+
+### **When to Use**
+
+**Use 3-Stage Pipeline when**:
+- Running ablation studies on pipeline architecture
+- Consistency between mappings and sequences is critical
+- Need faster generation than 4-stage but with explicit product/persona flow
+- Testing impact of consolidating related outputs
+
+**Use 4-Stage Pipeline when**:
+- Need maximum flexibility to regenerate individual stages
+- Each output type requires independent optimization
+- Production environment prioritizing quality over speed
+
+**Use 2-Stage Baseline when**:
+- Speed is the priority
+- All persona-related outputs can be generated together
+- Comparing architectural approaches for research
+
 ## 2-Stage Baseline Design
 
 The **2-Stage Baseline** (`/llm/two-stage/generate`) is an experimental approach designed for fair architectural comparison with the multi-stage pipeline.
@@ -730,7 +817,9 @@ Interactive docs: http://localhost:8000/docs
 | `/api/v1/llm/products/generate` | POST | Generate product catalog (uses Perplexity web search) |
 | `/api/v1/llm/persona/generate` | POST | Generate buyer personas        |
 | `/api/v1/llm/mappings/generate` | POST | Generate pain-point to value-prop mappings |
-| `/api/v1/llm/pipeline/generate` | POST   | Run full pipeline (products → personas → mappings → sequences) |
+| `/api/v1/llm/pipeline/generate` | POST   | Run full 4-stage pipeline (products → personas → mappings → sequences) |
+| `/api/v1/llm/three-stage/generate` | POST   | Run 3-stage pipeline (products → personas → mappings+sequences) |
+| `/api/v1/llm/two-stage/generate` | POST   | Run 2-stage baseline (products → personas+mappings+sequences) |
 | `/api/v1/llm/baseline/generate` | POST   | Baseline single-shot generation (all 4 outputs in one call) |
 | `/api/v1/llm/test`          | GET    | Test LLM connectivity          |
 | `/api/v1/llm/config`        | GET    | Get LLM configuration          |
@@ -801,6 +890,8 @@ All generated content is automatically saved to `data/generated/` with timestamp
 - **Personas**: `{company}_personas_{timestamp}.json`
 - **Mappings**: `{company}_mappings_{timestamp}.json`
 - **Outreach Sequences**: `{company}_outreach_{timestamp}.json`
+- **3-Stage Pipeline**: `{company}_three_stage_{timestamp}.json` (mappings + sequences in one file)
+- **2-Stage Baseline**: `{company}_two_stage_{timestamp}.json` (personas + mappings + sequences)
 - **Baseline**: `{company}_baseline_{timestamp}.json` (all 4 outputs in one file)
 
 ### **Scraped Data Storage**
@@ -1138,6 +1229,8 @@ crm-pipeline/
 │   │   ├── persona_generator.py    # Buyer persona generation
 │   │   ├── mapping_generator.py    # Pain-point to value-prop mapping generation
 │   │   ├── outreach_generator.py   # Outreach sequence generation
+│   │   ├── three_stage_generator.py # 3-stage pipeline (mappings + sequences consolidated)
+│   │   ├── two_stage_generator.py  # 2-stage baseline (personas + mappings + sequences)
 │   │   └── baseline_generator.py   # Baseline single-shot generation
 │   ├── services/                    # Business logic
 │   │   ├── llm_web_search_service.py  # LLM-powered web search
@@ -1152,6 +1245,8 @@ crm-pipeline/
 │       ├── mapping_schemas.py      # Mapping schemas
 │       ├── outreach_schemas.py     # Outreach sequence schemas
 │       ├── pipeline_schemas.py     # Full pipeline schemas
+│       ├── three_stage_schemas.py  # 3-stage pipeline schemas
+│       ├── two_stage_schemas.py    # 2-stage baseline schemas
 │       ├── baseline_schemas.py     # Baseline generation schemas
 │       └── crm_schemas.py          # CRM data schemas
 ├── data/
