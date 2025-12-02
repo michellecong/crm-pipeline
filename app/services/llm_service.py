@@ -25,37 +25,25 @@ class LLMConfig:
         model: The OpenAI model identifier to use
         temperature: Controls randomness in responses (0.0 = deterministic, 2.0 = very random)
         max_completion_tokens: Maximum number of tokens in the response
-        top_p: Nucleus sampling parameter
-        frequency_penalty: Penalty for token frequency (-2.0 to 2.0)
-        presence_penalty: Penalty for token presence (-2.0 to 2.0)
     """
     
     def __init__(
         self,
         model: str = None,
         temperature: float = None,
-        max_completion_tokens: int = None,
-        top_p: float = None,
-        frequency_penalty: float = None,
-        presence_penalty: float = None
+        max_completion_tokens: int = None
     ):
         # Use settings from config if not provided
         self.model = model if model is not None else settings.OPENAI_MODEL
         self.temperature = temperature if temperature is not None else settings.OPENAI_TEMPERATURE
         self.max_completion_tokens = max_completion_tokens if max_completion_tokens is not None else settings.OPENAI_MAX_COMPLETION_TOKENS
-        self.top_p = top_p if top_p is not None else settings.OPENAI_TOP_P
-        self.frequency_penalty = frequency_penalty if frequency_penalty is not None else settings.OPENAI_FREQUENCY_PENALTY
-        self.presence_penalty = presence_penalty if presence_penalty is not None else settings.OPENAI_PRESENCE_PENALTY
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary format."""
         return {
             "model": self.model,
             "temperature": self.temperature,
-            "max_completion_tokens": self.max_completion_tokens,
-            "top_p": self.top_p,
-            "frequency_penalty": self.frequency_penalty,
-            "presence_penalty": self.presence_penalty
+            "max_completion_tokens": self.max_completion_tokens
         }
 
 
@@ -219,9 +207,6 @@ class LLMService:
             "messages": messages,
             "temperature": temperature if temperature is not None else self.config.temperature,
             "max_completion_tokens": max_completion_tokens if max_completion_tokens is not None else self.config.max_completion_tokens,
-            "top_p": self.config.top_p,
-            "frequency_penalty": self.config.frequency_penalty,
-            "presence_penalty": self.config.presence_penalty,
             "response_format": {"type": "text"}
         }
         
