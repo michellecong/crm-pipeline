@@ -1,0 +1,404 @@
+.section {
+  margin-bottom: 3rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #4CAF50;
+  padding-bottom: 0.5rem;
+}
+
+/* Products Section */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-card {
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: box-shadow 0.3s;
+}
+
+.product-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.product-name {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #2196F3;
+  font-size: 1.25rem;
+}
+
+.product-description {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.product-link {
+  color: #2196F3;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.product-link:hover {
+  text-decoration: underline;
+}
+
+/* Personas Section */
+.personas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.persona-card {
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.persona-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.persona-name {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+  flex: 1;
+}
+
+.tier-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 1rem;
+}
+
+.persona-info {
+  margin-bottom: 1rem;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #666;
+  min-width: 100px;
+}
+
+.persona-description {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.persona-tags {
+  margin-top: 1rem;
+}
+
+.tags-group {
+  margin-bottom: 1rem;
+}
+
+.tags-group strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.tag-positive {
+  background-color: #E3F2FD;
+  color: #1976D2;
+}
+
+.tag-negative {
+  background-color: #FFEBEE;
+  color: #C62828;
+}
+
+/* Mappings Section */
+.mappings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.mapping-group {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: #fafafa;
+}
+
+.mapping-persona-name {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.mappings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mapping-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.mapping-pain-point,
+.mapping-value-prop {
+  flex: 1;
+}
+
+.mapping-pain-point strong,
+.mapping-value-prop strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.mapping-pain-point p,
+.mapping-value-prop p {
+  margin: 0;
+  color: #333;
+  line-height: 1.5;
+}
+
+.mapping-arrow {
+  font-size: 1.5rem;
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+/* Sequences Section */
+.sequences-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.sequence-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: #fafafa;
+}
+
+.sequence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.sequence-name {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.sequence-persona {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.sequence-objective {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.touches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.touch-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.touch-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.touch-order {
+  background: #4CAF50;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.touch-type {
+  font-weight: 500;
+  color: #333;
+}
+
+.touch-timing {
+  margin-left: auto;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.touch-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.touch-objective,
+.touch-subject,
+.touch-suggestion,
+.touch-hints {
+  font-size: 0.9rem;
+}
+
+.touch-objective strong,
+.touch-subject strong,
+.touch-suggestion strong,
+.touch-hints strong {
+  color: #666;
+  margin-right: 0.5rem;
+}
+
+.touch-suggestion p {
+  margin: 0.5rem 0 0 0;
+  color: #333;
+  line-height: 1.6;
+}
+
+.touch-hints {
+  color: #666;
+  font-style: italic;
+}
+
+/* Statistics Section */
+.statistics-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.statistics-section .section-title {
+  color: white;
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.statistics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.step-statistics {
+  margin-top: 2rem;
+}
+
+.step-statistics h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.step-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.step-stat-card {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+}
+
+.step-name {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+}
+
+.step-details {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.step-details div {
+  margin-bottom: 0.25rem;
+}
+
