@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { pipelineApi } from "./services/api";
 import type { PipelineGenerateEnvelope } from "./types/api";
 import ProductsSection from "./components/ProductsSection";
@@ -8,30 +8,71 @@ import SequencesSection from "./components/SequencesSection";
 import StatisticsSection from "./components/StatisticsSection";
 import "./App.css";
 
+type TabType = "products" | "personas" | "mappings" | "sequences";
+
+const STORAGE_KEY = "crm-pipeline-data";
+
 function App() {
   const [companyName, setCompanyName] = useState("");
   const [generateCount, setGenerateCount] = useState(5);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<PipelineGenerateEnvelope | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>("products");
+  const [showStatisticsModal, setShowStatisticsModal] = useState(false);
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setData(parsed);
+        // Set default tab based on available data
+        if (parsed.payload?.products?.length > 0) {
+          setActiveTab("products");
+        }
+      } catch (e) {
+        console.error("Failed to parse saved data:", e);
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    if (data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+  }, [data]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!companyName.trim()) {
       setError("Please enter a company name");
       return;
     }
 
+    if (loading) {
+      return; // Prevent multiple submissions
+    }
+
     setLoading(true);
     setError(null);
-    setData(null);
+    // Don't clear data immediately - keep it visible until new data arrives
 
     try {
       const result = await pipelineApi.generatePipeline({
         company_name: companyName.trim(),
         generate_count: generateCount,
       });
-      setData(result);
+      // Only set data if we successfully got a result
+      if (result && result.payload) {
+        setData(result);
+        // Set default tab to products
+        setActiveTab("products");
+      }
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -39,6 +80,7 @@ function App() {
         setError("Generation failed, please try again later");
       }
       console.error("Pipeline generation error:", err);
+      // Don't clear existing data on error
     } finally {
       setLoading(false);
     }
@@ -108,19 +150,92 @@ function App() {
 
         {data && (
           <div className="results">
-            {data.statistics && (
-              <StatisticsSection statistics={data.statistics} />
-            )}
+            <div className="results-header">
+              {data.statistics && (
+                <button
+                  className="statistics-button"
+                  onClick={() => setShowStatisticsModal(true)}
+                >
+                  📊 View Statistics
+                </button>
+              )}
+            </div>
+            <div className="tabs-container">
+              <div className="tabs-header">
+                <button
+                  className={`tab-button ${
+                    activeTab === "products" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab("products")}
+                >
+                  Products ({data.payload.products.length})
+                </button>
+                <button
+                  className={`tab-button ${
+                    activeTab === "personas" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab("personas")}
+                >
+                  Personas ({data.payload.personas.length})
+                </button>
+                <button
+                  className={`tab-button ${
+                    activeTab === "mappings" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab("mappings")}
+                >
+                  Mappings ({data.payload.personas_with_mappings.length})
+                </button>
+                <button
+                  className={`tab-button ${
+                    activeTab === "sequences" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab("sequences")}
+                >
+                  Sequences ({data.payload.sequences.length})
+                </button>
+              </div>
 
-            <ProductsSection products={data.payload.products} />
+              <div className="tabs-content">
+                {activeTab === "products" && (
+                  <ProductsSection products={data.payload.products} />
+                )}
+                {activeTab === "personas" && (
+                  <PersonasSection personas={data.payload.personas} />
+                )}
+                {activeTab === "mappings" && (
+                  <MappingsSection
+                    personasWithMappings={data.payload.personas_with_mappings}
+                  />
+                )}
+                {activeTab === "sequences" && (
+                  <SequencesSection sequences={data.payload.sequences} />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
-            <PersonasSection personas={data.payload.personas} />
-
-            <MappingsSection
-              personasWithMappings={data.payload.personas_with_mappings}
-            />
-
-            <SequencesSection sequences={data.payload.sequences} />
+        {/* Statistics Modal */}
+        {showStatisticsModal && data?.statistics && (
+          <div
+            className="modal-overlay"
+            onClick={() => setShowStatisticsModal(false)}
+          >
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Generation Statistics</h2>
+                <button
+                  className="modal-close"
+                  onClick={() => setShowStatisticsModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="modal-body">
+                <StatisticsSection statistics={data.statistics} />
+              </div>
+            </div>
           </div>
         )}
       </main>
