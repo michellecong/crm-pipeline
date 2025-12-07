@@ -206,8 +206,11 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Scraped data files
-data/
+# Data folders (user-generated content)
+data/           # Web scraped data and generated outputs
+crm-data/       # User-uploaded CRM CSV files
+pdf-data/       # User-uploaded PDF documents
+uploads/        # Temporary file uploads
 
 # macOS
 .DS_Store
