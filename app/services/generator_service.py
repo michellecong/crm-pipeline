@@ -58,32 +58,9 @@ class GeneratorService:
             else:
                 logger.info("ℹ️  No saved products found. Generating personas from web content only.")
         
-        # Auto-inject CRM data for persona generation if not provided
-        crm_data_provided = False
-        if generator_type == "personas" and "crm_data" not in kwargs:
-            crm_data = self._load_crm_data()
-            if crm_data:
-                kwargs["crm_data"] = crm_data
-                crm_data_provided = True
-                logger.info("✅ Auto-loaded CRM data from crm-data folder")
-            else:
-                logger.info("ℹ️  No CRM data found in crm-data folder. Generating personas without CRM insights.")
-        elif generator_type == "personas" and kwargs.get("crm_data"):
-            crm_data_provided = True
-            logger.info("✅ Using provided CRM data for persona generation")
-        
-        # Auto-inject CRM data for two_stage generation (includes persona generation)
-        if generator_type == "two_stage" and "crm_data" not in kwargs:
-            crm_data = self._load_crm_data()
-            if crm_data:
-                kwargs["crm_data"] = crm_data
-                crm_data_provided = True
-                logger.info("✅ Auto-loaded CRM data for two-stage generation")
-            else:
-                logger.info("ℹ️  No CRM data found. Generating two-stage output without CRM insights.")
-        elif generator_type == "two_stage" and kwargs.get("crm_data"):
-            crm_data_provided = True
-            logger.info("✅ Using provided CRM data for two-stage generation")
+        # Note: CRM and PDF data are now automatically loaded by DataAggregator.prepare_context()
+        # No need for separate CRM injection here - it's included in the context string
+        crm_data_provided = False  # Keep for backward compatibility with validation logic
         
         # Auto-inject products and personas for mapping generation if not provided
         if generator_type == "mappings":
@@ -114,6 +91,8 @@ class GeneratorService:
                 raise ValueError("personas_with_mappings is required for outreach generation")
             context = f"Generating outreach sequences for {company_name}"
         else:
+            # Prepare comprehensive context (Web + CRM + PDF)
+            # CRM and PDF are automatically included if available in their respective folders
             context, content_processing_tokens = await self.data_aggregator.prepare_context(
                 company_name,
                 kwargs.get('max_context_chars', 15000),
@@ -121,7 +100,11 @@ class GeneratorService:
                 kwargs.get('include_case_studies', True),
                 kwargs.get('max_urls', 10),
                 kwargs.get('use_llm_search', False),
-                kwargs.get('provider', 'google')
+                kwargs.get('provider', 'google'),
+                include_crm=True,   # CRM data auto-loaded from crm-data folder
+                include_pdf=True,   # PDF data auto-loaded from pdf-data folder
+                crm_folder="crm-data",
+                pdf_folder="pdf-data"
             )
             if content_processing_tokens:
                 logger.info(
@@ -134,24 +117,15 @@ class GeneratorService:
         
         result = await generator.generate(company_name, context, **kwargs)
         
-        # For personas and two_stage, verify that data_sources field is present and matches CRM data availability
+        # For personas and two_stage, log data_sources information if present
+        # CRM/PDF data are now automatically included in context by DataAggregator
         if generator_type == 'personas' or generator_type == 'two_stage':
             if 'data_sources' in result:
                 reported_crm_usage = result['data_sources'].get('crm_data_used', False)
-                if crm_data_provided and not reported_crm_usage:
-                    logger.warning(
-                        "⚠️  CRM data was provided but LLM reported crm_data_used=false. "
-                        "This may indicate the LLM did not use the CRM data effectively."
-                    )
-                elif not crm_data_provided and reported_crm_usage:
-                    logger.warning(
-                        "⚠️  LLM reported crm_data_used=true but no CRM data was provided. "
-                        "This may indicate a mismatch in the response."
-                    )
-                else:
-                    logger.info(
-                        f"✅ Data source attribution matches: CRM data {'used' if reported_crm_usage else 'not used'}"
-                    )
+                logger.info(
+                    f"✅ Data sources used: CRM={'Yes' if reported_crm_usage else 'No'}, "
+                    f"Web=Yes, PDF={'Check logs' if reported_crm_usage else 'Check logs'}"
+                )
         
         # Check if generation was successful
         if generator_type == 'personas':

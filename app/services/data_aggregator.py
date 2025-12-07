@@ -2,7 +2,8 @@
 """
 Service for aggregating and preparing data for generators
 """
-from typing import Dict
+from typing import Dict, Optional
+from pathlib import Path
 from ..services.data_store import get_data_store
 from ..controllers.scraping_controller import get_scraping_controller
 import logging
@@ -21,21 +22,47 @@ class DataAggregator:
                              include_case_studies: bool = True,
                              max_urls: int = 10,
                              use_llm_search: bool = False,
-                             provider: str = "google") -> tuple[str, dict]:
+                             provider: str = "google",
+                             include_crm: bool = True,
+                             include_pdf: bool = True,
+                             crm_folder: str = "crm-data",
+                             pdf_folder: str = "pdf-data") -> tuple[str, dict]:
         """
-        Prepare context from pre-processed scraped data (cleaned and LLM-processed)
+        Prepare comprehensive context from multiple data sources:
+        1. Web scraped content (required)
+        2. CRM customer data (optional)
+        3. PDF documents (optional)
+        
+        Args:
+            company_name: Target company name
+            max_chars: Maximum characters for web content
+            include_news: Include news articles in web scraping
+            include_case_studies: Include case studies in web scraping
+            max_urls: Maximum URLs to scrape
+            use_llm_search: Use LLM-powered search
+            provider: Search provider (google/perplexity)
+            include_crm: Include CRM data if available
+            include_pdf: Include PDF documents if available
+            crm_folder: Folder containing CRM CSV files
+            pdf_folder: Folder containing PDF documents
         
         Returns:
             Tuple of (context string, content processing tokens dict)
         """
+        context_parts = []
+        content_processing_tokens = {}
+        
+        # ========================================
+        # 1. WEB SCRAPED CONTENT (Required)
+        # ========================================
+        logger.info(f"[DataAggregator] Preparing context for {company_name}")
+        
         # Load scraped data
         scraped_data = self.data_store.load_latest_scraped_data(company_name)
-        content_processing_tokens = {}
         
         # Fallback to scraping if no cached data
         if not scraped_data:
-            logger.info(f"No cached data found for {company_name}, "
-                        f"starting scraping...")
+            logger.info(f"No cached data found for {company_name}, starting scraping...")
             controller = get_scraping_controller()
             scraped_data = await controller.scrape_company(
                 company_name=company_name,
@@ -57,8 +84,12 @@ class DataAggregator:
         if not scraped_data:
             raise ValueError(f"No scraped data found for {company_name}")
         
+        # Add section header for web content
+        context_parts.append("=" * 80)
+        context_parts.append("WEB SCRAPED CONTENT")
+        context_parts.append("=" * 80)
+        
         # Extract and combine pre-processed content (already cleaned and LLM-processed)
-        content_parts = []
         char_count = 0
         
         # Prioritize official website
@@ -67,7 +98,7 @@ class DataAggregator:
             # Use processed content if available, otherwise use original
             if isinstance(website_content, dict) and 'processed_markdown' in website_content:
                 website_content = website_content['processed_markdown']
-            content_parts.append(f"OFFICIAL WEBSITE:\n{website_content}")
+            context_parts.append(f"\nOFFICIAL WEBSITE:\n{website_content}")
             char_count += len(website_content)
         
         # Add scraped content (cleaned)
@@ -84,11 +115,122 @@ class DataAggregator:
                 if char_count + len(markdown) > max_chars:
                     break
                 
-                content_parts.append(f"\n--- {content_type.upper()} ---\n"
+                context_parts.append(f"\n--- {content_type.upper()} ---\n"
                                    f"URL: {url}\n\n{markdown}")
-                char_count += len(content_parts[-1])
+                char_count += len(context_parts[-1])
         
-        return "\n".join(content_parts), content_processing_tokens
+        logger.info(f"✅ Web content loaded: {char_count} chars")
+        
+        # ========================================
+        # 2. CRM CUSTOMER DATA (Optional)
+        # ========================================
+        if include_crm:
+            crm_summary = self._load_crm_context(crm_folder)
+            if crm_summary:
+                context_parts.append("\n\n" + "=" * 80)
+                context_parts.append("CRM CUSTOMER DATA")
+                context_parts.append("=" * 80)
+                context_parts.append(crm_summary)
+                logger.info(f"✅ CRM data loaded: {len(crm_summary)} chars")
+            else:
+                logger.info("ℹ️  No CRM data available (folder empty or not found)")
+        else:
+            logger.info("ℹ️  CRM data skipped (include_crm=False)")
+        
+        # ========================================
+        # 3. PDF DOCUMENTS (Optional)
+        # ========================================
+        if include_pdf:
+            pdf_summary = self._load_pdf_context(pdf_folder)
+            if pdf_summary:
+                context_parts.append("\n\n" + "=" * 80)
+                context_parts.append("PDF DOCUMENTS")
+                context_parts.append("=" * 80)
+                context_parts.append(pdf_summary)
+                logger.info(f"✅ PDF data loaded: {len(pdf_summary)} chars")
+            else:
+                logger.info("ℹ️  No PDF data available (folder empty or not found)")
+        else:
+            logger.info("ℹ️  PDF data skipped (include_pdf=False)")
+        
+        # Combine all context parts
+        full_context = "\n".join(context_parts)
+        logger.info(f"[DataAggregator] Total context prepared: {len(full_context)} chars")
+        
+        return full_context, content_processing_tokens
+    
+    def _load_crm_context(self, crm_folder: str = "crm-data") -> Optional[str]:
+        """
+        Load CRM customer data summary for persona generation
+        
+        Args:
+            crm_folder: Folder containing CRM CSV files
+            
+        Returns:
+            Text summary string for LLM, or None if no data found
+        """
+        try:
+            from .crm_data_loader import CRMDataLoader
+            crm_summary = CRMDataLoader.load_crm_data_for_persona(crm_folder)
+            return crm_summary
+        except Exception as e:
+            logger.warning(f"Failed to load CRM data from {crm_folder}: {e}")
+            return None
+    
+    def _load_pdf_context(self, pdf_folder: str = "pdf-data") -> Optional[str]:
+        """
+        Load all PDF documents from specified folder
+        
+        Args:
+            pdf_folder: Folder containing PDF files
+            
+        Returns:
+            Combined text from all PDFs, or None if no PDFs found
+        """
+        try:
+            from .pdf_service import PDFService
+            
+            pdf_dir = Path(pdf_folder)
+            if not pdf_dir.exists():
+                logger.debug(f"PDF folder not found: {pdf_folder}")
+                return None
+            
+            pdf_files = list(pdf_dir.glob("*.pdf"))
+            if not pdf_files:
+                logger.debug(f"No PDF files found in {pdf_folder}")
+                return None
+            
+            pdf_service = PDFService()
+            pdf_contents = []
+            max_pdfs = 5  # Limit to 5 PDFs to avoid context overflow
+            max_chars_per_pdf = 5000  # Limit each PDF to 5000 chars
+            
+            logger.info(f"Found {len(pdf_files)} PDF file(s) in {pdf_folder}")
+            
+            for pdf_file in pdf_files[:max_pdfs]:
+                try:
+                    result = pdf_service.extract_text(str(pdf_file))
+                    pdf_text = result['extracted_text']
+                    
+                    # Truncate if too long
+                    if len(pdf_text) > max_chars_per_pdf:
+                        pdf_text = pdf_text[:max_chars_per_pdf] + "\n... [truncated]"
+                    
+                    pdf_contents.append(
+                        f"\n--- PDF: {result['filename']} ({result['page_count']} pages) ---\n"
+                        f"{pdf_text}"
+                    )
+                    logger.debug(f"Loaded PDF: {result['filename']} ({result['text_length']} chars)")
+                except Exception as e:
+                    logger.warning(f"Failed to load {pdf_file.name}: {e}")
+            
+            if pdf_contents:
+                return "\n".join(pdf_contents)
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Failed to load PDF data from {pdf_folder}: {e}")
+            return None
     
     def get_data_summary(self, company_name: str) -> Dict:
         """Get summary of available data"""
