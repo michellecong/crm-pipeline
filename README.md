@@ -82,8 +82,8 @@ curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
   -d '{
     "company_name": "Salesforce",
     "generate_count": 5,
-    "use_llm_search": true,
-    "provider": "perplexity"
+    "use_llm_search": false,
+    "provider": "google"
   }'
 ```
 
@@ -266,23 +266,26 @@ Or if no optional data:
 
 ### Pipeline Generation
 
-The system provides multiple approaches to generate content:
+The system provides a **production-ready 4-stage pipeline** and several baseline approaches for comparison and testing.
 
-#### 1. Multi-Stage Pipeline (Recommended)
+#### 4-Stage Pipeline (Production - Recommended)
 
 **Endpoint**: `POST /api/v1/llm/pipeline/generate`
 
-**Architecture**: 4 sequential LLM calls with inter-stage data flow
-- **Call 1**: Generate products from web content
-- **Call 2**: Generate personas using products + web content + CRM + PDF
-- **Call 3**: Generate mappings using personas + products
-- **Call 4**: Generate sequences using personas_with_mappings
+This is the **final production pipeline** with the best performance and quality.
 
-**Advantages:**
+**Architecture**: 4 sequential LLM calls with explicit inter-stage data flow
+- **Stage 1**: Generate products from web content
+- **Stage 2**: Generate personas using products + web content + CRM + PDF
+- **Stage 3**: Generate mappings using personas + products
+- **Stage 4**: Generate sequences using personas_with_mappings
+
+**Key Features:**
 - ✅ Personas receive actual products JSON for context
 - ✅ Mappings receive actual personas + products for context
 - ✅ Each stage can be optimized independently
-- ✅ Better quality through explicit information flow
+- ✅ Best quality through explicit information flow
+- ✅ Highest performance and accuracy
 
 **Use Case**: Production deployment, best quality output
 
@@ -298,60 +301,23 @@ curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
   }'
 ```
 
-#### 2. 3-Stage Pipeline
+#### Baseline Approaches (For Comparison & Testing)
 
-**Endpoint**: `POST /api/v1/llm/three-stage/generate`
+The following endpoints are provided for **comparison and testing purposes** to evaluate different architectural approaches:
 
-**Architecture**: Consolidates final two stages
-- **Stage 1**: Generate products
-- **Stage 2**: Generate personas
-- **Stage 3**: Generate mappings + sequences in ONE consolidated LLM call
+**3-Stage Pipeline** (`POST /api/v1/llm/three-stage/generate`)
+- Consolidates final two stages (mappings + sequences) into one call
+- Used for ablation studies to test impact of stage consolidation
 
-**Advantages:**
-- ✅ Faster than 4-stage pipeline (3 calls vs 4)
-- ✅ Better consistency between mappings and sequences
-- ✅ Maintains explicit product and persona data flow
+**2-Stage Baseline** (`POST /api/v1/llm/two-stage/generate`)
+- Consolidates persona-related outputs (personas + mappings + sequences) into one call
+- Used for architectural comparison studies
 
-**Use Case**: Ablation studies, performance optimization
+**Single-Stage Baseline** (`POST /api/v1/llm/baseline/generate`)
+- Generates all 4 outputs in a single LLM call
+- Used for baseline comparison and quick prototyping
 
-#### 3. 2-Stage Baseline
-
-**Endpoint**: `POST /api/v1/llm/two-stage/generate`
-
-**Architecture**: Consolidates persona-related outputs
-- **Stage 1**: Generate products
-- **Stage 2**: Generate personas + mappings + sequences in ONE call
-
-**Advantages:**
-- ✅ Faster than pipeline (2 calls vs 4)
-- ✅ Better consistency (all persona outputs generated together)
-- ✅ Full guidance parity with pipeline
-
-**Use Case**: Speed optimization, architectural comparison
-
-#### 4. Single-Stage Baseline
-
-**Endpoint**: `POST /api/v1/llm/baseline/generate`
-
-**Architecture**: 1 consolidated LLM call
-- **Single Call**: Generate all 4 outputs simultaneously
-
-**Advantages:**
-- ✅ Fastest execution (1 API call)
-- ✅ Lower latency
-- ✅ Simpler architecture
-
-**Use Case**: Evaluation, comparison, testing, quick prototypes
-
-#### Comparison
-
-| Aspect | Multi-Stage Pipeline | 3-Stage | 2-Stage | Baseline |
-|--------|---------------------|---------|---------|----------|
-| **API Calls** | 4 sequential calls | 3 calls | 2 calls | 1 call |
-| **Information Flow** | Explicit JSON passing | Explicit for products/personas | Explicit for products | Context-based |
-| **Generation Time** | ~4x longer | ~3x longer | ~2x longer | Fastest |
-| **Quality** | Highest | High | High | Baseline |
-| **Consistency** | High | Very High | Very High | Medium |
+**Note**: These baseline approaches have lower performance compared to the 4-stage pipeline and are primarily used for research, evaluation, and architectural comparison purposes.
 
 #### Auto-Loading Features
 
