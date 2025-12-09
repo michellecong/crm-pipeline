@@ -14,12 +14,6 @@ from typing import Dict
 import pandas as pd
 from datetime import datetime
 
-try:
-    import matplotlib.pyplot as plt
-    HAS_VISUALIZATION = True
-except ImportError:
-    HAS_VISUALIZATION = False
-    print("⚠️  matplotlib未安装，将跳过可视化功能")
 
 # 评估数据目录
 EVALUATION_DIR = Path("data/Evaluation")
@@ -75,10 +69,21 @@ class PipelineEvaluator:
 
     def load_company_data(self, company_name: str, architecture: str) -> Dict:
         """加载某个公司在某个架构下的所有数据"""
-        company_dir = self.evaluation_dir / company_name / architecture
-
+        company_base_dir = self.evaluation_dir / company_name
+        
+        # 首先尝试精确匹配
+        company_dir = company_base_dir / architecture
         if not company_dir.exists():
-            return {}
+            # 如果精确匹配失败，尝试大小写不敏感匹配
+            if company_base_dir.exists():
+                for subdir in company_base_dir.iterdir():
+                    if subdir.is_dir() and subdir.name.lower() == architecture.lower():
+                        company_dir = subdir
+                        break
+                else:
+                    return {}
+            else:
+                return {}
 
         # 归一化架构名称（不区分大小写）
         normalized_architecture = normalize_architecture_name(architecture)
@@ -336,6 +341,97 @@ class PipelineEvaluator:
         df = pd.DataFrame(all_metrics)
         return df
 
+    def generate_time_token_analysis(self, df: pd.DataFrame) -> Dict:
+        """生成时间和Token的详细对比分析"""
+        analysis = {
+            "time_analysis": {},
+            "token_analysis": {},
+            "efficiency_metrics": {},
+            "stage_breakdown": {},
+            "comparison_summary": {}
+        }
+        
+        # 按架构分组
+        for arch in ["Two-Stage", "Three-Stage", "Four-Stage"]:
+            arch_df = df[df["architecture"] == arch]
+            if len(arch_df) == 0:
+                continue
+            
+            # 时间分析
+            time_series = arch_df["total_time_seconds"]
+            time_without_outliers = remove_outliers(time_series, method="iqr", multiplier=1.5)
+            
+            analysis["time_analysis"][arch] = {
+                "mean": float(time_series.mean()),
+                "median": float(time_series.median()),
+                "std": float(time_series.std()) if len(time_series) > 1 else 0.0,
+                "min": float(time_series.min()),
+                "max": float(time_series.max()),
+                "mean_without_outliers": float(time_without_outliers.mean()) if len(time_without_outliers) > 0 else float(time_series.mean()),
+                "count": int(len(time_series)),
+                "count_without_outliers": int(len(time_without_outliers))
+            }
+            
+            # Token分析
+            token_series = arch_df["total_tokens"]
+            prompt_tokens = arch_df["prompt_tokens"].sum()
+            completion_tokens = arch_df["completion_tokens"].sum()
+            
+            analysis["token_analysis"][arch] = {
+                "total_tokens_mean": float(token_series.mean()),
+                "total_tokens_median": float(token_series.median()),
+                "total_tokens_std": float(token_series.std()) if len(token_series) > 1 else 0.0,
+                "total_tokens_min": float(token_series.min()),
+                "total_tokens_max": float(token_series.max()),
+                "prompt_tokens_total": int(prompt_tokens),
+                "completion_tokens_total": int(completion_tokens),
+                "prompt_tokens_mean": float(arch_df["prompt_tokens"].mean()),
+                "completion_tokens_mean": float(arch_df["completion_tokens"].mean()),
+                "prompt_ratio": float(prompt_tokens / token_series.sum() * 100) if token_series.sum() > 0 else 0.0,
+                "completion_ratio": float(completion_tokens / token_series.sum() * 100) if token_series.sum() > 0 else 0.0,
+                "count": int(len(token_series))
+            }
+            
+            # 效率指标
+            avg_time = analysis["time_analysis"][arch]["mean_without_outliers"]
+            avg_tokens = analysis["token_analysis"][arch]["total_tokens_mean"]
+            avg_mappings = float(arch_df["num_mappings"].mean())
+            avg_sequences = float(arch_df["num_sequences"].mean())
+            
+            analysis["efficiency_metrics"][arch] = {
+                "tokens_per_second": float(avg_tokens / avg_time) if avg_time > 0 else 0.0,
+                "mappings_per_token": float(avg_mappings / avg_tokens) if avg_tokens > 0 else 0.0,
+                "sequences_per_token": float(avg_sequences / avg_tokens) if avg_tokens > 0 else 0.0,
+                "mappings_per_second": float(avg_mappings / avg_time) if avg_time > 0 else 0.0,
+                "sequences_per_second": float(avg_sequences / avg_time) if avg_time > 0 else 0.0,
+                "time_per_mapping": float(avg_time / avg_mappings) if avg_mappings > 0 else 0.0,
+                "time_per_sequence": float(avg_time / avg_sequences) if avg_sequences > 0 else 0.0
+            }
+        
+        # 对比总结（相对于2-Stage的变化）
+        two_stage_time = analysis["time_analysis"].get("Two-Stage", {}).get("mean_without_outliers", 0)
+        two_stage_tokens = analysis["token_analysis"].get("Two-Stage", {}).get("total_tokens_mean", 0)
+        
+        for arch in ["Three-Stage", "Four-Stage"]:
+            if arch in analysis["time_analysis"]:
+                arch_time = analysis["time_analysis"][arch]["mean_without_outliers"]
+                arch_tokens = analysis["token_analysis"][arch]["total_tokens_mean"]
+                
+                analysis["comparison_summary"][arch] = {
+                    "time_vs_two_stage": {
+                        "absolute_change": float(arch_time - two_stage_time),
+                        "percentage_change": float((arch_time - two_stage_time) / two_stage_time * 100) if two_stage_time > 0 else 0.0,
+                        "multiplier": float(arch_time / two_stage_time) if two_stage_time > 0 else 0.0
+                    },
+                    "tokens_vs_two_stage": {
+                        "absolute_change": float(arch_tokens - two_stage_tokens),
+                        "percentage_change": float((arch_tokens - two_stage_tokens) / two_stage_tokens * 100) if two_stage_tokens > 0 else 0.0,
+                        "multiplier": float(arch_tokens / two_stage_tokens) if two_stage_tokens > 0 else 0.0
+                    }
+                }
+        
+        return analysis
+
     def generate_meaningful_comparison(self, df: pd.DataFrame) -> Dict:
         """生成有意义的架构对比（只对比生成方法不同的部分）"""
         comparison = {
@@ -343,27 +439,28 @@ class PipelineEvaluator:
             "mappings_comparison": {},
             "sequences_comparison": {},
             "overall_performance": {},
+            "time_token_analysis": {},
             "notes": []
         }
         
-        # 1. Personas对比：2 Stage vs 3 Stage（生成方法不同）
+        # 1. Personas对比：2 Stage vs 4 Stage（3 Stage 和 4 Stage 的 Personas 是一样的）
         two_stage_personas = df[df["architecture"] == "Two-Stage"]["num_personas"]
-        three_stage_personas = df[df["architecture"] == "Three-Stage"]["num_personas"]
+        four_stage_personas = df[df["architecture"] == "Four-Stage"]["num_personas"]
 
-        if len(two_stage_personas) > 0 and len(three_stage_personas) > 0:
+        if len(two_stage_personas) > 0 and len(four_stage_personas) > 0:
             comparison["personas_comparison"] = {
                 "two_stage": {
                     "avg": float(two_stage_personas.mean()),
                     "std": float(two_stage_personas.std()) if len(two_stage_personas) > 1 else 0.0,
                     "count": int(len(two_stage_personas))
                 },
-                "three_stage": {
-                    "avg": float(three_stage_personas.mean()),
-                    "std": float(three_stage_personas.std()) if len(three_stage_personas) > 1 else 0.0,
-                    "count": int(len(three_stage_personas))
+                "four_stage": {
+                    "avg": float(four_stage_personas.mean()),
+                    "std": float(four_stage_personas.std()) if len(four_stage_personas) > 1 else 0.0,
+                    "count": int(len(four_stage_personas))
                 },
-                "difference": float(two_stage_personas.mean() - three_stage_personas.mean()),
-                "note": "对比有意义：2 Stage使用consolidated生成，3 Stage使用独立生成"
+                "difference": float(two_stage_personas.mean() - four_stage_personas.mean()),
+                "note": "对比有意义：2 Stage使用consolidated生成，4 Stage使用独立生成。注意：3 Stage和4 Stage的Personas相同，无需对比"
             }
 
         # 2. Mappings对比：2 Stage vs 3 Stage vs 4 Stage（生成方法不同）
@@ -468,13 +565,16 @@ class PipelineEvaluator:
                     "count_without_outliers": count_without_outliers if arch == "Three-Stage" else None
                 }
 
+        # 添加时间和Token分析
+        comparison["time_token_analysis"] = self.generate_time_token_analysis(df)
+
         # 添加说明
         comparison["notes"] = [
-            "Personas对比：只对比2 Stage vs 3 Stage（生成方法不同）",
+            "Personas对比：只对比2 Stage vs 4 Stage（3 Stage和4 Stage的Personas相同，无需对比）",
             "Mappings对比：对比2 Stage vs 3 Stage vs 4 Stage（生成方法不同）",
             "Sequences对比：对比2 Stage vs 3 Stage vs 4 Stage（生成方法不同）",
-            "注意：3 Stage vs 4 Stage的Personas对比没有意义（生成方法相同）",
-            "注意：3 Stage vs 4 Stage的Products对比没有意义（生成方法相同）"
+            "注意：3 Stage和4 Stage的Personas生成方法相同，所以只对比2 Stage和4 Stage",
+            "注意：3 Stage和4 Stage的Products生成方法相同，无需对比"
         ]
 
         return comparison
@@ -485,10 +585,17 @@ class PipelineEvaluator:
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        # 保存详细数据
+        # 保存详细数据 CSV
         csv_path = output_dir / f"detailed_metrics_{timestamp}.csv"
         df.to_csv(csv_path, index=False)
         print(f"✅ 详细指标已保存到: {csv_path}")
+
+        # 保存详细数据 JSON（包含每个公司的详细指标）
+        detailed_json_path = output_dir / f"detailed_metrics_{timestamp}.json"
+        detailed_data = df.to_dict(orient='records')
+        with open(detailed_json_path, 'w', encoding='utf-8') as f:
+            json.dump(detailed_data, f, indent=2, ensure_ascii=False)
+        print(f"✅ 详细指标 JSON 已保存到: {detailed_json_path}")
 
         # 生成有意义的对比报告
         comparison = self.generate_meaningful_comparison(df)
@@ -504,18 +611,73 @@ class PipelineEvaluator:
             "num_mappings": ["mean", "std", "count"],
             "num_sequences": ["mean", "std", "count"],
             "num_touches": ["mean", "std"],
-            "total_tokens": ["mean", "std"],
-            "total_time_seconds": ["mean", "std"],
+            "total_tokens": ["mean", "std", "min", "max"],
+            "total_time_seconds": ["mean", "std", "min", "max"],
+            "prompt_tokens": ["mean", "sum"],
+            "completion_tokens": ["mean", "sum"],
         }).round(2)
         comparison_df.to_csv(comparison_csv_path)
         print(f"✅ 对比数据已保存到: {comparison_csv_path}")
 
+        # 生成时间和Token详细对比CSV
+        if comparison.get("time_token_analysis"):
+            tta = comparison["time_token_analysis"]
+            time_token_csv_path = output_dir / f"time_token_analysis_{timestamp}.csv"
+            
+            # 构建时间和Token对比表
+            time_token_rows = []
+            for arch in ["Two-Stage", "Three-Stage", "Four-Stage"]:
+                if arch in tta.get("time_analysis", {}):
+                    row = {
+                        "Architecture": arch,
+                        "Avg_Time_Seconds": tta["time_analysis"][arch]["mean_without_outliers"],
+                        "Median_Time_Seconds": tta["time_analysis"][arch]["median"],
+                        "Std_Time_Seconds": tta["time_analysis"][arch]["std"],
+                        "Min_Time_Seconds": tta["time_analysis"][arch]["min"],
+                        "Max_Time_Seconds": tta["time_analysis"][arch]["max"],
+                        "Avg_Total_Tokens": tta["token_analysis"][arch]["total_tokens_mean"],
+                        "Median_Total_Tokens": tta["token_analysis"][arch]["total_tokens_median"],
+                        "Std_Total_Tokens": tta["token_analysis"][arch]["total_tokens_std"],
+                        "Min_Total_Tokens": tta["token_analysis"][arch]["total_tokens_min"],
+                        "Max_Total_Tokens": tta["token_analysis"][arch]["total_tokens_max"],
+                        "Avg_Prompt_Tokens": tta["token_analysis"][arch]["prompt_tokens_mean"],
+                        "Avg_Completion_Tokens": tta["token_analysis"][arch]["completion_tokens_mean"],
+                        "Prompt_Ratio_Percent": tta["token_analysis"][arch]["prompt_ratio"],
+                        "Completion_Ratio_Percent": tta["token_analysis"][arch]["completion_ratio"],
+                        "Tokens_Per_Second": tta["efficiency_metrics"][arch]["tokens_per_second"],
+                        "Mappings_Per_Token": tta["efficiency_metrics"][arch]["mappings_per_token"],
+                        "Sequences_Per_Token": tta["efficiency_metrics"][arch]["sequences_per_token"],
+                        "Mappings_Per_Second": tta["efficiency_metrics"][arch]["mappings_per_second"],
+                        "Sequences_Per_Second": tta["efficiency_metrics"][arch]["sequences_per_second"],
+                        "Time_Per_Mapping": tta["efficiency_metrics"][arch]["time_per_mapping"],
+                        "Time_Per_Sequence": tta["efficiency_metrics"][arch]["time_per_sequence"],
+                    }
+                    
+                    # 添加相对于2-Stage的变化（如果是3-Stage或4-Stage）
+                    if arch in tta.get("comparison_summary", {}):
+                        cs = tta["comparison_summary"][arch]
+                        row["Time_Change_vs_2Stage_Seconds"] = cs["time_vs_two_stage"]["absolute_change"]
+                        row["Time_Change_vs_2Stage_Percent"] = cs["time_vs_two_stage"]["percentage_change"]
+                        row["Time_Multiplier_vs_2Stage"] = cs["time_vs_two_stage"]["multiplier"]
+                        row["Token_Change_vs_2Stage"] = cs["tokens_vs_two_stage"]["absolute_change"]
+                        row["Token_Change_vs_2Stage_Percent"] = cs["tokens_vs_two_stage"]["percentage_change"]
+                        row["Token_Multiplier_vs_2Stage"] = cs["tokens_vs_two_stage"]["multiplier"]
+                    else:
+                        row["Time_Change_vs_2Stage_Seconds"] = 0
+                        row["Time_Change_vs_2Stage_Percent"] = 0
+                        row["Time_Multiplier_vs_2Stage"] = 1.0
+                        row["Token_Change_vs_2Stage"] = 0
+                        row["Token_Change_vs_2Stage_Percent"] = 0
+                        row["Token_Multiplier_vs_2Stage"] = 1.0
+                    
+                    time_token_rows.append(row)
+            
+            time_token_df = pd.DataFrame(time_token_rows)
+            time_token_df.to_csv(time_token_csv_path, index=False)
+            print(f"✅ 时间和Token详细分析已保存到: {time_token_csv_path}")
+
         # 打印汇总统计
         self.print_summary(comparison, df)
-
-        # 生成可视化图表
-        if HAS_VISUALIZATION:
-            self.generate_visualizations(df, output_dir, timestamp)
 
         return output_dir
 
@@ -525,24 +687,24 @@ class PipelineEvaluator:
         print("评估结果汇总（只包含有意义的对比）")
         print("=" * 80)
 
-        print(f"\n📊 总体统计:")
+        print("\n📊 总体统计:")
         print(f"   - 公司数量: {df['company_name'].nunique()}")
         print(f"   - 架构数量: {df['architecture'].nunique()}")
         print(f"   - 总运行次数: {len(df)}")
 
-        # Personas对比（2 Stage vs 3 Stage）
+        # Personas对比（2 Stage vs 4 Stage）
         if comparison.get("personas_comparison"):
             pc = comparison["personas_comparison"]
-            print(f"\n👥 Personas对比（2 Stage vs 3 Stage）:")
+            print("\n👥 Personas对比（2 Stage vs 4 Stage）:")
             print(f"   2 Stage: 平均 {pc['two_stage']['avg']:.1f} 个 (n={pc['two_stage']['count']})")
-            print(f"   3 Stage: 平均 {pc['three_stage']['avg']:.1f} 个 (n={pc['three_stage']['count']})")
+            print(f"   4 Stage: 平均 {pc['four_stage']['avg']:.1f} 个 (n={pc['four_stage']['count']})")
             print(f"   差异: {pc['difference']:.1f}")
             print(f"   说明: {pc['note']}")
 
         # Mappings对比（2 Stage vs 3 Stage vs 4 Stage）
         if comparison.get("mappings_comparison"):
             mc = comparison["mappings_comparison"]
-            print(f"\n🔗 Mappings对比（2 Stage vs 3 Stage vs 4 Stage）:")
+            print("\n🔗 Mappings对比（2 Stage vs 3 Stage vs 4 Stage）:")
             print(f"   2 Stage: 平均 {mc['two_stage']['avg']:.1f} 个 (n={mc['two_stage']['count']})")
             print(f"   3 Stage: 平均 {mc['three_stage']['avg']:.1f} 个 (n={mc['three_stage']['count']})")
             print(f"   4 Stage: 平均 {mc['four_stage']['avg']:.1f} 个 (n={mc['four_stage']['count']})")
@@ -552,7 +714,7 @@ class PipelineEvaluator:
         # Sequences对比（2 Stage vs 3 Stage vs 4 Stage）
         if comparison.get("sequences_comparison"):
             sc = comparison["sequences_comparison"]
-            print(f"\n📧 Sequences对比（2 Stage vs 3 Stage vs 4 Stage）:")
+            print("\n📧 Sequences对比（2 Stage vs 3 Stage vs 4 Stage）:")
             print(f"   2 Stage: 平均 {sc['two_stage']['avg']:.1f} 个 (n={sc['two_stage']['count']})")
             print(f"   3 Stage: 平均 {sc['three_stage']['avg']:.1f} 个 (n={sc['three_stage']['count']})")
             print(f"   4 Stage: 平均 {sc['four_stage']['avg']:.1f} 个 (n={sc['four_stage']['count']})")
@@ -561,7 +723,7 @@ class PipelineEvaluator:
 
         # 整体性能
         if comparison.get("overall_performance"):
-            print(f"\n⚡ 整体性能对比:")
+            print("\n⚡ 整体性能对比:")
             for arch, perf in comparison["overall_performance"].items():
                 print(f"   {arch}:")
                 print(f"      - 平均Token: {perf['avg_tokens']:,.0f}")
@@ -576,152 +738,74 @@ class PipelineEvaluator:
             
             # 显示异常值信息
             if comparison.get("outliers"):
-                print(f"\n🔍 异常值检测:")
+                print("\n🔍 异常值检测:")
                 for arch, outlier_info in comparison["outliers"].items():
                     print(f"   {arch}:")
                     for i, (company, time) in enumerate(zip(outlier_info["companies"], outlier_info["times"])):
                         print(f"      - {company}: {time:.1f}秒 (已排除)")
 
+        # 时间和Token详细分析
+        if comparison.get("time_token_analysis"):
+            tta = comparison["time_token_analysis"]
+            
+            print("\n⏱️  时间消耗详细分析:")
+            for arch in ["Two-Stage", "Three-Stage", "Four-Stage"]:
+                if arch in tta.get("time_analysis", {}):
+                    ta = tta["time_analysis"][arch]
+                    print(f"   {arch}:")
+                    print(f"      - 平均时间: {ta['mean']:.1f}秒 (排除异常值后: {ta['mean_without_outliers']:.1f}秒)")
+                    print(f"      - 中位数: {ta['median']:.1f}秒")
+                    print(f"      - 标准差: {ta['std']:.1f}秒")
+                    print(f"      - 范围: {ta['min']:.1f} - {ta['max']:.1f}秒")
+                    print(f"      - 样本数: {ta['count']} (排除异常值后: {ta['count_without_outliers']})")
+            
+            print("\n🔢 Token消耗详细分析:")
+            for arch in ["Two-Stage", "Three-Stage", "Four-Stage"]:
+                if arch in tta.get("token_analysis", {}):
+                    toa = tta["token_analysis"][arch]
+                    print(f"   {arch}:")
+                    print(f"      - 平均总Token: {toa['total_tokens_mean']:,.0f}")
+                    print(f"      - 中位数: {toa['total_tokens_median']:,.0f}")
+                    print(f"      - 范围: {toa['total_tokens_min']:,.0f} - {toa['total_tokens_max']:,.0f}")
+                    print(f"      - 平均Prompt Token: {toa['prompt_tokens_mean']:,.0f} ({toa['prompt_ratio']:.1f}%)")
+                    print(f"      - 平均Completion Token: {toa['completion_tokens_mean']:,.0f} ({toa['completion_ratio']:.1f}%)")
+            
+            print("\n📊 效率指标对比:")
+            for arch in ["Two-Stage", "Three-Stage", "Four-Stage"]:
+                if arch in tta.get("efficiency_metrics", {}):
+                    em = tta["efficiency_metrics"][arch]
+                    print(f"   {arch}:")
+                    print(f"      - Token/秒: {em['tokens_per_second']:.1f}")
+                    print(f"      - Mappings/Token: {em['mappings_per_token']:.4f}")
+                    print(f"      - Sequences/Token: {em['sequences_per_token']:.4f}")
+                    print(f"      - Mappings/秒: {em['mappings_per_second']:.2f}")
+                    print(f"      - Sequences/秒: {em['sequences_per_second']:.2f}")
+                    print(f"      - 时间/Mapping: {em['time_per_mapping']:.2f}秒")
+                    print(f"      - 时间/Sequence: {em['time_per_sequence']:.2f}秒")
+            
+            print("\n📈 相对于2-Stage的变化:")
+            for arch in ["Three-Stage", "Four-Stage"]:
+                if arch in tta.get("comparison_summary", {}):
+                    cs = tta["comparison_summary"][arch]
+                    print(f"   {arch}:")
+                    time_change = cs["time_vs_two_stage"]
+                    token_change = cs["tokens_vs_two_stage"]
+                    print(f"      时间变化:")
+                    print(f"         - 绝对变化: {time_change['absolute_change']:+.1f}秒")
+                    print(f"         - 百分比变化: {time_change['percentage_change']:+.1f}%")
+                    print(f"         - 倍数: {time_change['multiplier']:.2f}x")
+                    print(f"      Token变化:")
+                    print(f"         - 绝对变化: {token_change['absolute_change']:+,.0f}")
+                    print(f"         - 百分比变化: {token_change['percentage_change']:+.1f}%")
+                    print(f"         - 倍数: {token_change['multiplier']:.2f}x")
+
         # 注意事项
         if comparison.get("notes"):
-            print(f"\n⚠️  注意事项:")
+            print("\n⚠️  注意事项:")
             for note in comparison["notes"]:
                 print(f"   - {note}")
             if comparison.get("outliers"):
                 print(f"   - Three-Stage的平均时间已排除异常值（使用IQR方法检测）")
-
-    def generate_visualizations(self, df: pd.DataFrame, output_dir: Path, timestamp: str):
-        """生成可视化图表（只包含有意义的对比）"""
-        try:
-            plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']
-            plt.rcParams['axes.unicode_minus'] = False
-
-            # 1. Personas对比（2 Stage vs 3 Stage）
-            fig, axes = plt.subplots(1, 1, figsize=(10, 6))
-            fig.suptitle('Personas对比：2 Stage vs 3 Stage', fontsize=14, fontweight='bold')
-
-            personas_data = []
-            archs = []
-            for arch in ["Two-Stage", "Three-Stage"]:
-                arch_df = df[df["architecture"] == arch]
-                if len(arch_df) > 0:
-                    personas_data.append(arch_df["num_personas"].values)
-                    archs.append(arch)
-
-            if personas_data:
-                axes.boxplot(personas_data, labels=archs)
-                axes.set_ylabel('Personas数量')
-                axes.set_title('对比有意义：生成方法不同', fontsize=12)
-                axes.grid(axis='y', alpha=0.3)
-
-            plt.tight_layout()
-            personas_chart_path = output_dir / f"personas_comparison_{timestamp}.png"
-            plt.savefig(personas_chart_path, dpi=300, bbox_inches='tight')
-            plt.close()
-            print(f"✅ Personas对比图表已保存到: {personas_chart_path}")
-
-            # 2. Mappings对比（2 Stage vs 3 Stage vs 4 Stage）
-            fig, axes = plt.subplots(1, 1, figsize=(12, 6))
-            fig.suptitle('Mappings对比：2 Stage vs 3 Stage vs 4 Stage', fontsize=14, fontweight='bold')
-
-            mappings_data = []
-            archs = []
-            for arch in ["Two-Stage", "Three-Stage", "Four-Stage"]:
-                arch_df = df[df["architecture"] == arch]
-                if len(arch_df) > 0:
-                    mappings_data.append(arch_df["num_mappings"].values)
-                    archs.append(arch)
-
-            if mappings_data:
-                axes.boxplot(mappings_data, labels=archs)
-                axes.set_ylabel('Mappings数量')
-                axes.set_title('对比有意义：生成方法不同', fontsize=12)
-                axes.grid(axis='y', alpha=0.3)
-
-            plt.tight_layout()
-            mappings_chart_path = output_dir / f"mappings_comparison_{timestamp}.png"
-            plt.savefig(mappings_chart_path, dpi=300, bbox_inches='tight')
-            plt.close()
-            print(f"✅ Mappings对比图表已保存到: {mappings_chart_path}")
-
-            # 3. Sequences对比（2 Stage vs 3 Stage vs 4 Stage）
-            fig, axes = plt.subplots(1, 1, figsize=(12, 6))
-            fig.suptitle('Sequences对比：2 Stage vs 3 Stage vs 4 Stage', fontsize=14, fontweight='bold')
-
-            sequences_data = []
-            archs = []
-            for arch in ["Two-Stage", "Three-Stage", "Four-Stage"]:
-                arch_df = df[df["architecture"] == arch]
-                if len(arch_df) > 0:
-                    sequences_data.append(arch_df["num_sequences"].values)
-                    archs.append(arch)
-
-            if sequences_data:
-                axes.boxplot(sequences_data, labels=archs)
-                axes.set_ylabel('Sequences数量')
-                axes.set_title('对比有意义：生成方法不同', fontsize=12)
-                axes.grid(axis='y', alpha=0.3)
-
-            plt.tight_layout()
-            sequences_chart_path = output_dir / f"sequences_comparison_{timestamp}.png"
-            plt.savefig(sequences_chart_path, dpi=300, bbox_inches='tight')
-            plt.close()
-            print(f"✅ Sequences对比图表已保存到: {sequences_chart_path}")
-
-            # 4. 整体性能对比
-            fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-            fig.suptitle('整体架构性能对比', fontsize=16, fontweight='bold')
-
-            # Token对比
-            arch_tokens = df.groupby("architecture")["total_tokens"].mean()
-            axes[0, 0].bar(arch_tokens.index, arch_tokens.values, color=['#3498db', '#2ecc71', '#e74c3c'])
-            axes[0, 0].set_title('平均Token消耗', fontsize=12, fontweight='bold')
-            axes[0, 0].set_ylabel('Token数量')
-            axes[0, 0].grid(axis='y', alpha=0.3)
-
-            # 时间对比（排除异常值）
-            arch_time_data = {}
-            for arch in ["Two-Stage", "Three-Stage", "Four-Stage"]:
-                arch_df = df[df["architecture"] == arch]
-                if len(arch_df) > 0:
-                    if arch == "Three-Stage":
-                        # 排除异常值
-                        time_series = arch_df["total_time_seconds"]
-                        time_without_outliers = remove_outliers(time_series, method="iqr", multiplier=1.5)
-                        arch_time_data[arch] = time_without_outliers.mean() if len(time_without_outliers) > 0 else time_series.mean()
-                    else:
-                        arch_time_data[arch] = arch_df["total_time_seconds"].mean()
-            
-            if arch_time_data:
-                arch_time = pd.Series(arch_time_data)
-                axes[0, 1].bar(arch_time.index, arch_time.values, color=['#3498db', '#2ecc71', '#e74c3c'])
-                axes[0, 1].set_title('平均生成时间 (排除异常值)', fontsize=12, fontweight='bold')
-                axes[0, 1].set_ylabel('时间 (秒)')
-                axes[0, 1].grid(axis='y', alpha=0.3)
-
-            # Mappings对比
-            arch_mappings = df.groupby("architecture")["num_mappings"].mean()
-            axes[1, 0].bar(arch_mappings.index, arch_mappings.values, color=['#3498db', '#2ecc71', '#e74c3c'])
-            axes[1, 0].set_title('平均Mappings数量', fontsize=12, fontweight='bold')
-            axes[1, 0].set_ylabel('Mappings数量')
-            axes[1, 0].grid(axis='y', alpha=0.3)
-
-            # Sequences对比
-            arch_sequences = df.groupby("architecture")["num_sequences"].mean()
-            axes[1, 1].bar(arch_sequences.index, arch_sequences.values, color=['#3498db', '#2ecc71', '#e74c3c'])
-            axes[1, 1].set_title('平均Sequences数量', fontsize=12, fontweight='bold')
-            axes[1, 1].set_ylabel('Sequences数量')
-            axes[1, 1].grid(axis='y', alpha=0.3)
-
-            plt.tight_layout()
-            performance_path = output_dir / f"performance_comparison_{timestamp}.png"
-            plt.savefig(performance_path, dpi=300, bbox_inches='tight')
-            plt.close()
-            print(f"✅ 性能对比图表已保存到: {performance_path}")
-
-        except Exception as e:
-            print(f"⚠️  生成可视化图表时出错: {e}")
-
 
 def main():
     """主函数"""

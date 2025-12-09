@@ -2,21 +2,20 @@
 """
 Outreach Quality Evaluation Script
 
-评估 Outreach Sequences 的质量，包括：
-1. 序列结构质量（touches 数量、duration、timing 是否正确）
-2. Touch 类型多样性（email, linkedin, phone 的分布）
-3. 内容质量（subject line 长度、内容个性化、是否引用 pain points）
-4. 与 Persona/Mappings 的匹配度
-5. 序列的连贯性和渐进性
+Evaluates the quality of Outreach Sequences, including:
+1. Sequence structure quality (number of touches, duration, timing correctness)
+2. Touch type diversity (distribution of email, linkedin, phone)
+3. Content quality (subject line length, content personalization, pain point references)
+4. Match with Persona/Mappings
+5. Sequence coherence and progression
 
-支持两种评估模式：
-- 传统模式（默认）：基于规则和模式匹配
-- LLM 模式（--use-llm）：使用 LLM 进行语义理解和智能评估
+Supports two evaluation modes:
+- Traditional mode (default): Based on rules and pattern matching
+- LLM mode (--use-llm): Uses LLM for semantic understanding and intelligent evaluation
 """
 import json
-import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from datetime import datetime
 
 try:
@@ -29,47 +28,55 @@ except (ImportError, ValueError):
 # Try to import LLM service
 try:
     import sys
-    import os
     current_file = Path(__file__).absolute()
     project_root = current_file.parent
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
     from app.services.llm_service import LLMService
-    from app.config import settings
     HAS_LLM = True
-except (ImportError, Exception) as e:
+except (ImportError, Exception):
     HAS_LLM = False
-    pass
 
 
 class OutreachQualityEvaluator:
-    """评估 Outreach Sequence 质量的类"""
+    """Class for evaluating Outreach Sequence quality"""
     
     def __init__(self, evaluation_dir: Path, use_llm: bool = False):
         self.evaluation_dir = evaluation_dir
         self.use_llm = use_llm and HAS_LLM
         
-        # 初始化 LLM 服务（如果启用）
+        # Initialize LLM service (if enabled)
         if self.use_llm:
             try:
                 self.llm_service = LLMService()
-                print("✅ LLM 评估模式已启用")
+                print("✅ LLM evaluation mode enabled")
             except Exception as e:
-                print(f"⚠️  LLM 服务初始化失败: {e}，将使用传统评估模式")
+                print(f"⚠️  LLM service initialization failed: {e}, will use traditional evaluation mode")
                 self.use_llm = False
     
     def load_outreach_and_mappings(self, company_name: str, architecture: str) -> Tuple[List[Dict], List[Dict], List[Dict]]:
-        """加载某个公司在某个架构下的 outreach sequences、mappings 和 personas"""
-        company_dir = self.evaluation_dir / company_name / architecture
+        """Load outreach sequences, mappings, and personas for a company under a specific architecture"""
+        company_base_dir = self.evaluation_dir / company_name
         
+        # First try exact match
+        company_dir = company_base_dir / architecture
         if not company_dir.exists():
-            return [], [], []
+            # If exact match fails, try case-insensitive match
+            if company_base_dir.exists():
+                for subdir in company_base_dir.iterdir():
+                    if subdir.is_dir() and subdir.name.lower() == architecture.lower():
+                        company_dir = subdir
+                        break
+                else:
+                    return [], [], []
+            else:
+                return [], [], []
         
         sequences_data = []
         mappings_data = []
         personas_data = []
         
-        # 加载所有JSON文件
+        # Load all JSON files
         for json_file in company_dir.glob("*.json"):
             filename = json_file.stem.lower()
             
@@ -78,19 +85,19 @@ class OutreachQualityEvaluator:
                     content = json.load(f)
                 
                 if "outreach" in filename or "sequence" in filename:
-                    # Outreach 文件
+                    # Outreach file
                     if "result" in content and "sequences" in content["result"]:
                         sequences_data = content["result"]["sequences"]
                 elif "mapping" in filename:
-                    # Mappings 文件
+                    # Mappings file
                     if "result" in content and "personas_with_mappings" in content["result"]:
                         mappings_data = content["result"]["personas_with_mappings"]
                 elif "persona" in filename and "mapping" not in filename:
-                    # 独立的 personas 文件
+                    # Standalone personas file
                     if "result" in content and "personas" in content["result"]:
                         personas_data = content["result"]["personas"]
                 elif "two_stage" in filename or "three_stage" in filename:
-                    # Consolidated 文件
+                    # Consolidated file
                     if "result" in content:
                         if "sequences" in content["result"]:
                             sequences_data = content["result"]["sequences"]
@@ -105,20 +112,20 @@ class OutreachQualityEvaluator:
         return sequences_data, mappings_data, personas_data
     
     def evaluate_sequence_structure(self, sequence: Dict) -> Dict:
-        """评估序列结构质量"""
+        """Evaluate sequence structure quality"""
         total_touches = sequence.get("total_touches", 0)
         duration_days = sequence.get("duration_days", 0)
         touches = sequence.get("touches", [])
         
-        # 1. Touches 数量检查（4-6 为理想）
+        # 1. Touches count check (4-6 is ideal)
         touches_count_valid = 4 <= total_touches <= 6
         touches_count_score = 1.0 if touches_count_valid else (0.5 if 3 <= total_touches <= 7 else 0.0)
         
-        # 2. Duration 检查（10-21 天为理想）
+        # 2. Duration check (10-21 days is ideal)
         duration_valid = 10 <= duration_days <= 21
         duration_score = 1.0 if duration_valid else (0.5 if 7 <= duration_days <= 25 else 0.0)
         
-        # 3. Timing 检查
+        # 3. Timing check
         timing_valid = True
         timing_issues = []
         prev_timing = -1
@@ -127,27 +134,27 @@ class OutreachQualityEvaluator:
             timing = touch.get("timing_days", -1)
             sort_order = touch.get("sort_order", i + 1)
             
-            # 第一个 touch 必须是 0
+            # First touch must be 0
             if i == 0 and timing != 0:
                 timing_valid = False
-                timing_issues.append(f"Touch {sort_order}: 第一个 touch 的 timing_days 应该是 0，实际是 {timing}")
+                timing_issues.append(f"Touch {sort_order}: First touch timing_days should be 0, but is {timing}")
             
-            # Timing 应该是递增的
+            # Timing should be increasing
             if i > 0 and timing <= prev_timing:
                 timing_valid = False
-                timing_issues.append(f"Touch {sort_order}: timing_days ({timing}) 应该大于前一个 ({prev_timing})")
+                timing_issues.append(f"Touch {sort_order}: timing_days ({timing}) should be greater than previous ({prev_timing})")
             
-            # Timing 间隔应该是 2-3 天（除了第一个）
+            # Timing interval should be 2-3 days (except first)
             if i > 0:
                 interval = timing - prev_timing
                 if not (2 <= interval <= 3):
-                    timing_issues.append(f"Touch {sort_order}: 间隔 {interval} 天，理想是 2-3 天")
+                    timing_issues.append(f"Touch {sort_order}: Interval {interval} days, ideal is 2-3 days")
             
             prev_timing = timing
         
         timing_score = 1.0 if timing_valid and not timing_issues else max(0.0, 1.0 - len(timing_issues) * 0.2)
         
-        # 4. Sort order 检查
+        # 4. Sort order check
         sort_order_valid = True
         for i, touch in enumerate(touches):
             expected_order = i + 1
@@ -158,7 +165,7 @@ class OutreachQualityEvaluator:
         
         sort_order_score = 1.0 if sort_order_valid else 0.5
         
-        # 5. 最后一个 touch 的 timing 应该等于 duration_days
+        # 5. Last touch timing should equal duration_days
         last_timing_match = False
         if touches:
             last_touch = touches[-1]
@@ -194,21 +201,21 @@ class OutreachQualityEvaluator:
         }
     
     def evaluate_touch_diversity(self, sequence: Dict) -> Dict:
-        """评估 Touch 类型多样性"""
+        """Evaluate touch type diversity"""
         touches = sequence.get("touches", [])
         touch_types = [touch.get("touch_type", "").lower() for touch in touches]
         
-        # 统计各类型数量
+        # Count each type
         type_counts = {}
         for touch_type in touch_types:
             type_counts[touch_type] = type_counts.get(touch_type, 0) + 1
         
-        # 理想分布：应该有 email, linkedin, phone
+        # Ideal distribution: should have email, linkedin, phone
         has_email = "email" in touch_types
         has_linkedin = "linkedin" in touch_types
         has_phone = "phone" in touch_types or "video" in touch_types
         
-        # 多样性评分
+        # Diversity score
         diversity_score = 0.0
         if has_email:
             diversity_score += 0.3
@@ -217,19 +224,19 @@ class OutreachQualityEvaluator:
         if has_phone:
             diversity_score += 0.4
         
-        # 检查是否有合理的类型分布
-        # 理想：email 最多，linkedin 次之，phone 最少
+        # Check for reasonable type distribution
+        # Ideal: email most, linkedin second, phone least
         email_count = touch_types.count("email")
         linkedin_count = touch_types.count("linkedin")
         phone_count = touch_types.count("phone") + touch_types.count("video")
         
         distribution_score = 1.0
         if email_count < linkedin_count:
-            distribution_score -= 0.2  # Email 应该最多
+            distribution_score -= 0.2  # Email should be most
         if phone_count > email_count:
-            distribution_score -= 0.3  # Phone 不应该比 email 多
+            distribution_score -= 0.3  # Phone should not be more than email
         
-        # 检查是否有 phone/video 在最后
+        # Check if phone/video is at the end
         last_touch_type = touch_types[-1] if touch_types else ""
         phone_at_end = last_touch_type in ["phone", "video"]
         phone_placement_score = 1.0 if phone_at_end else 0.7
@@ -253,11 +260,11 @@ class OutreachQualityEvaluator:
         }
     
     def evaluate_content_quality(self, sequence: Dict, mappings: List[Dict] = None) -> Dict:
-        """评估内容质量"""
+        """Evaluate content quality"""
         touches = sequence.get("touches", [])
         persona_name = sequence.get("persona_name", "")
         
-        # 创建 pain points 集合（用于检查是否引用）
+        # Create pain points set (for checking references)
         pain_points = set()
         if mappings:
             for mapping_group in mappings:
@@ -279,62 +286,62 @@ class OutreachQualityEvaluator:
             
             touch_score = 1.0
             
-            # 1. Subject line 检查
+            # 1. Subject line check
             if touch_type in ["email", "linkedin"]:
                 if not subject_line:
-                    subject_line_issues.append(f"Touch {touch.get('sort_order')}: {touch_type} 缺少 subject_line")
+                    subject_line_issues.append(f"Touch {touch.get('sort_order')}: {touch_type} missing subject_line")
                     touch_score -= 0.2
                 elif len(subject_line) > 60:
-                    subject_line_issues.append(f"Touch {touch.get('sort_order')}: subject_line 过长 ({len(subject_line)} 字符)")
+                    subject_line_issues.append(f"Touch {touch.get('sort_order')}: subject_line too long ({len(subject_line)} chars)")
                     touch_score -= 0.1
                 elif len(subject_line) < 10:
-                    subject_line_issues.append(f"Touch {touch.get('sort_order')}: subject_line 过短 ({len(subject_line)} 字符)")
+                    subject_line_issues.append(f"Touch {touch.get('sort_order')}: subject_line too short ({len(subject_line)} chars)")
                     touch_score -= 0.1
             elif touch_type in ["phone", "video"]:
                 if subject_line is not None:
-                    subject_line_issues.append(f"Touch {touch.get('sort_order')}: {touch_type} 不应该有 subject_line")
+                    subject_line_issues.append(f"Touch {touch.get('sort_order')}: {touch_type} should not have subject_line")
                     touch_score -= 0.1
             
-            # 2. Content 检查
+            # 2. Content check
             if not content:
-                content_issues.append(f"Touch {touch.get('sort_order')}: 缺少 content_suggestion")
+                content_issues.append(f"Touch {touch.get('sort_order')}: missing content_suggestion")
                 touch_score -= 0.3
             else:
-                # 检查是否包含个性化标记
+                # Check for personalization markers
                 has_personalization = "{{first_name}}" in content or "{{company}}" in content
                 if not has_personalization:
-                    content_issues.append(f"Touch {touch.get('sort_order')}: 缺少个性化标记")
+                    content_issues.append(f"Touch {touch.get('sort_order')}: missing personalization markers")
                     touch_score -= 0.1
                 
-                # 检查是否引用 pain point
+                # Check for pain point references
                 content_lower = content.lower()
                 for pain_point in pain_points:
-                    # 简单的关键词匹配
-                    pain_keywords = set(pain_point.split()[:5])  # 取前5个词
+                    # Simple keyword matching
+                    pain_keywords = set(pain_point.split()[:5])  # Take first 5 words
                     content_words = set(content_lower.split())
-                    if len(pain_keywords & content_words) >= 2:  # 至少2个关键词匹配
+                    if len(pain_keywords & content_words) >= 2:  # At least 2 keywords match
                         pain_point_references += 1
                         break
                 
-                # 检查内容长度
+                # Check content length
                 if len(content) < 50:
-                    content_issues.append(f"Touch {touch.get('sort_order')}: 内容过短")
+                    content_issues.append(f"Touch {touch.get('sort_order')}: content too short")
                     touch_score -= 0.1
                 elif len(content) > 500:
-                    content_issues.append(f"Touch {touch.get('sort_order')}: 内容过长")
+                    content_issues.append(f"Touch {touch.get('sort_order')}: content too long")
                     touch_score -= 0.05
             
-            # 3. Objective 检查
+            # 3. Objective check
             objective = touch.get("objective", "")
             if not objective:
-                content_issues.append(f"Touch {touch.get('sort_order')}: 缺少 objective")
+                content_issues.append(f"Touch {touch.get('sort_order')}: missing objective")
                 touch_score -= 0.1
             
             touch_scores.append(max(0.0, touch_score))
         
         avg_touch_score = sum(touch_scores) / len(touch_scores) if touch_scores else 0.0
         
-        # Pain point 引用率
+        # Pain point reference rate
         pain_point_reference_rate = pain_point_references / len(touches) if touches else 0.0
         
         overall_content_score = (
@@ -353,7 +360,7 @@ class OutreachQualityEvaluator:
         }
     
     def evaluate_sequence_coherence(self, sequence: Dict) -> Dict:
-        """评估序列的连贯性和渐进性"""
+        """Evaluate sequence coherence and progression"""
         touches = sequence.get("touches", [])
         objective = sequence.get("objective", "")
         
@@ -362,10 +369,10 @@ class OutreachQualityEvaluator:
                 "coherence_score": 0.0,
                 "progression_score": 0.0,
                 "overall_coherence_score": 0.0,
-                "issues": ["序列太短，无法评估连贯性"]
+                "issues": ["Sequence too short, cannot evaluate coherence"]
             }
         
-        # 1. 检查每个 touch 的 objective 是否相关
+        # 1. Check if each touch's objective is relevant
         objectives = [touch.get("objective", "") for touch in touches]
         sequence_objective_words = set(objective.lower().split())
         
@@ -373,7 +380,7 @@ class OutreachQualityEvaluator:
         for i, touch_obj in enumerate(objectives):
             if touch_obj:
                 touch_obj_words = set(touch_obj.lower().split())
-                # 检查是否有共同的关键词
+                # Check for common keywords
                 common_words = sequence_objective_words & touch_obj_words
                 relevance = len(common_words) / max(len(sequence_objective_words), 1)
                 objective_relevance.append(relevance)
@@ -382,9 +389,9 @@ class OutreachQualityEvaluator:
         
         coherence_score = sum(objective_relevance) / len(objective_relevance) if objective_relevance else 0.0
         
-        # 2. 检查渐进性（后面的 touch 应该更深入或更具体）
-        progression_score = 0.5  # 默认中等分数
-        # 简单的启发式：检查后面的 touch 是否包含更多细节词
+        # 2. Check progression (later touches should be deeper or more specific)
+        progression_score = 0.5  # Default medium score
+        # Simple heuristic: check if later touches contain more detail words
         detail_words = ["case", "example", "specific", "deep", "dive", "detailed", "approach"]
         progression_indicators = 0
         
@@ -413,8 +420,270 @@ class OutreachQualityEvaluator:
             "objective_relevance": objective_relevance
         }
     
+    def llm_evaluate_sequence(
+        self, 
+        sequence: Dict, 
+        persona: Dict, 
+        mappings: List[Dict]
+    ) -> Dict:
+        """
+        Deep evaluation using LLM
+        
+        Evaluation dimensions:
+        1. Pain resonance: Does content truly address the core pain points of the target audience
+        2. Value clarity: Can recipients quickly understand "what's in it for me"
+        3. Sequence flow: Logical flow from touch 1 to the last touch
+        4. Personalization: Is content customized for specific company/role
+        5. Action drive: Is each touch's CTA clear and low-friction
+        """
+        if not self.use_llm:
+            return {
+                "error": "LLM evaluation not enabled",
+                "scores": {},
+                "strengths": [],
+                "improvements": [],
+                "overall_grade": "N/A",
+                "reasoning": ""
+            }
+        
+        try:
+            # Build prompt
+            prompt = self._build_llm_evaluation_prompt(sequence, persona, mappings)
+            
+            # Call LLM
+            response = self.llm_service.generate(
+                prompt=prompt,
+                system_message=self._get_llm_system_message(),
+                temperature=None,  # Use default value
+                max_completion_tokens=2000
+            )
+            
+            # Parse response
+            evaluation_result = self._parse_llm_response(response.content)
+            
+            # Add metadata
+            evaluation_result["llm_metadata"] = {
+                "model": response.model,
+                "tokens_used": response.total_tokens,
+                "prompt_tokens": response.prompt_tokens,
+                "completion_tokens": response.completion_tokens
+            }
+            
+            return evaluation_result
+            
+        except Exception as e:
+            print(f"⚠️  LLM evaluation failed: {e}")
+            return {
+                "error": str(e),
+                "scores": {},
+                "strengths": [],
+                "improvements": [],
+                "overall_grade": "N/A",
+                "reasoning": ""
+            }
+    
+    def _get_llm_system_message(self) -> str:
+        """Get system message for LLM evaluation"""
+        return """You are a senior B2B sales coach and content evaluation expert. Your task is to evaluate the quality of outreach sequences and provide professional, objective, and actionable feedback from a sales effectiveness perspective.
+
+Please carefully analyze the sequence content and evaluate its effectiveness in real sales scenarios. Your evaluation should:
+1. Be based on B2B sales best practices
+2. Consider the actual decision-making scenarios of target roles
+3. Provide specific, actionable improvement suggestions
+4. Be objective in scoring, avoiding being too lenient or strict
+
+Always return results in JSON format."""
+    
+    def _build_llm_evaluation_prompt(
+        self, 
+        sequence: Dict, 
+        persona: Dict, 
+        mappings: List[Dict]
+    ) -> str:
+        """Build prompt for LLM evaluation"""
+        # Extract pain points
+        pain_points = []
+        if mappings:
+            for mapping_group in mappings:
+                if mapping_group.get("persona_name") == sequence.get("persona_name", ""):
+                    for mapping in mapping_group.get("mappings", []):
+                        pain_point = mapping.get("pain_point", "")
+                        if pain_point:
+                            pain_points.append(pain_point)
+        
+        # Build touches information
+        touches_info = []
+        for touch in sequence.get("touches", []):
+            touch_info = {
+                "sort_order": touch.get("sort_order", 0),
+                "touch_type": touch.get("touch_type", ""),
+                "timing_days": touch.get("timing_days", 0),
+                "subject_line": touch.get("subject_line", ""),
+                "objective": touch.get("objective", ""),
+                "content_suggestion": touch.get("content_suggestion", "")
+            }
+            touches_info.append(touch_info)
+        
+        prompt = f"""Evaluate the quality of the following outreach sequence.
+
+## Target Audience Information
+- Role Name: {persona.get('persona_name', 'N/A')}
+- Role Description: {persona.get('description', 'N/A')}
+- Industry: {persona.get('industry', 'N/A')}
+- Company Size: {persona.get('company_size_range', 'N/A')}
+
+## Core Pain Points
+{chr(10).join(f"- {pp}" for pp in pain_points) if pain_points else "- No pain point information provided"}
+
+## Sequence Information
+- Sequence Name: {sequence.get('name', 'N/A')}
+- Sequence Objective: {sequence.get('objective', 'N/A')}
+- Total Touches: {sequence.get('total_touches', 0)}
+- Duration: {sequence.get('duration_days', 0)} days
+
+## Sequence Content
+{json.dumps(touches_info, indent=2, ensure_ascii=False)}
+
+---
+
+Please score from the following 5 dimensions (0-10 points) and provide specific suggestions:
+
+### 1. Pain Resonance (pain_resonance)
+Does the content truly address the core pain points of the target audience?
+- Does it demonstrate deep understanding of their challenges?
+- Is the solution specific and credible?
+- Does it avoid generic statements?
+
+### 2. Value Clarity (value_clarity)
+Can recipients quickly understand "what's in it for me"?
+- Is value quantified (time, cost, efficiency)?
+- Is there social proof (cases, customers)?
+- Does the value proposition directly correspond to pain points?
+
+### 3. Sequence Flow (sequence_flow)
+Is the logical flow from touch 1 to the last touch natural?
+- Is it building trust relationships?
+- Does each touch have clear incremental value?
+- Does the tone progress from light to heavy, from educational to sales?
+- Are there any repetitive or contradictory information?
+
+### 4. Personalization (personalization)
+Is the content customized for specific company/role?
+- Does it reference specific industry trends/challenges?
+- Or is it just a generic template with names changed?
+- Does it demonstrate real understanding of the customer's business?
+
+### 5. Action Drive (cta_effectiveness)
+Is each touch's CTA clear and low-friction?
+- Does it fit decision-makers' time constraints?
+- Is the next step clear and easy to execute?
+- Does the CTA match the sequence stage?
+
+---
+
+Please return evaluation results in JSON format:
+
+{{
+  "scores": {{
+    "pain_resonance": <0-10>,
+    "value_clarity": <0-10>,
+    "sequence_flow": <0-10>,
+    "personalization": <0-10>,
+    "cta_effectiveness": <0-10>
+  }},
+  "strengths": ["Specific strength 1", "Specific strength 2", ...],
+  "improvements": ["Specific suggestion 1", "Specific suggestion 2", ...],
+  "overall_grade": "<A+/A/A-/B+/B/B-/C+/C/C-/D/F>",
+  "reasoning": "Overall evaluation reasoning (2-3 sentences)"
+}}
+
+Note:
+- Scoring should be objective, 7-8 points indicates good, 9-10 points indicates excellent
+- Strengths and improvement suggestions should be specific, avoid generic statements
+- Overall grade should reflect comprehensive quality"""
+        
+        return prompt
+    
+    def _parse_llm_response(self, response_content: str) -> Dict:
+        """Parse LLM response"""
+        try:
+            content = response_content.strip()
+            
+            # Try to extract JSON (may contain markdown code blocks)
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                parts = content.split("```")
+                if len(parts) >= 2:
+                    content = parts[1].strip()
+                    if content.startswith("json"):
+                        content = content[4:].strip()
+                    elif content.startswith("JSON"):
+                        content = content[4:].strip()
+            
+            # Parse JSON
+            result = json.loads(content)
+            
+            # Validate structure
+            if "scores" not in result:
+                raise ValueError("Response missing 'scores' field")
+            
+            # Ensure all required fields exist
+            default_scores = {
+                "pain_resonance": 0,
+                "value_clarity": 0,
+                "sequence_flow": 0,
+                "personalization": 0,
+                "cta_effectiveness": 0
+            }
+            
+            for key in default_scores:
+                if key not in result["scores"]:
+                    result["scores"][key] = default_scores[key]
+            
+            # Ensure other fields exist
+            if "strengths" not in result:
+                result["strengths"] = []
+            if "improvements" not in result:
+                result["improvements"] = []
+            if "overall_grade" not in result:
+                result["overall_grade"] = "N/A"
+            if "reasoning" not in result:
+                result["reasoning"] = ""
+            
+            # Calculate composite score (0-1.0)
+            scores = result["scores"]
+            avg_score = sum(scores.values()) / len(scores) if scores else 0.0
+            result["overall_score"] = avg_score / 10.0  # Convert to 0-1.0
+            
+            return result
+            
+        except json.JSONDecodeError as e:
+            print(f"⚠️  JSON parsing failed: {e}")
+            print(f"Response content: {response_content[:500]}")
+            return {
+                "error": f"JSON parsing failed: {str(e)}",
+                "scores": {},
+                "strengths": [],
+                "improvements": [],
+                "overall_grade": "N/A",
+                "reasoning": "",
+                "overall_score": 0.0
+            }
+        except Exception as e:
+            print(f"⚠️  Error parsing response: {e}")
+            return {
+                "error": str(e),
+                "scores": {},
+                "strengths": [],
+                "improvements": [],
+                "overall_grade": "N/A",
+                "reasoning": "",
+                "overall_score": 0.0
+            }
+    
     def evaluate_all_sequences(self, company_name: str, architecture: str) -> Dict:
-        """评估某个公司在某个架构下的所有 sequences"""
+        """Evaluate all sequences for a company under a specific architecture"""
         sequences_data, mappings_data, personas_data = self.load_outreach_and_mappings(
             company_name, architecture
         )
@@ -430,65 +699,143 @@ class OutreachQualityEvaluator:
             "company_name": company_name,
             "architecture": architecture,
             "total_sequences": len(sequences_data),
+            "evaluation_mode": "hybrid" if self.use_llm else "rule_based",
             "sequence_details": []
         }
         
         for sequence in sequences_data:
             persona_name = sequence.get("persona_name", "")
             
-            # 找到对应的 mappings
+            # Find corresponding mappings and persona
             persona_mappings = None
+            persona_data = None
             for mapping_group in mappings_data:
                 if mapping_group.get("persona_name") == persona_name:
                     persona_mappings = [mapping_group]
                     break
             
-            # 评估各项指标
+            for persona in personas_data:
+                if persona.get("persona_name") == persona_name:
+                    persona_data = persona
+                    break
+            
+            # First layer: Rule-based evaluation (fast, cheap)
             structure = self.evaluate_sequence_structure(sequence)
             diversity = self.evaluate_touch_diversity(sequence)
             content = self.evaluate_content_quality(sequence, persona_mappings)
             coherence = self.evaluate_sequence_coherence(sequence)
             
-            # 计算总体评分
-            overall_score = (
+            # Calculate overall rule-based score
+            rule_based_score = (
                 structure["overall_structure_score"] * 0.25 +
                 diversity["overall_diversity_score"] * 0.25 +
-                content["overall_content_score"] * 0.3 +
-                coherence["overall_coherence_score"] * 0.2
+                content["overall_content_score"] * 0.25 +
+                coherence["overall_coherence_score"] * 0.25
             )
             
-            results["sequence_details"].append({
+            sequence_result = {
                 "persona_name": persona_name,
                 "sequence_name": sequence.get("name", ""),
-                "structure": structure,
-                "diversity": diversity,
-                "content": content,
-                "coherence": coherence,
-                "overall_score": overall_score
-            })
-        
-        # 计算汇总统计
-        if results["sequence_details"]:
-            structure_scores = [s["structure"]["overall_structure_score"] for s in results["sequence_details"]]
-            diversity_scores = [s["diversity"]["overall_diversity_score"] for s in results["sequence_details"]]
-            content_scores = [s["content"]["overall_content_score"] for s in results["sequence_details"]]
-            coherence_scores = [s["coherence"]["overall_coherence_score"] for s in results["sequence_details"]]
-            overall_scores = [s["overall_score"] for s in results["sequence_details"]]
+                "rule_based_evaluation": {
+                    "structure": structure,
+                    "diversity": diversity,
+                    "content": content,
+                    "coherence": coherence,
+                    "overall_score": rule_based_score
+                }
+            }
             
-            results["summary"] = {
+            # Second layer: LLM intelligent evaluation (deep, accurate)
+            if self.use_llm and persona_data:
+                llm_evaluation = self.llm_evaluate_sequence(
+                    sequence, 
+                    persona_data, 
+                    persona_mappings if persona_mappings else []
+                )
+                sequence_result["llm_evaluation"] = llm_evaluation
+                
+                # Calculate hybrid score (rule-based 40% + LLM 60%)
+                llm_score = llm_evaluation.get("overall_score", 0.0)
+                combined_score = rule_based_score * 0.4 + llm_score * 0.6
+                sequence_result["combined_score"] = combined_score
+            else:
+                sequence_result["combined_score"] = rule_based_score
+            
+            results["sequence_details"].append(sequence_result)
+        
+        # Calculate summary statistics
+        if results["sequence_details"]:
+            rule_scores = [s["rule_based_evaluation"]["overall_score"] for s in results["sequence_details"]]
+            combined_scores = [s["combined_score"] for s in results["sequence_details"]]
+            
+            summary = {
+                "avg_rule_based_score": sum(rule_scores) / len(rule_scores) if rule_scores else 0.0,
+                "avg_combined_score": sum(combined_scores) / len(combined_scores) if combined_scores else 0.0
+            }
+            
+            # Detailed statistics for rule-based evaluation
+            structure_scores = [
+                s["rule_based_evaluation"]["structure"]["overall_structure_score"]
+                for s in results["sequence_details"]
+            ]
+            diversity_scores = [
+                s["rule_based_evaluation"]["diversity"]["overall_diversity_score"]
+                for s in results["sequence_details"]
+            ]
+            content_scores = [
+                s["rule_based_evaluation"]["content"]["overall_content_score"]
+                for s in results["sequence_details"]
+            ]
+            coherence_scores = [
+                s["rule_based_evaluation"]["coherence"]["overall_coherence_score"]
+                for s in results["sequence_details"]
+            ]
+            
+            summary.update({
                 "avg_structure_score": sum(structure_scores) / len(structure_scores) if structure_scores else 0.0,
                 "avg_diversity_score": sum(diversity_scores) / len(diversity_scores) if diversity_scores else 0.0,
                 "avg_content_score": sum(content_scores) / len(content_scores) if content_scores else 0.0,
-                "avg_coherence_score": sum(coherence_scores) / len(coherence_scores) if coherence_scores else 0.0,
-                "avg_overall_score": sum(overall_scores) / len(overall_scores) if overall_scores else 0.0
-            }
+                "avg_coherence_score": sum(coherence_scores) / len(coherence_scores) if coherence_scores else 0.0
+            })
+            
+            # LLM evaluation statistics (if enabled)
+            if self.use_llm:
+                llm_scores_list = []
+                llm_pain_scores = []
+                llm_value_scores = []
+                llm_flow_scores = []
+                llm_personalization_scores = []
+                llm_cta_scores = []
+                
+                for s in results["sequence_details"]:
+                    if "llm_evaluation" in s and "scores" in s["llm_evaluation"]:
+                        scores = s["llm_evaluation"]["scores"]
+                        llm_scores_list.append(s["llm_evaluation"].get("overall_score", 0.0))
+                        llm_pain_scores.append(scores.get("pain_resonance", 0) / 10.0)
+                        llm_value_scores.append(scores.get("value_clarity", 0) / 10.0)
+                        llm_flow_scores.append(scores.get("sequence_flow", 0) / 10.0)
+                        llm_personalization_scores.append(scores.get("personalization", 0) / 10.0)
+                        llm_cta_scores.append(scores.get("cta_effectiveness", 0) / 10.0)
+                
+                if llm_scores_list:
+                    summary["llm_evaluation"] = {
+                        "avg_overall_score": sum(llm_scores_list) / len(llm_scores_list),
+                        "avg_pain_resonance": sum(llm_pain_scores) / len(llm_pain_scores) if llm_pain_scores else 0.0,
+                        "avg_value_clarity": sum(llm_value_scores) / len(llm_value_scores) if llm_value_scores else 0.0,
+                        "avg_sequence_flow": sum(llm_flow_scores) / len(llm_flow_scores) if llm_flow_scores else 0.0,
+                        "avg_personalization": sum(llm_personalization_scores) / len(llm_personalization_scores) if llm_personalization_scores else 0.0,
+                        "avg_cta_effectiveness": sum(llm_cta_scores) / len(llm_cta_scores) if llm_cta_scores else 0.0
+                    }
+            
+            results["summary"] = summary
         
         return results
     
     def compare_architectures(self, two_stage_results: Dict, three_stage_results: Dict = None, four_stage_results: Dict = None) -> Dict:
-        """对比两种或三种架构的 outreach 质量"""
+        """Compare outreach quality between two or three architectures"""
         comparison = {
             "company_name": two_stage_results.get("company_name", ""),
+            "evaluation_mode": two_stage_results.get("evaluation_mode", "rule_based"),
             "comparison": {}
         }
         
@@ -504,16 +851,17 @@ class OutreachQualityEvaluator:
             comparison["comparison"]["error"] = "Missing 2-stage summary data"
             return comparison
         
-        metrics = {
+        # 规则评估指标
+        rule_metrics = {
             "structure_score": "avg_structure_score",
             "diversity_score": "avg_diversity_score",
             "content_score": "avg_content_score",
             "coherence_score": "avg_coherence_score",
-            "overall_score": "avg_overall_score"
+            "rule_based_score": "avg_rule_based_score"
         }
         
         comparison_details = {}
-        for metric_name, summary_key in metrics.items():
+        for metric_name, summary_key in rule_metrics.items():
             two_value = two_summary.get(summary_key, 0)
             three_value = three_summary.get(summary_key, 0) if has_three else None
             four_value = four_summary.get(summary_key, 0) if has_four else None
@@ -533,48 +881,100 @@ class OutreachQualityEvaluator:
                 "best": best_stage
             }
         
+        # 混合评分（如果启用 LLM）
+        if two_summary.get("avg_combined_score") is not None:
+            two_combined = two_summary.get("avg_combined_score", 0)
+            three_combined = three_summary.get("avg_combined_score", 0) if has_three else None
+            four_combined = four_summary.get("avg_combined_score", 0) if has_four else None
+            
+            values = {"two_stage": two_combined}
+            if three_combined is not None:
+                values["three_stage"] = three_combined
+            if four_combined is not None:
+                values["four_stage"] = four_combined
+            
+            best_stage = max(values.items(), key=lambda x: x[1])[0] if values else "two_stage"
+            
+            comparison_details["combined_score"] = {
+                "two_stage": two_combined,
+                "three_stage": three_combined,
+                "four_stage": four_combined,
+                "best": best_stage
+            }
+        
+        # LLM 评估指标（如果启用）
+        if two_summary.get("llm_evaluation"):
+            llm_metrics = {
+                "llm_pain_resonance": "avg_pain_resonance",
+                "llm_value_clarity": "avg_value_clarity",
+                "llm_sequence_flow": "avg_sequence_flow",
+                "llm_personalization": "avg_personalization",
+                "llm_cta_effectiveness": "avg_cta_effectiveness",
+                "llm_overall_score": "avg_overall_score"
+            }
+            
+            for metric_name, llm_key in llm_metrics.items():
+                two_llm = two_summary.get("llm_evaluation", {}).get(llm_key, 0)
+                three_llm = three_summary.get("llm_evaluation", {}).get(llm_key, 0) if has_three else None
+                four_llm = four_summary.get("llm_evaluation", {}).get(llm_key, 0) if has_four else None
+                
+                values = {"two_stage": two_llm}
+                if three_llm is not None:
+                    values["three_stage"] = three_llm
+                if four_llm is not None:
+                    values["four_stage"] = four_llm
+                
+                best_stage = max(values.items(), key=lambda x: x[1])[0] if values else "two_stage"
+                
+                comparison_details[metric_name] = {
+                    "two_stage": two_llm,
+                    "three_stage": three_llm,
+                    "four_stage": four_llm,
+                    "best": best_stage
+                }
+        
         comparison["comparison"] = comparison_details
         return comparison
 
 
 def main():
-    """主函数"""
+    """Main function"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="评估 Outreach Sequences 质量")
+    parser = argparse.ArgumentParser(description="Evaluate Outreach Sequences quality")
     parser.add_argument(
         "--use-llm",
         action="store_true",
-        help="使用 LLM 进行智能评估（更灵活，但需要 API 调用）"
+        help="Use LLM for intelligent evaluation (more flexible, but requires API calls)"
     )
     args = parser.parse_args()
     
     evaluation_dir = Path("data/Evaluation")
     
     if not evaluation_dir.exists():
-        print(f"❌ 评估目录不存在: {evaluation_dir}")
+        print(f"❌ Evaluation directory does not exist: {evaluation_dir}")
         return
     
     evaluator = OutreachQualityEvaluator(evaluation_dir, use_llm=args.use_llm)
     
-    # 获取所有公司
+    # Get all companies
     companies = [d.name for d in evaluation_dir.iterdir() if d.is_dir()]
     
     if not companies:
-        print("❌ 没有找到公司数据")
+        print("❌ No company data found")
         return
     
-    print(f"🚀 开始评估 Outreach Sequences 质量...")
-    print(f"📁 评估目录: {evaluation_dir}")
-    print(f"📊 找到 {len(companies)} 个公司\n")
+    print(f"🚀 Starting Outreach Sequences quality evaluation...")
+    print(f"📁 Evaluation directory: {evaluation_dir}")
+    print(f"📊 Found {len(companies)} companies\n")
     
     all_results = []
     all_comparisons = []
     
     for company_name in companies:
-        print(f"评估 {company_name}...")
+        print(f"Evaluating {company_name}...")
         
-        # 评估各架构
+        # Evaluate each architecture
         two_stage_results = evaluator.evaluate_all_sequences(company_name, "2 Stage")
         if "error" in two_stage_results:
             two_stage_results = evaluator.evaluate_all_sequences(company_name, "Two-Stage")
@@ -593,7 +993,7 @@ def main():
         if "error" in four_stage_results:
             four_stage_results = evaluator.evaluate_all_sequences(company_name, "4 stage")
         
-        # 进行三方比较
+        # Perform three-way comparison
         if "error" not in two_stage_results:
             comparison = evaluator.compare_architectures(
                 two_stage_results,
@@ -610,32 +1010,35 @@ def main():
             "four_stage": four_stage_results if "error" not in four_stage_results else None
         })
     
-    # 保存结果
+    # Save results
     output_dir = Path("evaluation_results")
     output_dir.mkdir(exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    # 保存详细结果
+    # Save detailed results
     results_file = output_dir / f"outreach_quality_evaluation_{timestamp}.json"
     with open(results_file, 'w', encoding='utf-8') as f:
         json.dump(all_results, f, indent=2, ensure_ascii=False)
-    print(f"\n✅ 详细评估结果已保存到: {results_file}")
+    print(f"\n✅ Detailed evaluation results saved to: {results_file}")
     
-    # 保存对比结果
+    # Save comparison results
     comparison_file = output_dir / f"outreach_quality_comparison_{timestamp}.json"
     with open(comparison_file, 'w', encoding='utf-8') as f:
         json.dump(all_comparisons, f, indent=2, ensure_ascii=False)
-    print(f"✅ 对比结果已保存到: {comparison_file}")
+    print(f"✅ Comparison results saved to: {comparison_file}")
     
-    # 打印汇总
+    # Print summary
     print("\n" + "=" * 80)
-    print("Outreach 质量评估汇总（2 Stage vs 3 Stage vs 4 Stage）")
+    mode_text = "Hybrid evaluation (Rule + LLM)" if evaluator.use_llm else "Rule-based evaluation"
+    print("Outreach Quality Evaluation Summary (2 Stage vs 3 Stage vs 4 Stage)")
+    print(f"Evaluation mode: {mode_text}")
     print("=" * 80)
     
     for comparison in all_comparisons:
         company_name = comparison["company_name"]
         comp = comparison.get("comparison", {})
+        eval_mode = comparison.get("evaluation_mode", "rule_based")
         
         if "error" in comp:
             print(f"\n⚠️  {company_name}: {comp['error']}")
@@ -644,22 +1047,86 @@ def main():
         print(f"\n📊 {company_name}:")
         print("-" * 80)
         
-        for metric_name, metric_data in comp.items():
+        # Rule-based evaluation metrics
+        print("\n【Rule-based Evaluation Metrics】")
+        rule_metrics = ["structure_score", "diversity_score", "content_score", "coherence_score", "rule_based_score"]
+        for metric_name in rule_metrics:
+            if metric_name in comp:
+                metric_data = comp[metric_name]
+                if isinstance(metric_data, dict) and "two_stage" in metric_data:
+                    two_val = metric_data["two_stage"]
+                    three_val = metric_data.get("three_stage")
+                    four_val = metric_data.get("four_stage")
+                    best = metric_data.get("best", "two_stage")
+                    
+                    metric_display = {
+                        "structure_score": "Structure Quality",
+                        "diversity_score": "Diversity",
+                        "content_score": "Content Quality",
+                        "coherence_score": "Coherence",
+                        "rule_based_score": "Rule-based Total Score"
+                    }.get(metric_name, metric_name)
+                    
+                    print(f"\n  {metric_display}:")
+                    print(f"    2 Stage: {two_val:.3f}")
+                    if three_val is not None:
+                        marker_3 = " ⭐" if best == "three_stage" else ""
+                        print(f"    3 Stage: {three_val:.3f}{marker_3}")
+                    if four_val is not None:
+                        marker_4 = " ⭐" if best == "four_stage" else ""
+                        print(f"    4 Stage: {four_val:.3f}{marker_4}")
+                    print(f"    Best: {best.replace('_', ' ').title()}")
+        
+        # LLM evaluation metrics (if enabled)
+        if "llm_overall_score" in comp:
+            print("\n【LLM Intelligent Evaluation Metrics】")
+            llm_metrics = [
+                ("llm_pain_resonance", "Pain Resonance"),
+                ("llm_value_clarity", "Value Clarity"),
+                ("llm_sequence_flow", "Sequence Flow"),
+                ("llm_personalization", "Personalization"),
+                ("llm_cta_effectiveness", "CTA Effectiveness"),
+                ("llm_overall_score", "LLM Total Score")
+            ]
+            
+            for metric_name, metric_display in llm_metrics:
+                if metric_name in comp:
+                    metric_data = comp[metric_name]
+                    if isinstance(metric_data, dict) and "two_stage" in metric_data:
+                        two_val = metric_data["two_stage"]
+                        three_val = metric_data.get("three_stage")
+                        four_val = metric_data.get("four_stage")
+                        best = metric_data.get("best", "two_stage")
+                        
+                        print(f"\n  {metric_display}:")
+                        print(f"    2 Stage: {two_val:.3f}")
+                        if three_val is not None:
+                            marker_3 = " ⭐" if best == "three_stage" else ""
+                            print(f"    3 Stage: {three_val:.3f}{marker_3}")
+                        if four_val is not None:
+                            marker_4 = " ⭐" if best == "four_stage" else ""
+                            print(f"    4 Stage: {four_val:.3f}{marker_4}")
+                        print(f"    Best: {best.replace('_', ' ').title()}")
+        
+        # Combined score (if enabled)
+        if "combined_score" in comp:
+            print("\n【Combined Score (Rule 40% + LLM 60%)】")
+            metric_data = comp["combined_score"]
             if isinstance(metric_data, dict) and "two_stage" in metric_data:
                 two_val = metric_data["two_stage"]
                 three_val = metric_data.get("three_stage")
                 four_val = metric_data.get("four_stage")
                 best = metric_data.get("best", "two_stage")
                 
-                print(f"\n{metric_name}:")
-                print(f"  2 Stage: {two_val:.3f}")
+                print(f"\n  Combined Score:")
+                print(f"    2 Stage: {two_val:.3f}")
                 if three_val is not None:
                     marker_3 = " ⭐" if best == "three_stage" else ""
-                    print(f"  3 Stage: {three_val:.3f}{marker_3}")
+                    print(f"    3 Stage: {three_val:.3f}{marker_3}")
                 if four_val is not None:
                     marker_4 = " ⭐" if best == "four_stage" else ""
-                    print(f"  4 Stage: {four_val:.3f}{marker_4}")
-                print(f"  最佳: {best.replace('_', ' ').title()}")
+                    print(f"    4 Stage: {four_val:.3f}{marker_4}")
+                print(f"    Best: {best.replace('_', ' ').title()}")
 
 
 if __name__ == "__main__":

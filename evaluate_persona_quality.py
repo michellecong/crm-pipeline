@@ -32,14 +32,33 @@ class PersonaQualityEvaluator:
     """评估 Persona 质量的类"""
     
     def __init__(self, evaluation_dir: Path):
+        """
+        初始化评估器
+        
+        Args:
+            evaluation_dir: 评估数据目录
+        """
         self.evaluation_dir = evaluation_dir
         
     def load_personas(self, company_name: str, architecture: str) -> tuple[List[Dict], Optional[Dict]]:
         """加载某个公司在某个架构下的 personas 和 products"""
-        company_dir = self.evaluation_dir / company_name / architecture
+        company_dir = self.evaluation_dir / company_name
         
-        if not company_dir.exists():
-            return [], None
+        # 首先尝试精确匹配
+        target_dir = company_dir / architecture
+        if not target_dir.exists():
+            # 如果精确匹配失败，尝试大小写不敏感匹配
+            if company_dir.exists():
+                for subdir in company_dir.iterdir():
+                    if subdir.is_dir() and subdir.name.lower() == architecture.lower():
+                        target_dir = subdir
+                        break
+                else:
+                    return [], None
+            else:
+                return [], None
+        
+        company_dir = target_dir
         
         personas_data = []
         products_data = None
@@ -126,7 +145,6 @@ class PersonaQualityEvaluator:
         
         for persona in personas:
             description = persona.get("description", "").lower()
-            job_titles = [jt.lower() for jt in persona.get("job_titles", [])]
             
             # 检查是否提及产品名称或关键词
             mentions_product = False
@@ -163,13 +181,6 @@ class PersonaQualityEvaluator:
     
     def evaluate_description_completeness(self, personas: List[Dict]) -> Dict:
         """评估描述完整性 - 检查是否包含4个必需指标"""
-        required_metrics = {
-            "team_size": False,
-            "deal_size": False,
-            "sales_cycle": False,
-            "stakeholders": False
-        }
-        
         completeness_scores = []
         metric_details = []
         
@@ -201,29 +212,131 @@ class PersonaQualityEvaluator:
         }
     
     def evaluate_job_titles_quality(self, personas: List[Dict]) -> Dict:
-        """评估 Job Titles 的质量"""
-        job_title_counts = []
-        excluded_title_counts = []
-        job_title_lengths = []
+        """评估 Job Titles 的质量（相关性、去重、层级分布）"""
+        scores = []
+        details = []
         
         for persona in personas:
             job_titles = persona.get("job_titles", [])
-            excluded_titles = persona.get("excluded_job_titles", [])
+            if not job_titles:
+                scores.append(0.0)
+                details.append({
+                    "persona_name": persona.get("persona_name", ""),
+                    "count": 0,
+                    "quality_score": 0.0,
+                    "reason": "No job titles"
+                })
+                continue
             
-            job_title_counts.append(len(job_titles))
-            excluded_title_counts.append(len(excluded_titles))
+            description = persona.get("description", "").lower()
             
-            # 计算平均 job title 长度
-            if job_titles:
-                avg_length = sum(len(jt) for jt in job_titles) / len(job_titles)
-                job_title_lengths.append(avg_length)
+            # 简单的词根提取函数
+            def simple_stemming(word):
+                """简单的词根提取，移除常见后缀"""
+                if len(word) <= 4:
+                    return word
+                for suffix in ['ing', 'ed', 's', 'es', 'er', 'or', 'ly']:
+                    if word.endswith(suffix) and len(word) > len(suffix) + 2:
+                        return word[:-len(suffix)]
+                return word
+            
+            # 1. 相关性检查（40%）：job titles 是否与 description 相关
+            relevance_count = 0
+            checked_titles = job_titles[:10]  # 只检查前10个，避免过度惩罚长列表
+            
+            for jt in checked_titles:
+                jt_lower = jt.lower()
+                
+                # 提取关键词（去除常见停用词）
+                stopwords = {'senior', 'junior', 'chief', 'manager', 'director', 'head', 'vp', 'vice', 'president', 'of', 'the', 'a', 'an', 'and', 'or', 'but'}
+                jt_words = set(w for w in re.findall(r'\b\w+\b', jt_lower) if w not in stopwords)
+                desc_words = set(re.findall(r'\b\w+\b', description))
+                
+                # 检查是否有共同的关键词
+                common_words = jt_words & desc_words
+                if len(jt_words) > 0 and len(common_words) > 0:
+                    relevance_count += 1
+                # 也检查完整匹配
+                elif jt_lower in description:
+                    relevance_count += 1
+                # 词根匹配（提升匹配准确性）
+                else:
+                    jt_stems = {simple_stemming(w) for w in jt_words if len(w) > 3}
+                    desc_stems = {simple_stemming(w) for w in desc_words if len(w) > 3}
+                    common_stems = jt_stems & desc_stems
+                    if len(jt_stems) > 0 and len(common_stems) > 0:
+                        relevance_count += 1
+            
+            relevance_score = relevance_count / len(checked_titles) if checked_titles else 0.0
+            
+            # 2. 去重检查（20%）
+            unique_titles = set([jt.lower().strip() for jt in job_titles])
+            uniqueness_score = len(unique_titles) / len(job_titles) if job_titles else 0.0
+            
+            # 3. 层级分布（30%）：是否覆盖不同职级
+            hierarchy_levels = {
+                'c_level': ['ceo', 'cto', 'cfo', 'coo', 'cmo', 'chief', 'president'],
+                'vp_level': ['vp', 'vice president'],
+                'director': ['director'],
+                'manager': ['manager', 'head of', 'lead'],
+                'specialist': ['specialist', 'analyst', 'coordinator', 'executive']
+            }
+            
+            levels_covered = set()
+            for jt in job_titles:
+                jt_lower = jt.lower()
+                for level, keywords in hierarchy_levels.items():
+                    if any(kw in jt_lower for kw in keywords):
+                        levels_covered.add(level)
+                        break
+            
+            # 理想情况：覆盖至少3个层级
+            hierarchy_score = min(len(levels_covered) / 3.0, 1.0)
+            
+            # 4. 数量合理性（10%）：太少或太多都不好
+            count = len(job_titles)
+            if 10 <= count <= 30:
+                count_score = 1.0
+            elif 5 <= count < 10 or 30 < count <= 40:
+                count_score = 0.7
+            elif count < 5 or count > 40:
+                count_score = 0.3
+            else:
+                count_score = 0.5
+            
+            # 综合评分
+            quality_score = (
+                relevance_score * 0.40 +
+                uniqueness_score * 0.20 +
+                hierarchy_score * 0.30 +
+                count_score * 0.10
+            )
+            
+            scores.append(quality_score)
+            details.append({
+                "persona_name": persona.get("persona_name", ""),
+                "count": count,
+                "relevance": round(relevance_score, 3),
+                "uniqueness": round(uniqueness_score, 3),
+                "hierarchy": round(hierarchy_score, 3),
+                "count_score": round(count_score, 3),
+                "quality_score": round(quality_score, 3)
+            })
+        
+        # 保持向后兼容：也返回 avg_job_titles_per_persona
+        avg_count = sum(len(p.get("job_titles", [])) for p in personas) / len(personas) if personas else 0.0
         
         return {
-            "avg_job_titles_per_persona": sum(job_title_counts) / len(job_title_counts) if job_title_counts else 0.0,
-            "avg_excluded_titles_per_persona": sum(excluded_title_counts) / len(excluded_title_counts) if excluded_title_counts else 0.0,
-            "min_job_titles": min(job_title_counts) if job_title_counts else 0,
-            "max_job_titles": max(job_title_counts) if job_title_counts else 0,
-            "avg_job_title_length": sum(job_title_lengths) / len(job_title_lengths) if job_title_lengths else 0.0
+            "avg_quality_score": sum(scores) / len(scores) if scores else 0.0,
+            "min_quality": min(scores) if scores else 0.0,
+            "max_quality": max(scores) if scores else 0.0,
+            "high_quality_personas": sum(1 for s in scores if s >= 0.7),
+            "total_personas": len(scores),
+            "details": details,
+            # 向后兼容字段
+            "avg_job_titles_per_persona": avg_count,
+            "min_job_titles": min(len(p.get("job_titles", [])) for p in personas) if personas else 0,
+            "max_job_titles": max(len(p.get("job_titles", [])) for p in personas) if personas else 0
         }
     
     def evaluate_field_completeness(self, personas: List[Dict]) -> Dict:
@@ -263,8 +376,15 @@ class PersonaQualityEvaluator:
             "field_presence_rate": field_presence_rate
         }
     
-    def evaluate_diversity(self, personas: List[Dict]) -> Dict:
-        """评估多样性"""
+    def evaluate_diversity(self, personas: List[Dict], company_name: str = "", products: Optional[List[Dict]] = None) -> Dict:
+        """评估多样性（自适应评估：根据公司类型调整评分）"""
+        if company_name:
+            return self._evaluate_diversity_adaptive(personas, company_name, products)
+        else:
+            return self._evaluate_diversity_basic(personas)
+    
+    def _evaluate_diversity_basic(self, personas: List[Dict]) -> Dict:
+        """基础多样性评估"""
         industries = [p.get("industry", "Unknown") for p in personas]
         locations = [p.get("location", "Unknown") for p in personas]
         tiers = [p.get("tier", "Unknown") for p in personas]
@@ -282,12 +402,124 @@ class PersonaQualityEvaluator:
             "location_distribution": dict(Counter(locations))
         }
     
+    def _is_vertical_focused_company(self, company_name: str, products: Optional[List[Dict]] = None) -> bool:
+        """判断公司是否专注于特定垂直行业"""
+        # 垂直行业关键词（扩展版）
+        vertical_keywords = [
+            # 医疗健康
+            'healthcare', 'medical', 'hospital', 'clinic', 'pharma', 'pharmaceutical', 'health',
+            # 金融服务
+            'financial', 'banking', 'insurance', 'fintech', 'wealth', 'investment', 'trading',
+            # 制造业
+            'manufacturing', 'automotive', 'industrial', 'factory', 'production',
+            # 零售电商
+            'retail', 'e-commerce', 'ecommerce', 'merchandising', 'commerce',
+            # 房地产建筑
+            'real estate', 'property', 'construction', 'procore', 'building',
+            # 教育
+            'education', 'edtech', 'learning', 'university', 'school',
+            # 法律合规
+            'legal', 'law', 'compliance', 'attorney', 'lawyer',
+            # SaaS（垂直型）
+            'saas', 'software as a service',
+            # 物流供应链
+            'logistics', 'supply chain', 'transportation', 'shipping',
+            # 酒店餐饮
+            'hospitality', 'hotel', 'restaurant', 'food service',
+            # 农业
+            'agriculture', 'agtech', 'farming',
+            # 能源公用事业
+            'energy', 'utility', 'power', 'electric',
+            # 电信
+            'telecom', 'telecommunications', 'wireless',
+            # 媒体出版
+            'media', 'publishing', 'broadcasting',
+            # 公共部门
+            'nonprofit', 'government', 'public sector'
+        ]
+        
+        company_lower = company_name.lower()
+        
+        # 方法1：从公司名称判断（权重30%）
+        name_score = sum(1 for kw in vertical_keywords if kw in company_lower) / len(vertical_keywords)
+        name_indicator = name_score > 0
+        
+        # 方法2：从产品描述判断（权重70%）
+        product_score = 0.0
+        if products:
+            product_texts = ' '.join([
+                p.get('description', '') + ' ' + p.get('product_name', '')
+                for p in products
+            ]).lower()
+            
+            industry_mentions = {}
+            for kw in vertical_keywords:
+                count = product_texts.count(kw)
+                if count > 0:
+                    industry_mentions[kw] = count
+            
+            # 如果某个行业被提及3次以上，认为是垂直型
+            if industry_mentions and max(industry_mentions.values()) >= 3:
+                product_score = 1.0
+            elif len(industry_mentions) == 1:
+                product_score = 0.7  # 只提及一个行业
+        
+        # 综合判断
+        total_score = (1.0 if name_indicator else 0.0) * 0.3 + product_score * 0.7
+        return total_score >= 0.4
+    
+    def _evaluate_diversity_adaptive(self, personas: List[Dict], company_name: str, products: Optional[List[Dict]] = None) -> Dict:
+        """自适应多样性评估：根据公司类型调整评分"""
+        # 计算原始多样性指标
+        basic_diversity = self._evaluate_diversity_basic(personas)
+        
+        # 判断公司类型
+        is_vertical = self._is_vertical_focused_company(company_name, products)
+        
+        # 自适应评分
+        if is_vertical:
+            # 垂直型公司：行业集中度高 = 好（专注），地理多样性仍重要
+            industry_concentration = 1 - basic_diversity["industry_diversity_score"]
+            industry_score = industry_concentration * 10.0
+            location_score = basic_diversity["location_diversity_score"] * 10.0
+            
+            interpretation = "垂直行业公司：期望行业专注（低多样性），地理覆盖广"
+        else:
+            # 通用型公司：高多样性 = 好（广泛适用）
+            industry_score = basic_diversity["industry_diversity_score"] * 10.0
+            location_score = basic_diversity["location_diversity_score"] * 10.0
+            
+            interpretation = "通用型公司：期望行业和地理都有多样性"
+        
+        # 返回结果，保持向后兼容
+        result = basic_diversity.copy()
+        result.update({
+            "industry_score": industry_score,
+            "location_score": location_score,
+            "is_vertical_focused": is_vertical,
+            "interpretation": interpretation,
+            "adjusted_total": industry_score + location_score  # 总分20
+        })
+        
+        return result
+    
     def evaluate_generation_reasoning(self, company_name: str, architecture: str) -> Dict:
         """评估 Generation Reasoning 质量（仅适用于有 reasoning 的架构）"""
-        company_dir = self.evaluation_dir / company_name / architecture
+        company_base_dir = self.evaluation_dir / company_name
         
+        # 尝试精确匹配
+        company_dir = company_base_dir / architecture
         if not company_dir.exists():
-            return {"has_reasoning": False, "reasoning_length": 0}
+            # 尝试大小写不敏感匹配
+            if company_base_dir.exists():
+                for subdir in company_base_dir.iterdir():
+                    if subdir.is_dir() and subdir.name.lower() == architecture.lower():
+                        company_dir = subdir
+                        break
+                else:
+                    return {"has_reasoning": False, "reasoning_length": 0}
+            else:
+                return {"has_reasoning": False, "reasoning_length": 0}
         
         reasoning_text = None
         reasoning_length = 0
@@ -305,7 +537,7 @@ class PersonaQualityEvaluator:
                         reasoning_text = content["result"]["generation_reasoning"]
                         reasoning_length = len(reasoning_text) if reasoning_text else 0
                         break
-                except Exception as e:
+                except Exception:
                     continue
         
         return {
@@ -316,27 +548,145 @@ class PersonaQualityEvaluator:
         }
     
     def evaluate_persona_name_quality(self, personas: List[Dict]) -> Dict:
-        """评估 Persona Name 质量"""
-        name_lengths = []
-        valid_format_count = 0
+        """评估 Persona Name 质量（规范性、信息完整性、长度合理性、可读性）"""
+        scores = []
+        details = []
         
-        # Persona name 格式: "[Geography] [Size] [Industry] - [Function]"
+        # 标准格式："[Geography] [Size] [Industry] - [Function]"
         format_pattern = re.compile(r'^.+?\s+.+?\s+.+?\s*-\s*.+$')
+        
+        # 关键词定义
+        geo_keywords = ['north america', 'us', 'united states', 'europe', 'emea', 'apac', 'asia', 'global', 'latam', 'uk', 'canada', 'australia']
+        size_keywords = ['enterprise', 'mid-market', 'mid market', 'smb', 'small', 'medium', 'large', 'startup']
+        function_keywords = ['vp', 'director', 'manager', 'head', 'chief', 'leader', 'operations', 'sales', 'marketing', 'it', 'rev', 'revenue', 'ops']
         
         for persona in personas:
             name = persona.get("persona_name", "")
-            name_lengths.append(len(name))
+            score = 0.0
+            checks = {}
             
-            if format_pattern.match(name):
-                valid_format_count += 1
+            # 1. 格式规范性（30%）
+            format_valid = bool(format_pattern.match(name))
+            checks["format_valid"] = format_valid
+            if format_valid:
+                score += 0.30
+            
+            # 2. 信息完整性（40%）：是否包含4个关键组件
+            name_lower = name.lower()
+            has_geo = any(kw in name_lower for kw in geo_keywords)
+            has_size = any(kw in name_lower for kw in size_keywords)
+            has_industry = persona.get("industry", "") != "" and persona.get("industry", "").lower() in name_lower
+            has_function = any(kw in name_lower for kw in function_keywords) or '-' in name
+            
+            checks.update({
+                "has_geo": has_geo,
+                "has_size": has_size,
+                "has_industry": has_industry,
+                "has_function": has_function
+            })
+            
+            info_completeness = sum([has_geo, has_size, has_industry, has_function]) / 4.0
+            score += info_completeness * 0.40
+            
+            # 3. 长度合理性（20%）：30-70字符为最佳
+            length = len(name)
+            if 30 <= length <= 70:
+                length_score = 1.0
+            elif 20 <= length < 30 or 70 < length <= 80:
+                length_score = 0.7
+            elif 15 <= length < 20 or 80 < length <= 100:
+                length_score = 0.4
+            else:
+                length_score = 0.0
+            
+            checks["length"] = length
+            checks["length_score"] = length_score
+            score += length_score * 0.20
+            
+            # 4. 可读性（10%）：无特殊字符，单词间有空格
+            has_special_chars = bool(re.search(r'[^\w\s\-]', name))
+            has_proper_spacing = not bool(re.search(r'\w{20,}', name))  # 没有超长单词
+            readability = (not has_special_chars) and has_proper_spacing
+            checks["readability"] = readability
+            if readability:
+                score += 0.10
+            
+            scores.append(score)
+            details.append({
+                "persona_name": name,
+                "score": round(score, 3),
+                "checks": checks
+            })
+        
+        # 向后兼容：也返回 avg_name_length
+        name_lengths = [len(p.get("persona_name", "")) for p in personas]
         
         return {
+            "avg_name_quality": sum(scores) / len(scores) if scores else 0.0,
+            "names_with_high_quality": sum(1 for s in scores if s >= 0.7),
+            "names_with_valid_format": sum(1 for d in details if d["checks"]["format_valid"]),
+            "total_personas": len(scores),
+            "details": details,
+            # 向后兼容字段
             "avg_name_length": sum(name_lengths) / len(name_lengths) if name_lengths else 0.0,
-            "names_within_limit": sum(1 for l in name_lengths if l <= 60),
-            "names_over_limit": sum(1 for l in name_lengths if l > 60),
-            "valid_format_count": valid_format_count,
-            "total_personas": len(personas)
+            "valid_format_count": sum(1 for d in details if d["checks"]["format_valid"])
         }
+    
+    def detect_anomalies(self, results: Dict) -> List[str]:
+        """检测异常的评估结果"""
+        warnings = []
+        company_name = results.get("company_name", "Unknown")
+        
+        for stage in ['two_stage', 'four_stage']:
+            data = results.get(stage, {})
+            if not data:
+                continue
+            
+            stage_name = "2 Stage" if stage == "two_stage" else "4 Stage"
+            
+            # 检查是否有 persona 但没有 job titles
+            persona_count = data.get("persona_count", 0)
+            job_quality = data.get("job_titles_quality", {})
+            avg_jobs = job_quality.get("avg_job_titles_per_persona", 0)
+            
+            if persona_count > 0 and avg_jobs == 0:
+                msg = (f"{company_name} ({stage_name}): "
+                       f"有 {persona_count} 个 personas 但没有 job titles")
+                warnings.append(msg)
+
+            # 检查 product alignment 是否过低
+            product_alignment = data.get("product_alignment", {})
+            product_score = product_alignment.get("score", 0)
+            if product_score < 0.3 and persona_count > 0:
+                msg = (f"{company_name} ({stage_name}): "
+                       f"Product alignment 过低 ({product_score:.1%})")
+                warnings.append(msg)
+
+            # 检查 field completeness 是否不足
+            field_completeness = data.get("field_completeness", {})
+            field_score = field_completeness.get("average_completeness", 0)
+            if field_score < 0.8 and persona_count > 0:
+                msg = (f"{company_name} ({stage_name}): "
+                       f"字段完整性不足 ({field_score:.1%})")
+                warnings.append(msg)
+
+            # 检查 description completeness 是否过低
+            desc_completeness = data.get("description_completeness", {})
+            desc_score = desc_completeness.get("average_score", 0)
+            if desc_score < 0.5 and persona_count > 0:
+                msg = (f"{company_name} ({stage_name}): "
+                       f"描述完整性过低 ({desc_score:.1%})")
+                warnings.append(msg)
+
+            # 检查 job titles 质量是否过低
+            if "avg_quality_score" in job_quality:
+                quality_score = job_quality.get("avg_quality_score", 0)
+                if quality_score < 0.4 and persona_count > 0:
+                    msg = (f"{company_name} ({stage_name}): "
+                           f"Job titles 质量过低 ({quality_score:.1%})")
+                    warnings.append(msg)
+        
+        return warnings
     
     def evaluate_all(self, company_name: str) -> Dict:
         """评估某个公司的 2 Stage 和 4 Stage personas"""
@@ -346,8 +696,10 @@ class PersonaQualityEvaluator:
             "four_stage": {}
         }
         
-        # 评估 2 Stage
+        # 评估 2 Stage - 尝试多种可能的目录名称
         two_stage_personas, two_stage_products = self.load_personas(company_name, "2 Stage")
+        if not two_stage_personas:
+            two_stage_personas, two_stage_products = self.load_personas(company_name, "2 stage")
         if not two_stage_personas:
             two_stage_personas, two_stage_products = self.load_personas(company_name, "Two-Stage")
         
@@ -358,13 +710,15 @@ class PersonaQualityEvaluator:
                 "description_completeness": self.evaluate_description_completeness(two_stage_personas),
                 "job_titles_quality": self.evaluate_job_titles_quality(two_stage_personas),
                 "field_completeness": self.evaluate_field_completeness(two_stage_personas),
-                "diversity": self.evaluate_diversity(two_stage_personas),
+                "diversity": self.evaluate_diversity(two_stage_personas, company_name, two_stage_products),
                 "persona_name_quality": self.evaluate_persona_name_quality(two_stage_personas),
                 "generation_reasoning": self.evaluate_generation_reasoning(company_name, "2 Stage")
             }
         
-        # 评估 4 Stage
+        # 评估 4 Stage - 尝试多种可能的目录名称
         four_stage_personas, four_stage_products = self.load_personas(company_name, "4 Stage")
+        if not four_stage_personas:
+            four_stage_personas, four_stage_products = self.load_personas(company_name, "4 stage")
         if not four_stage_personas:
             four_stage_personas, four_stage_products = self.load_personas(company_name, "Four-Stage")
         
@@ -375,10 +729,15 @@ class PersonaQualityEvaluator:
                 "description_completeness": self.evaluate_description_completeness(four_stage_personas),
                 "job_titles_quality": self.evaluate_job_titles_quality(four_stage_personas),
                 "field_completeness": self.evaluate_field_completeness(four_stage_personas),
-                "diversity": self.evaluate_diversity(four_stage_personas),
+                "diversity": self.evaluate_diversity(four_stage_personas, company_name, four_stage_products),
                 "persona_name_quality": self.evaluate_persona_name_quality(four_stage_personas),
                 "generation_reasoning": self.evaluate_generation_reasoning(company_name, "4 Stage")
             }
+        
+        # 检测异常情况
+        anomalies = self.detect_anomalies(results)
+        if anomalies:
+            results["anomalies"] = anomalies
         
         return results
     
@@ -465,37 +824,14 @@ class PersonaQualityEvaluator:
         }
     
     def calculate_absolute_score(self, architecture_data: Dict, architecture_name: str) -> Dict:
-        """计算某个架构的绝对总分（基于相同的评分标准，包含所有指标）"""
+        """计算某个架构的绝对总分"""
         total_score = 0.0
         max_total_score = 100.0
         scores = {}
         
-        # 1. Generation Reasoning（权重：15分）- 降低权重
-        reasoning = architecture_data.get("generation_reasoning", {})
-        if reasoning.get("has_reasoning", False):
-            reasoning_length = reasoning.get("reasoning_length", 0)
-            if reasoning_length >= 1000:
-                reasoning_score = 15.0
-            elif reasoning_length >= 500:
-                reasoning_score = 12.0
-            elif reasoning_length > 0:
-                reasoning_score = 8.0
-            else:
-                reasoning_score = 0.0
-        else:
-            reasoning_score = 0.0
-        
-        scores["generation_reasoning"] = {
-            "score": reasoning_score,
-            "max_score": 15.0,
-            "has_reasoning": reasoning.get("has_reasoning", False),
-            "reasoning_length": reasoning.get("reasoning_length", 0)
-        }
-        total_score += reasoning_score
-        
-        # 2. Product Alignment（权重：20分）- 新增，两者都很好
+        # 1. Product Alignment（20分）
         product_alignment = architecture_data.get("product_alignment", {})
-        product_score = product_alignment.get("score", 0) * 20.0  # 0-1 转换为 0-20分
+        product_score = product_alignment.get("score", 0) * 20.0
         scores["product_alignment"] = {
             "score": product_score,
             "max_score": 20.0,
@@ -503,9 +839,9 @@ class PersonaQualityEvaluator:
         }
         total_score += product_score
         
-        # 3. Description Completeness（权重：15分）- 新增
+        # 2. Description Completeness（15分）
         desc_completeness = architecture_data.get("description_completeness", {})
-        desc_score = desc_completeness.get("average_score", 0) * 15.0  # 0-1 转换为 0-15分
+        desc_score = desc_completeness.get("average_score", 0) * 15.0
         scores["description_completeness"] = {
             "score": desc_score,
             "max_score": 15.0,
@@ -513,64 +849,93 @@ class PersonaQualityEvaluator:
         }
         total_score += desc_score
         
-        # 4. Field Completeness（权重：15分）- 新增，两者都满分
+        # 3. Field Completeness（10分）
         field_completeness = architecture_data.get("field_completeness", {})
-        field_score = field_completeness.get("average_completeness", 0) * 15.0  # 0-1 转换为 0-15分
+        field_score = field_completeness.get("average_completeness", 0) * 10.0
         scores["field_completeness"] = {
             "score": field_score,
-            "max_score": 15.0,
+            "max_score": 10.0,
             "average_completeness": field_completeness.get("average_completeness", 0)
         }
         total_score += field_score
         
-        # 5. Industry Diversity（权重：10分）- 新增
-        diversity = architecture_data.get("diversity", {})
-        industry_score = diversity.get("industry_diversity_score", 0) * 10.0  # 0-1 转换为 0-10分
-        scores["industry_diversity"] = {
-            "score": industry_score,
-            "max_score": 10.0,
-            "industry_diversity_score": diversity.get("industry_diversity_score", 0)
-        }
-        total_score += industry_score
-        
-        # 6. Location Diversity（权重：10分）- 新增
-        location_score = diversity.get("location_diversity_score", 0) * 10.0  # 0-1 转换为 0-10分
-        scores["location_diversity"] = {
-            "score": location_score,
-            "max_score": 10.0,
-            "location_diversity_score": diversity.get("location_diversity_score", 0)
-        }
-        total_score += location_score
-        
-        # 7. Job Titles 数量（权重：10分）- 降低权重
-        # 基准：15个 = 0分，每增加1个得1分，最多10分
-        avg_job_titles = architecture_data.get("job_titles_quality", {}).get("avg_job_titles_per_persona", 0)
-        if avg_job_titles >= 15:
-            job_titles_score = min((avg_job_titles - 15) * 1.0, 10.0)
+        # 4. Job Titles 质量（15分）
+        job_quality = architecture_data.get("job_titles_quality", {})
+        if "avg_quality_score" in job_quality:
+            job_score = job_quality.get("avg_quality_score", 0) * 15.0
         else:
-            job_titles_score = 0.0
-        
-        scores["avg_job_titles"] = {
-            "score": job_titles_score,
-            "max_score": 10.0,
-            "avg_job_titles": avg_job_titles
+            # 向后兼容：如果没有质量评分，使用数量评分
+            avg_job_titles = job_quality.get("avg_job_titles_per_persona", 0)
+            if avg_job_titles >= 15:
+                job_score = min((avg_job_titles - 15) * 1.0, 15.0)
+            else:
+                job_score = 0.0
+        scores["job_titles_quality"] = {
+            "score": job_score,
+            "max_score": 15.0,
+            "avg_quality_score": job_quality.get("avg_quality_score", 0),
+            "avg_job_titles": job_quality.get("avg_job_titles_per_persona", 0)
         }
-        total_score += job_titles_score
+        total_score += job_score
         
-        # 8. Persona Name 质量（权重：5分）- 降低权重
-        # 基准：40字符 = 0分，每增加1字符得0.2分，最多5分
-        avg_name_length = architecture_data.get("persona_name_quality", {}).get("avg_name_length", 0)
-        if avg_name_length >= 40:
-            name_score = min((avg_name_length - 40) * 0.2, 5.0)
+        # 5. Persona Name 质量（10分）
+        name_quality = architecture_data.get("persona_name_quality", {})
+        if "avg_name_quality" in name_quality:
+            name_score = name_quality.get("avg_name_quality", 0) * 10.0
         else:
-            name_score = 0.0
-        
+            # 向后兼容：如果没有质量评分，使用长度评分
+            avg_name_length = name_quality.get("avg_name_length", 0)
+            if avg_name_length >= 40:
+                name_score = min((avg_name_length - 40) * 0.2, 10.0)
+            else:
+                name_score = 0.0
         scores["persona_name_quality"] = {
             "score": name_score,
-            "max_score": 5.0,
-            "avg_name_length": avg_name_length
+            "max_score": 10.0,
+            "avg_name_quality": name_quality.get("avg_name_quality", 0),
+            "avg_name_length": name_quality.get("avg_name_length", 0)
         }
         total_score += name_score
+        
+        # 6. Diversity（20分）- 自适应评估
+        diversity = architecture_data.get("diversity", {})
+        if "adjusted_total" in diversity:
+            diversity_score = diversity.get("adjusted_total", 0)
+        else:
+            # 向后兼容：使用基础多样性评分
+            industry_score = diversity.get("industry_diversity_score", 0) * 10.0
+            location_score = diversity.get("location_diversity_score", 0) * 10.0
+            diversity_score = industry_score + location_score
+        scores["diversity"] = {
+            "score": diversity_score,
+            "max_score": 20.0,
+            "industry_score": diversity.get("industry_score", diversity.get("industry_diversity_score", 0) * 10.0),
+            "location_score": diversity.get("location_score", diversity.get("location_diversity_score", 0) * 10.0),
+            "is_vertical_focused": diversity.get("is_vertical_focused", False)
+        }
+        total_score += diversity_score
+        
+        # 7. Generation Reasoning（10分）
+        reasoning = architecture_data.get("generation_reasoning", {})
+        if reasoning.get("has_reasoning", False):
+            reasoning_length = reasoning.get("reasoning_length", 0)
+            if reasoning_length >= 1000:
+                reasoning_score = 10.0
+            elif reasoning_length >= 500:
+                reasoning_score = 7.0
+            elif reasoning_length > 0:
+                reasoning_score = 4.0
+            else:
+                reasoning_score = 0.0
+        else:
+            reasoning_score = 0.0
+        scores["generation_reasoning"] = {
+            "score": reasoning_score,
+            "max_score": 10.0,
+            "has_reasoning": reasoning.get("has_reasoning", False),
+            "reasoning_length": reasoning.get("reasoning_length", 0)
+        }
+        total_score += reasoning_score
         
         return {
             "architecture": architecture_name,
@@ -695,6 +1060,12 @@ def main():
         results = evaluator.evaluate_all(company_name)
         comparison = evaluator.compare_architectures(results)
         
+        # 显示异常警告
+        if "anomalies" in results and results["anomalies"]:
+            print(f"  ⚠️  发现 {len(results['anomalies'])} 个异常:")
+            for anomaly in results["anomalies"]:
+                print(f"     - {anomaly}")
+        
         all_results.append(results)
         all_comparisons.append(comparison)
     
@@ -728,15 +1099,19 @@ def print_summary(comparisons: List[Dict]):
     print("\n" + "=" * 80)
     print("Persona 质量评估汇总（包含所有指标）")
     print("=" * 80)
-    print("\n评分说明（总分100分）：")
-    print("  - Generation Reasoning: 15分（4 Stage 有详细推理说明）")
+    
+    print("\n评分说明（绝对总分100分）：")
     print("  - Product Alignment: 20分（产品关联度）")
     print("  - Description Completeness: 15分（描述完整性）")
-    print("  - Field Completeness: 15分（字段完整性）")
-    print("  - Industry Diversity: 10分（行业多样性）")
-    print("  - Location Diversity: 10分（地理多样性）")
-    print("  - Job Titles 数量: 10分（Job Titles 数量）")
-    print("  - Persona Name 质量: 5分（Persona Name 质量）")
+    print("  - Field Completeness: 10分（字段完整性）")
+    print("  - Job Titles 质量: 15分（Job Titles 质量评估）")
+    print("  - Persona Name 质量: 10分（规范性评估）")
+    print("  - Diversity: 20分（自适应多样性评估）")
+    print("  - Generation Reasoning: 10分（推理说明质量）")
+    print("\n相对优势分数（100分）：")
+    print("  - Generation Reasoning: 40分（4 Stage 优势）")
+    print("  - Job Titles 数量: 35分（4 Stage 优势）")
+    print("  - Persona Name 质量: 25分（4 Stage 优势）")
     print("=" * 80)
     
     # 计算总体统计
@@ -765,10 +1140,25 @@ def print_summary(comparisons: List[Dict]):
             print(f"\n📊 {company_name}")
             print("-" * 80)
             print(f"绝对总分对比:")
-            print(f"  2 Stage: {two_total:.1f}/100 ({two_total:.1f}%)")
-            print(f"  4 Stage: {four_total:.1f}/100 ({four_total:.1f}%)")
-            print(f"  差异: {diff:+.1f} ({better})")
-            print(f"\n4 Stage 相对优势分数: {total_score:.1f}/100 ({total_score_percentage:.1f}%)")
+            # 可视化进度条（每5分一个方块）
+            two_bars = ("█" * int(two_total / 5) +
+                        "░" * (20 - int(two_total / 5)))
+            four_bars = ("█" * int(four_total / 5) +
+                         "░" * (20 - int(four_total / 5)))
+            print(f"  2 Stage: {two_total:.1f}/100 {two_bars} "
+                  f"({two_total:.1f}%)")
+            print(f"  4 Stage: {four_total:.1f}/100 {four_bars} "
+                  f"({four_total:.1f}%)")
+            # 使用表情符号表示差异
+            if diff > 0:
+                diff_emoji = "🟢 Better"
+            elif diff < 0:
+                diff_emoji = "🔴 Worse"
+            else:
+                diff_emoji = "⚪ Equal"
+            print(f"  差异: {diff:+.1f} ({diff_emoji})")
+            print(f"\n4 Stage 相对优势分数: {total_score:.1f}/100 "
+                  f"({total_score_percentage:.1f}%)")
             print("-" * 80)
         else:
             print(f"\n📊 {company_name} (相对优势分数: {total_score:.1f}/100, {total_score_percentage:.1f}%)")
@@ -780,8 +1170,14 @@ def print_summary(comparisons: List[Dict]):
             score = data.get("score", 0)
             max_score = data.get("max_score", 40)
             print(f"\n1. Generation Reasoning (权重: {max_score}分)")
-            print(f"   2 Stage: has_reasoning={data.get('two_stage_has_reasoning', False)}, length={data.get('two_stage_reasoning_length', 0)}")
-            print(f"   4 Stage: has_reasoning={data.get('four_stage_has_reasoning', False)}, length={data.get('four_stage_reasoning_length', 0)}")
+            two_has = data.get('two_stage_has_reasoning', False)
+            two_len = data.get('two_stage_reasoning_length', 0)
+            four_has = data.get('four_stage_has_reasoning', False)
+            four_len = data.get('four_stage_reasoning_length', 0)
+            print(f"   2 Stage: has_reasoning={two_has}, "
+                  f"length={two_len}")
+            print(f"   4 Stage: has_reasoning={four_has}, "
+                  f"length={four_len}")
             print(f"   得分: {score:.1f}/{max_score} ({data.get('score_percentage', 0):.1f}%)")
         
         # 2. Job Titles 数量
@@ -805,6 +1201,10 @@ def print_summary(comparisons: List[Dict]):
             print(f"   4 Stage: 平均长度 {data.get('four_stage', 0):.1f} 字符")
             print(f"   差异: {data.get('difference', 0):+.1f} 字符")
             print(f"   得分: {score:.1f}/{max_score} ({data.get('score_percentage', 0):.1f}%)")
+        
+        # 显示异常情况（如果存在）
+        # 注意：异常信息在 results 中，不在 comparison 中，所以这里暂时跳过
+        # 异常信息已经在评估时打印了
     
     # 打印总体统计
     if total_scores:

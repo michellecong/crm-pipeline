@@ -9,16 +9,12 @@ Mapping Quality Evaluation Script
 4. 量化指标（是否包含量化收益）
 5. Pain Point 和 Value Proposition 的匹配度
 
-支持两种评估模式：
-- 传统模式（默认）：基于关键词匹配和规则，快速但较生硬
-- LLM 模式（--use-llm）：使用 LLM 进行语义理解和智能评估，更灵活但需要 API 调用
+混合评估模式：
+- 所有指标使用 LLM 评估（一次调用评估所有指标）
+- 传统方法作为补充：Text Quality（长度检查）、Quantified Benefits（模式匹配）
 
 使用方法：
-    # 使用传统评估（默认）
     python evaluate_mapping_quality.py
-    
-    # 使用 LLM 评估
-    python evaluate_mapping_quality.py --use-llm
 """
 import json
 import re
@@ -36,36 +32,44 @@ except (ImportError, ValueError):
 # Try to import LLM service
 try:
     import sys
-    import os
     # Add project root to path to import app modules
     current_file = Path(__file__).absolute()
     project_root = current_file.parent  # evaluate_mapping_quality.py is in project root
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
     from app.services.llm_service import LLMService
-    from app.config import settings
     HAS_LLM = True
-except (ImportError, Exception) as e:
+except (ImportError, Exception):
     HAS_LLM = False
     # Only print warning if explicitly trying to use LLM
     pass
 
 
 class MappingQualityEvaluator:
-    """评估 Mapping 质量的类"""
+    """评估 Mapping 质量的类（混合模式：LLM + 传统方法补充）"""
     
-    def __init__(self, evaluation_dir: Path, use_llm: bool = False):
-        self.evaluation_dir = evaluation_dir
-        self.use_llm = use_llm and HAS_LLM
+    def __init__(self, evaluation_dir: Path):
+        """
+        初始化评估器
         
-        # 初始化 LLM 服务（如果启用）
+        Args:
+            evaluation_dir: 评估数据目录
+        """
+        self.evaluation_dir = evaluation_dir
+        
+        # 初始化 LLM 服务
+        self.use_llm = HAS_LLM
+        self.llm_service = None
         if self.use_llm:
             try:
+                print("🔧 正在初始化 LLM 服务...")
                 self.llm_service = LLMService()
-                print("✅ LLM 评估模式已启用")
+                print(f"✅ LLM 评估模式已启用（混合模式：LLM + 传统方法补充）")
             except Exception as e:
                 print(f"⚠️  LLM 服务初始化失败: {e}，将使用传统评估模式")
                 self.use_llm = False
+        else:
+            print(f"⚠️  LLM 服务不可用，将使用传统评估模式")
         
         # 行业关键词映射
         self.industry_keywords = {
@@ -94,10 +98,21 @@ class MappingQualityEvaluator:
     
     def load_mappings_and_personas(self, company_name: str, architecture: str) -> Tuple[List[Dict], List[Dict], Optional[List[Dict]]]:
         """加载某个公司在某个架构下的 mappings、personas 和 products"""
-        company_dir = self.evaluation_dir / company_name / architecture
+        company_base_dir = self.evaluation_dir / company_name
         
+        # 首先尝试精确匹配
+        company_dir = company_base_dir / architecture
         if not company_dir.exists():
-            return [], [], None
+            # 如果精确匹配失败，尝试大小写不敏感匹配
+            if company_base_dir.exists():
+                for subdir in company_base_dir.iterdir():
+                    if subdir.is_dir() and subdir.name.lower() == architecture.lower():
+                        company_dir = subdir
+                        break
+                else:
+                    return [], [], None
+            else:
+                return [], [], None
         
         mappings_data = []
         personas_data = []
@@ -364,6 +379,190 @@ class MappingQualityEvaluator:
             "total_metrics": len(percentages) + len(multipliers) + len(time_mentions) + len(amounts)
         }
     
+    def evaluate_all_metrics_with_llm(
+        self,
+        pain_point: str,
+        value_proposition: str,
+        persona: Dict,
+        products: List[Dict]
+    ) -> Optional[Dict]:
+        """
+        一次 LLM 调用评估所有指标（混合模式）
+        
+        Args:
+            pain_point: Pain Point 文本
+            value_proposition: Value Proposition 文本
+            persona: Persona 数据
+            products: 产品列表
+        
+        Returns:
+            包含所有指标评估结果的字典，如果失败返回 None
+        """
+        if not self.use_llm:
+            return None
+        
+        # 构建评估 prompt
+        persona_desc = persona.get('description', 'N/A') or 'N/A'
+        if persona_desc != 'N/A' and len(persona_desc) > 300:
+            persona_desc = persona_desc[:300] + "..."
+        
+        persona_info = f"""
+Persona Name: {persona.get('persona_name', 'N/A')}
+Industry: {persona.get('industry', 'N/A')}
+Company Size: {persona.get('company_size_range', 'N/A')}
+Job Titles: {', '.join(persona.get('job_titles', []) or [])}
+Description: {persona_desc}
+"""
+        
+        products_info = ""
+        if products and len(products) > 0:
+            products_list = "\n".join([
+                f"- {p.get('product_name', 'N/A')}: {p.get('description', 'N/A')[:150]}"
+                for p in products[:10]
+            ])
+            products_info = f"""
+## 产品列表
+{products_list}
+"""
+        
+        prompt = f"""请评估以下 Pain Point 和 Value Proposition 的匹配质量。
+
+## Persona 信息
+{persona_info}{products_info}
+## 待评估的 Mapping
+Pain Point: {pain_point}
+Value Proposition: {value_proposition}
+
+## 评估任务
+请从以下维度进行评估：
+
+1. **Pain-Value Match (问题-方案匹配度)**: Value Proposition 是否直接、有效地解决了 Pain Point 中提到的问题？需要深度语义理解，判断方案是否真正解决问题。
+
+2. **Persona Match (角色匹配度)**: Value Proposition 是否与 Persona 的角色、行业、公司规模相匹配？需要理解隐含的角色特征和行业背景。
+
+3. **Product Match (产品匹配度)**: Value Proposition 是否自然、合理地提及了相关产品？能否理解概念匹配（如 'unified analytics platform' = 'Lakehouse'）？
+
+4. **Text Quality (文本流畅度)**: 文本是否流畅、自然，没有语法错误？是否符合 B2B SaaS 行业的专业表达？语气是否合适？
+
+请以 JSON 格式返回评估结果：
+{{
+  "pain_value_match": {{
+    "score": 0.0-1.0,
+    "reason": "详细说明匹配度的理由"
+  }},
+  "persona_match": {{
+    "overall_match_score": 0.0-1.0,
+    "role_match_score": 0.0-1.0,
+    "industry_match_score": 0.0-1.0,
+    "size_match_score": 0.0-1.0,
+    "reason": "详细说明匹配度的理由"
+  }},
+  "product_match": {{
+    "score": 0.0-1.0,
+    "has_product_mention": true/false,
+    "mentioned_products": ["product1", "product2", ...],
+    "reason": "详细说明匹配度的理由"
+  }},
+  "text_quality": {{
+    "fluency_score": 0.0-1.0,
+    "professionalism_score": 0.0-1.0,
+    "overall_score": 0.0-1.0,
+    "reason": "详细说明评估理由"
+  }}
+}}
+"""
+        
+        try:
+            response = self.llm_service.generate(
+                prompt=prompt,
+                system_message="你是一个专业的 B2B 营销内容评估专家。请仔细分析并给出客观、专业的评估。",
+                temperature=None,
+                max_completion_tokens=1500
+            )
+            
+            # 解析 JSON 响应
+            content = response.content.strip()
+            
+            if not content:
+                raise ValueError("LLM 返回了空响应")
+            
+            # 提取 JSON
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                parts = content.split("```")
+                if len(parts) >= 2:
+                    content = parts[1].strip()
+                    if content.startswith("json"):
+                        content = content[4:].strip()
+                    elif content.startswith("JSON"):
+                        content = content[4:].strip()
+            
+            # 解析 JSON
+            try:
+                result = json.loads(content)
+            except json.JSONDecodeError as e:
+                import re
+                json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', content, re.DOTALL)
+                if json_match:
+                    try:
+                        result = json.loads(json_match.group(0))
+                    except json.JSONDecodeError:
+                        return None
+                else:
+                    return None
+            
+            # 转换为标准格式
+            llm_results = {}
+            
+            if 'pain_value_match' in result:
+                pvm = result["pain_value_match"]
+                llm_results['pain_value_match'] = {
+                    "match_score": float(pvm.get("score", 0.0)),
+                    "reason": pvm.get("reason", ""),
+                    "evaluation_method": "llm"
+                }
+            
+            if 'persona_match' in result:
+                pm = result["persona_match"]
+                llm_results['persona_match'] = {
+                    "overall_match_score": float(pm.get("overall_match_score", 0.0)),
+                    "role_match_score": float(pm.get("role_match_score", 0.0)),
+                    "industry_match_score": float(pm.get("industry_match_score", 0.0)),
+                    "size_match_score": float(pm.get("size_match_score", 0.0)),
+                    "reason": pm.get("reason", ""),
+                    "evaluation_method": "llm"
+                }
+            
+            if 'product_match' in result:
+                pm = result["product_match"]
+                llm_results['product_match'] = {
+                    "score": float(pm.get("score", 0.0)),
+                    "has_product_mention": bool(pm.get("has_product_mention", False)),
+                    "mentioned_products": pm.get("mentioned_products", []),
+                    "reason": pm.get("reason", ""),
+                    "evaluation_method": "llm"
+                }
+            
+            if 'text_quality' in result:
+                tq = result["text_quality"]
+                llm_results['text_quality'] = {
+                    "fluency_score": float(tq.get("fluency_score", 0.0)),
+                    "professionalism_score": float(tq.get("professionalism_score", 0.0)),
+                    "overall_score": float(tq.get("overall_score", 0.0)),
+                    "reason": tq.get("reason", ""),
+                    "evaluation_method": "llm"
+                }
+            
+            return llm_results
+            
+        except Exception as e:
+            # 静默失败，返回 None，让调用者回退到传统方法
+            # 只在调试时打印错误
+            if False:  # 设置为 True 可以看到详细错误
+                print(f"    LLM 评估异常: {e}")
+            return None
+    
     def evaluate_with_llm(
         self,
         pain_point: str,
@@ -483,7 +682,7 @@ Value Proposition: {value_proposition}
                 if json_match:
                     try:
                         result = json.loads(json_match.group(0))
-                    except:
+                    except json.JSONDecodeError:
                         raise ValueError(f"无法解析 LLM 返回的 JSON: {e}. 响应内容: {content[:200]}")
                 else:
                     raise ValueError(f"无法解析 LLM 返回的 JSON: {e}. 响应内容: {content[:200]}")
@@ -603,66 +802,77 @@ Value Proposition: {value_proposition}
             "mapping_details": []
         }
         
-        for persona_mapping in mappings_data:
+        total_mappings_count = sum(len(pm.get("mappings", [])) for pm in mappings_data)
+        print(f"  找到 {total_mappings_count} 个 mappings，开始评估...")
+        
+        for idx, persona_mapping in enumerate(mappings_data):
             persona_name = persona_mapping.get("persona_name", "")
             mappings = persona_mapping.get("mappings", [])
             
             persona = persona_dict.get(persona_name, {})
+            print(f"  评估 Persona: {persona_name} ({len(mappings)} 个 mappings)")
             
-            for mapping in mappings:
+            for mapping_idx, mapping in enumerate(mappings):
                 pain_point = mapping.get("pain_point", "")
                 value_proposition = mapping.get("value_proposition", "")
                 
-                # 根据配置选择评估方法
-                if self.use_llm:
-                    llm_result = self.evaluate_with_llm(
+                # 显示进度
+                current_count = results["total_mappings"] + 1
+                if current_count % 5 == 0 or current_count == 1:
+                    print(f"    正在评估第 {current_count}/{total_mappings_count} 个 mapping...")
+                
+                # 混合评估：一次 LLM 调用评估所有指标
+                evaluation_metadata = {"method": "hybrid"}
+                
+                # 一次 LLM 调用评估所有指标
+                try:
+                    llm_results = self.evaluate_all_metrics_with_llm(
                         pain_point, value_proposition, persona, products_data or []
                     )
-                    if llm_result:
-                        # 使用 LLM 评估结果
-                        product_match = {
-                            "score": llm_result["product_match"]["score"],
-                            "has_product_mention": llm_result["product_match"]["has_product_mention"],
-                            "reason": llm_result["product_match"]["reason"]
-                        }
-                        persona_match = {
-                            "overall_match_score": llm_result["persona_match"]["overall_match_score"],
-                            "reason": llm_result["persona_match"]["reason"]
-                        }
-                        text_quality = {
-                            "completeness_score": llm_result["text_quality"]["completeness_score"],
-                            "reason": llm_result["text_quality"]["reason"]
-                        }
-                        quantified_benefits = {
-                            "has_quantified_benefit": llm_result["quantified_benefits"]["has_quantified_benefit"],
-                            "score": llm_result["quantified_benefits"]["score"],
-                            "reason": llm_result["quantified_benefits"]["reason"]
-                        }
-                        pain_value_match = {
-                            "match_score": llm_result["pain_value_match"]["match_score"],
-                            "reason": llm_result["pain_value_match"]["reason"]
-                        }
-                        evaluation_metadata = {
-                            "method": "llm",
-                            "overall_score": llm_result.get("overall_score", 0.0),
-                            "overall_reason": llm_result.get("overall_reason", "")
-                        }
-                    else:
-                        # LLM 评估失败，回退到传统方法
-                        product_match = self.evaluate_product_match(value_proposition, products_data or [])
-                        persona_match = self.evaluate_persona_match(value_proposition, pain_point, persona)
-                        text_quality = self.evaluate_text_quality(pain_point, value_proposition)
-                        quantified_benefits = self.evaluate_quantified_benefits(value_proposition)
-                        pain_value_match = self.evaluate_pain_value_match(pain_point, value_proposition)
-                        evaluation_metadata = {"method": "traditional_fallback"}
+                except Exception as e:
+                    print(f"    ⚠️  LLM 调用失败: {e}，使用传统方法")
+                    llm_results = None
+                
+                # 1. Pain-Value Match
+                if llm_results and 'pain_value_match' in llm_results:
+                    pain_value_match = llm_results['pain_value_match']
                 else:
-                    # 使用传统评估方法
-                    product_match = self.evaluate_product_match(value_proposition, products_data or [])
-                    persona_match = self.evaluate_persona_match(value_proposition, pain_point, persona)
-                    text_quality = self.evaluate_text_quality(pain_point, value_proposition)
-                    quantified_benefits = self.evaluate_quantified_benefits(value_proposition)
                     pain_value_match = self.evaluate_pain_value_match(pain_point, value_proposition)
-                    evaluation_metadata = {"method": "traditional"}
+                    pain_value_match["evaluation_method"] = "traditional"
+                
+                # 2. Persona Match
+                if llm_results and 'persona_match' in llm_results:
+                    persona_match = llm_results['persona_match']
+                else:
+                    persona_match = self.evaluate_persona_match(value_proposition, pain_point, persona)
+                    persona_match["evaluation_method"] = "traditional"
+                
+                # 3. Product Match
+                if llm_results and 'product_match' in llm_results:
+                    product_match = llm_results['product_match']
+                else:
+                    product_match = self.evaluate_product_match(value_proposition, products_data or [])
+                    product_match["evaluation_method"] = "traditional"
+                
+                # 4. Text Quality（混合：传统方法检查长度 + LLM 评估流畅度）
+                text_quality = self.evaluate_text_quality(pain_point, value_proposition)  # 传统方法：长度、结构
+                text_quality["evaluation_method"] = "traditional"
+                
+                if llm_results and 'text_quality' in llm_results:
+                    tq_llm = llm_results['text_quality']
+                    text_quality["fluency_score"] = tq_llm.get("fluency_score", 0.0)
+                    text_quality["professionalism_score"] = tq_llm.get("professionalism_score", 0.0)
+                    text_quality["fluency_reason"] = tq_llm.get("reason", "")
+                    # 综合分数：基础检查（50%）+ 流畅度（50%）
+                    text_quality["completeness_score"] = (
+                        text_quality["completeness_score"] * 0.5 +
+                        tq_llm.get("overall_score", 0.0) * 0.5
+                    )
+                    text_quality["evaluation_method"] = "hybrid"
+                
+                # 5. Quantified Benefits（传统方法足够，模式匹配任务）
+                quantified_benefits = self.evaluate_quantified_benefits(value_proposition)
+                quantified_benefits["evaluation_method"] = "traditional"
                 
                 results["mapping_details"].append({
                     "persona_name": persona_name,
@@ -787,11 +997,11 @@ def main():
     """主函数"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="评估 Mappings 质量")
+    parser = argparse.ArgumentParser(description="评估 Mappings 质量（混合模式）")
     parser.add_argument(
-        "--use-llm",
-        action="store_true",
-        help="使用 LLM 进行智能评估（更灵活，但需要 API 调用）"
+        "--company",
+        type=str,
+        help="只评估指定的公司（如果不指定，评估所有公司）"
     )
     args = parser.parse_args()
     
@@ -801,10 +1011,16 @@ def main():
         print(f"❌ 评估目录不存在: {evaluation_dir}")
         return
     
-    evaluator = MappingQualityEvaluator(evaluation_dir, use_llm=args.use_llm)
+    evaluator = MappingQualityEvaluator(evaluation_dir)
     
-    # 获取所有公司
-    companies = [d.name for d in evaluation_dir.iterdir() if d.is_dir()]
+    # 获取要评估的公司列表
+    if args.company:
+        companies = [args.company]
+        if not (evaluation_dir / args.company).exists():
+            print(f"❌ 公司目录不存在: {args.company}")
+            return
+    else:
+        companies = [d.name for d in evaluation_dir.iterdir() if d.is_dir()]
     
     if not companies:
         print("❌ 没有找到公司数据")
@@ -812,57 +1028,90 @@ def main():
     
     print(f"🚀 开始评估 Mappings 质量...")
     print(f"📁 评估目录: {evaluation_dir}")
-    print(f"📊 找到 {len(companies)} 个公司\n")
+    print(f"📊 评估 {len(companies)} 个公司: {', '.join(companies)}")
+    print(f"⏰ 开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    
+    # 准备输出目录
+    output_dir = Path("evaluation_results")
+    output_dir.mkdir(exist_ok=True)
     
     all_results = []
     all_comparisons = []
     
-    for company_name in companies:
-        print(f"评估 {company_name}...")
+    for idx, company_name in enumerate(companies, 1):
+        print(f"\n{'='*80}")
+        print(f"评估公司 {idx}/{len(companies)}: {company_name}")
+        print(f"{'='*80}")
         
-        # 评估 2 Stage
-        two_stage_results = evaluator.evaluate_all_mappings(company_name, "2 Stage")
-        if "error" in two_stage_results:
-            two_stage_results = evaluator.evaluate_all_mappings(company_name, "Two-Stage")
-        if "error" in two_stage_results:
-            two_stage_results = evaluator.evaluate_all_mappings(company_name, "2 stage")
-        
-        # 评估 3 Stage
-        three_stage_results = evaluator.evaluate_all_mappings(company_name, "3 Stage")
-        if "error" in three_stage_results:
-            three_stage_results = evaluator.evaluate_all_mappings(company_name, "Three-Stage")
-        if "error" in three_stage_results:
-            three_stage_results = evaluator.evaluate_all_mappings(company_name, "3 stage")
-        
-        # 评估 4 Stage
-        four_stage_results = evaluator.evaluate_all_mappings(company_name, "4 Stage")
-        if "error" in four_stage_results:
-            four_stage_results = evaluator.evaluate_all_mappings(company_name, "Four-Stage")
-        if "error" in four_stage_results:
-            four_stage_results = evaluator.evaluate_all_mappings(company_name, "4 stage")
-        
-        # 进行三方比较
-        if "error" not in two_stage_results:
-            comparison = evaluator.compare_architectures(
-                two_stage_results, 
-                three_stage_results if "error" not in three_stage_results else None,
-                four_stage_results if "error" not in four_stage_results else None
-            )
-            if "error" not in comparison.get("comparison", {}):
-                all_comparisons.append(comparison)
-        
-        all_results.append({
-            "company_name": company_name,
-            "two_stage": two_stage_results,
-            "three_stage": three_stage_results if "error" not in three_stage_results else None,
-            "four_stage": four_stage_results if "error" not in four_stage_results else None
-        })
+        try:
+            # 评估 2 Stage
+            print(f"\n📊 评估 2 Stage...")
+            two_stage_results = evaluator.evaluate_all_mappings(company_name, "2 Stage")
+            if "error" in two_stage_results:
+                two_stage_results = evaluator.evaluate_all_mappings(company_name, "Two-Stage")
+            if "error" in two_stage_results:
+                two_stage_results = evaluator.evaluate_all_mappings(company_name, "2 stage")
+            
+            # 评估 3 Stage
+            print(f"\n📊 评估 3 Stage...")
+            three_stage_results = evaluator.evaluate_all_mappings(company_name, "3 Stage")
+            if "error" in three_stage_results:
+                three_stage_results = evaluator.evaluate_all_mappings(company_name, "Three-Stage")
+            if "error" in three_stage_results:
+                three_stage_results = evaluator.evaluate_all_mappings(company_name, "3 stage")
+            
+            # 评估 4 Stage
+            print(f"\n📊 评估 4 Stage...")
+            four_stage_results = evaluator.evaluate_all_mappings(company_name, "4 Stage")
+            if "error" in four_stage_results:
+                four_stage_results = evaluator.evaluate_all_mappings(company_name, "Four-Stage")
+            if "error" in four_stage_results:
+                four_stage_results = evaluator.evaluate_all_mappings(company_name, "4 stage")
+            
+            # 进行三方比较
+            if "error" not in two_stage_results:
+                comparison = evaluator.compare_architectures(
+                    two_stage_results, 
+                    three_stage_results if "error" not in three_stage_results else None,
+                    four_stage_results if "error" not in four_stage_results else None
+                )
+                if "error" not in comparison.get("comparison", {}):
+                    all_comparisons.append(comparison)
+            
+            all_results.append({
+                "company_name": company_name,
+                "two_stage": two_stage_results,
+                "three_stage": three_stage_results if "error" not in three_stage_results else None,
+                "four_stage": four_stage_results if "error" not in four_stage_results else None
+            })
+            
+            print(f"\n✅ {company_name} 评估完成 ({idx}/{len(companies)})")
+            
+            # 每评估完一个公司就保存一次（防止中途出错丢失数据）
+            if idx % 2 == 0 or idx == len(companies):
+                temp_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                temp_file = output_dir / f"mapping_quality_evaluation_temp_{temp_timestamp}.json"
+                with open(temp_file, 'w', encoding='utf-8') as f:
+                    json.dump(all_results, f, indent=2, ensure_ascii=False)
+                print(f"💾 临时保存: {temp_file} ({len(all_results)} 个公司)")
+                
+        except Exception as e:
+            print(f"\n❌ 评估 {company_name} 时出错: {e}")
+            import traceback
+            traceback.print_exc()
+            # 即使出错也保存已完成的评估
+            all_results.append({
+                "company_name": company_name,
+                "error": str(e)
+            })
+            continue
     
-    # 保存结果
-    output_dir = Path("evaluation_results")
-    output_dir.mkdir(exist_ok=True)
-    
+    # 保存最终结果
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    print(f"\n{'='*80}")
+    print(f"开始保存最终结果（共 {len(all_results)} 个公司）...")
+    print(f"{'='*80}")
     
     # 保存详细结果
     results_file = output_dir / f"mapping_quality_evaluation_{timestamp}.json"
@@ -879,8 +1128,13 @@ def main():
     # 生成汇总报告
     print_summary(all_comparisons)
     
-    # 生成 CSV 汇总
-    generate_csv_summary(all_comparisons, output_dir, timestamp)
+    print(f"\n✨ 评估完成！")
+    print(f"⏰ 完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"📊 结果已保存到: {output_dir}")
+    
+    # 确保程序正常退出（清理资源）
+    import sys
+    sys.exit(0)
 
 
 def print_summary(comparisons: List[Dict]):
@@ -961,46 +1215,6 @@ def print_summary(comparisons: List[Dict]):
             print(f"  最佳平均: {best_avg} ({max(avgs.values()):.3f})")
 
 
-def generate_csv_summary(comparisons: List[Dict], output_dir: Path, timestamp: str):
-    """生成 CSV 汇总"""
-    rows = []
-    
-    for comparison in comparisons:
-        company_name = comparison["company_name"]
-        comp = comparison.get("comparison", {})
-        
-        if "error" in comp:
-            continue
-        
-        row = {"company_name": company_name}
-        
-        for metric_name, metric_data in comp.items():
-            if isinstance(metric_data, dict) and "two_stage" in metric_data:
-                row[f"{metric_name}_2stage"] = metric_data["two_stage"]
-                if metric_data.get("three_stage") is not None:
-                    row[f"{metric_name}_3stage"] = metric_data["three_stage"]
-                if metric_data.get("four_stage") is not None:
-                    row[f"{metric_name}_4stage"] = metric_data["four_stage"]
-                row[f"{metric_name}_best"] = metric_data.get("best", "two_stage")
-        
-        rows.append(row)
-    
-    if rows:
-        csv_file = output_dir / f"mapping_quality_comparison_{timestamp}.csv"
-        
-        if HAS_PANDAS:
-            df = pd.DataFrame(rows)
-            df.to_csv(csv_file, index=False)
-        else:
-            import csv as csv_module
-            if rows:
-                fieldnames = rows[0].keys()
-                with open(csv_file, 'w', newline='', encoding='utf-8') as f:
-                    writer = csv_module.DictWriter(f, fieldnames=fieldnames)
-                    writer.writeheader()
-                    writer.writerows(rows)
-        
-        print(f"✅ CSV 汇总已保存到: {csv_file}")
 
 
 if __name__ == "__main__":
