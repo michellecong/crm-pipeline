@@ -21,7 +21,6 @@ class DataAggregator:
                              include_news: bool = True,
                              include_case_studies: bool = True,
                              max_urls: int = 10,
-                             use_llm_search: bool = False,
                              provider: str = "google",
                              include_crm: bool = True,
                              include_pdf: bool = True,
@@ -39,7 +38,6 @@ class DataAggregator:
             include_news: Include news articles in web scraping
             include_case_studies: Include case studies in web scraping
             max_urls: Maximum URLs to scrape
-            use_llm_search: Use LLM-powered search
             provider: Search provider (google/perplexity)
             include_crm: Include CRM data if available
             include_pdf: Include PDF documents if available
@@ -70,7 +68,6 @@ class DataAggregator:
                 include_case_studies=include_case_studies,
                 max_urls=max_urls,
                 save_to_file=True,
-                use_llm_search=use_llm_search,
                 provider=provider
             )
             # Extract content processing tokens from fresh scraping

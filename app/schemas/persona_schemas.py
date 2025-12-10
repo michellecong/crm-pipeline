@@ -174,13 +174,9 @@ class PersonaGenerateRequest(BaseModel):
         description="Optional product catalog to inform persona generation. If not provided, personas will be generated from web content only."
     )
     # Optional search behavior controls (used to collect web content when needed)
-    use_llm_search: Optional[bool] = Field(
-        default=None,
-        description="Use LLM-planned web search; if False, use selected provider. If omitted, system default is used."
-    )
     provider: Optional[Literal["google", "perplexity"]] = Field(
         default=None,
-        description="Search provider when not using LLM search (e.g., 'google' or 'perplexity')"
+        description="Search provider (e.g., 'google' or 'perplexity')"
     )
     
     class Config:

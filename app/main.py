@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from .routers.search import router as search_router
 from .routers.scraping import router as scraping_router
 from .routers.pdf import router as pdf_router
@@ -9,14 +10,23 @@ from .routers.crm import router as crm_router
 from .routers.export import router as export_router
 from datetime import datetime
 import uvicorn
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from app.database import get_db, test_connection
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan event handler"""
+    # Startup
+    print("Starting application...")
+    yield
+    # Shutdown (if needed in the future)
+    pass
+
 
 app = FastAPI(
     title="LLM-based CRM Pipeline API",
     description="API for LLM-based CRM pipeline: generate personas, outreach sequences, and more from company data",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -37,13 +47,6 @@ app.include_router(crm_router, prefix="/api/v1", tags=["CRM Service"])
 app.include_router(export_router, prefix="/api/v1", tags=["Export"])
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Test database connection on startup"""
-    print("Starting application...")
-    test_connection()
-
-
 @app.get("/")
 def root():
     return {
@@ -56,24 +59,6 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
-
-
-@app.get("/db-ping")
-def ping_db(db: Session = Depends(get_db)):
-    """
-    Simple ping test
-    """
-    try:
-        result = db.execute(text("SELECT 1 as ping"))
-        return {
-            "status": "success",
-            "ping": result.scalar()
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

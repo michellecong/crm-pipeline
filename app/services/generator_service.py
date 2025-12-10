@@ -4,7 +4,6 @@ from ..generators.persona_generator import PersonaGenerator
 from ..generators.product_generator import ProductGenerator
 from ..generators.mapping_generator import MappingGenerator
 from ..generators.outreach_generator import OutreachGenerator
-from ..generators.baseline_generator import BaselineGenerator
 from ..generators.two_stage_generator import TwoStageGenerator
 from ..generators.three_stage_generator import ThreeStageGenerator
 from .data_aggregator import DataAggregator
@@ -24,7 +23,6 @@ class GeneratorService:
             "products": ProductGenerator(),
             "mappings": MappingGenerator(),
             "outreach": OutreachGenerator(),
-            "baseline": BaselineGenerator(),
             "two_stage": TwoStageGenerator(),
             "three_stage": ThreeStageGenerator()
         }
@@ -99,7 +97,6 @@ class GeneratorService:
                 kwargs.get('include_news', True),
                 kwargs.get('include_case_studies', True),
                 kwargs.get('max_urls', 10),
-                kwargs.get('use_llm_search', False),
                 kwargs.get('provider', 'google'),
                 include_crm=True,   # CRM data auto-loaded from crm-data folder
                 include_pdf=True,   # PDF data auto-loaded from pdf-data folder
@@ -132,9 +129,6 @@ class GeneratorService:
             success = bool(result.get('personas'))
         elif generator_type == 'outreach':
             success = bool(result.get('sequences'))
-        elif generator_type == 'baseline':
-            # Baseline returns all 4 outputs in one response
-            success = bool(result.get('products') and result.get('personas'))
         elif generator_type == 'two_stage':
             # Two-stage returns personas, personas_with_mappings, and sequences
             success = bool(result.get('personas') and result.get('personas_with_mappings') and result.get('sequences'))
@@ -310,9 +304,6 @@ class GeneratorService:
         elif generator_type == "three_stage":
             data_to_save["pipeline_description"] = "Three-Stage Pipeline: Stage 1 (Products) → Stage 2 (Personas) → Stage 3 (Mappings + Sequences)"
             data_to_save["pipeline_stages"] = 3
-        elif generator_type == "baseline":
-            data_to_save["pipeline_description"] = "Baseline Single-Shot: All outputs generated in one LLM call"
-            data_to_save["pipeline_stages"] = 1
         
         # Save to file
         with open(filepath, 'w', encoding='utf-8') as f:

@@ -87,7 +87,7 @@ async def export_content(
         content_type = generator_type
         
         # Handle special cases
-        if generator_type in ["baseline", "two_stage", "three_stage", "pipeline"]:
+        if generator_type in ["two_stage", "three_stage", "pipeline"]:
             content_type = "pipeline"
         
         # Generate output filename
@@ -199,7 +199,7 @@ async def convert_content(
             else:
                 # Backend format - use generator_type
                 generator_type = data.get("generator_type", "unknown")
-                content_type = "pipeline" if generator_type in ["baseline", "two_stage", "three_stage", "pipeline"] else generator_type
+                content_type = "pipeline" if generator_type in ["two_stage", "three_stage", "pipeline"] else generator_type
         
         company_name = data.get("company_name", "export")
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

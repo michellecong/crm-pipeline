@@ -49,7 +49,7 @@ GOOGLE_CSE_CX=your_search_engine_cx
 # Firecrawl - for web scraping
 FIRECRAWL_API_KEY=your_firecrawl_key_here
 
-# OpenAI - for LLM services and LLM web search
+# OpenAI - for LLM services
 OPENAI_API_KEY=your_openai_key_here
 
 # Optional: OpenAI Configuration (defaults shown)
@@ -82,7 +82,6 @@ curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
   -d '{
     "company_name": "Salesforce",
     "generate_count": 5,
-    "use_llm_search": false,
     "provider": "google"
   }'
 ```
@@ -266,7 +265,7 @@ Or if no optional data:
 
 ### Pipeline Generation
 
-The system provides a **production-ready 4-stage pipeline** and several baseline approaches for comparison and testing.
+The system provides a **production-ready 4-stage pipeline** and two alternative approaches for comparison and testing.
 
 #### 4-Stage Pipeline (Production - Recommended)
 
@@ -296,12 +295,11 @@ curl -X POST http://localhost:8000/api/v1/llm/pipeline/generate \
   -d '{
     "company_name": "Salesforce",
     "generate_count": 5,
-    "use_llm_search": false,
     "provider": "google"
   }'
 ```
 
-#### Baseline Approaches (For Comparison & Testing)
+#### Alternative Approaches (For Comparison & Testing)
 
 The following endpoints are provided for **comparison and testing purposes** to evaluate different architectural approaches:
 
@@ -309,15 +307,11 @@ The following endpoints are provided for **comparison and testing purposes** to 
 - Consolidates final two stages (mappings + sequences) into one call
 - Used for ablation studies to test impact of stage consolidation
 
-**2-Stage Baseline** (`POST /api/v1/llm/two-stage/generate`)
+**2-Stage Pipeline** (`POST /api/v1/llm/two-stage/generate`)
 - Consolidates persona-related outputs (personas + mappings + sequences) into one call
 - Used for architectural comparison studies
 
-**Single-Stage Baseline** (`POST /api/v1/llm/baseline/generate`)
-- Generates all 4 outputs in a single LLM call
-- Used for baseline comparison and quick prototyping
-
-**Note**: These baseline approaches have lower performance compared to the 4-stage pipeline and are primarily used for research, evaluation, and architectural comparison purposes.
+**Note**: These alternative approaches are primarily used for research, evaluation, and architectural comparison purposes. The 4-stage pipeline is recommended for production use.
 
 #### Auto-Loading Features
 
@@ -483,7 +477,6 @@ High-growth SaaS companies with 200-500 sales reps...
 | **mappings** | ✅ | ✅ | ✅ | Pain-point mappings |
 | **sequences** | ✅ | ✅ | ✅ | Outreach sequences |
 | **pipeline** | ✅ | ✅ | ✅ | All components (products + personas + mappings + sequences) |
-| **baseline** | ✅ | ✅ | ✅ | All components in one file |
 | **two_stage** | ✅ | ✅ | ✅ | Products + personas+mappings+sequences |
 | **three_stage** | ✅ | ✅ | ✅ | Products + personas + mappings+sequences |
 
@@ -497,7 +490,6 @@ High-growth SaaS companies with 200-500 sales reps...
 | Endpoint                 | Method | Description                                    |
 | ------------------------ | ------ | ---------------------------------------------- |
 | `/api/v1/search/company` | POST   | Search for company URLs (Google/Perplexity)    |
-| `/api/v1/search/web`     | POST   | LLM-powered web search (structured JSON)       |
 | `/api/v1/scrape/company` | POST   | Search and scrape content                      |
 | `/api/v1/scrape/saved`   | GET    | List saved data                                |
 | `/api/v1/pdf/process/`   | POST   | Process PDF and chunk text                     |
@@ -512,8 +504,7 @@ High-growth SaaS companies with 200-500 sales reps...
 | `/api/v1/llm/mappings/generate` | POST | Generate pain-point to value-prop mappings |
 | `/api/v1/llm/pipeline/generate` | POST   | Run full 4-stage pipeline (products → personas → mappings → sequences) |
 | `/api/v1/llm/three-stage/generate` | POST   | Run 3-stage pipeline (products → personas → mappings+sequences) |
-| `/api/v1/llm/two-stage/generate` | POST   | Run 2-stage baseline (products → personas+mappings+sequences) |
-| `/api/v1/llm/baseline/generate` | POST   | Baseline single-shot generation (all 4 outputs in one call) |
+| `/api/v1/llm/two-stage/generate` | POST   | Run 2-stage pipeline (products → personas+mappings+sequences) |
 | `/api/v1/llm/test`          | GET    | Test LLM connectivity          |
 | `/api/v1/llm/config`        | GET    | Get LLM configuration          |
 | `/api/v1/llm/config`        | PATCH  | Update LLM configuration       |
@@ -536,17 +527,10 @@ High-growth SaaS companies with 200-500 sales reps...
 
 ### Search Options
 
-The system provides multiple search methods:
+The system provides two search methods:
 
-#### Traditional Search
 - **Google Custom Search** (default): `POST /api/v1/search/company` with `"provider": "google"`
 - **Perplexity Search**: `POST /api/v1/search/company` with `"provider": "perplexity"`
-
-#### LLM-Powered Intelligent Search
-- **Endpoint**: `POST /api/v1/search/web`
-- **How it works**: Uses OpenAI's LLM with web search capabilities to intelligently plan and execute multi-step searches
-- **Output**: Structured JSON with guaranteed official website, products, news, and case studies
-- **Best for**: Complex research requiring intelligent query planning and data synthesis
 
 ### Product Generation
 
@@ -598,11 +582,6 @@ pytest tests/test_crm_service.py -v
 pytest tests/test_crm_service.py --cov=services.crm_service --cov-report=html
 ```
 
-### Test LLM Service (Mock - No API Key Required)
-```bash
-python -m pytest tests/test_llm_mock.py -v
-```
-
 ### Test LLM Connection (Requires API Key)
 ```bash
 python tests/test_llm_connection.py
@@ -612,12 +591,6 @@ python tests/test_llm_connection.py
 ```bash
 # Run outreach tests
 python -m pytest tests/test_outreach.py -v
-```
-
-### Test Baseline Generation
-```bash
-# Run baseline tests
-python -m pytest tests/test_baseline.py -v
 ```
 
 ### Test All Services
@@ -726,7 +699,7 @@ crm-pipeline/
 ├── app/
 │   ├── main.py                      # FastAPI app
 │   ├── routers/                     # API endpoints
-│   │   ├── search.py               # Search & LLM web search endpoints
+│   │   ├── search.py               # Search endpoints (Google/Perplexity)
 │   │   ├── scraping.py             # Web scraping endpoints
 │   │   ├── llm.py                  # LLM, persona, mapping & outreach generation endpoints
 │   │   ├── crm.py                  # CRM upload & parsing endpoints
@@ -740,11 +713,9 @@ crm-pipeline/
 │   │   ├── mapping_generator.py    # Pain-point to value-prop mapping generation
 │   │   ├── outreach_generator.py   # Outreach sequence generation
 │   │   ├── three_stage_generator.py # 3-stage pipeline (mappings + sequences consolidated)
-│   │   ├── two_stage_generator.py  # 2-stage baseline (personas + mappings + sequences)
-│   │   └── baseline_generator.py   # Baseline single-shot generation
+│   │   └── two_stage_generator.py  # 2-stage pipeline (personas + mappings + sequences)
 │   ├── services/                    # Business logic
-│   │   ├── llm_web_search_service.py  # LLM-powered web search
-│   │   ├── search_service.py       # Traditional search (Google/Perplexity)
+│   │   ├── search_service.py       # Search (Google/Perplexity)
 │   │   ├── llm_service.py          # LLM text generation (supports OpenAI and Perplexity)
 │   │   ├── generator_service.py    # Generator orchestration
 │   │   ├── crm_service.py          # CRM file parsing & analysis
@@ -752,15 +723,14 @@ crm-pipeline/
 │   │   ├── data_aggregator.py      # Data source aggregation (Web + CRM + PDF)
 │   │   └── export_service.py       # Export format conversion
 │   └── schemas/                     # Data models
-│       ├── search.py               # Search & LLM web search schemas
+│       ├── search.py               # Search schemas
 │       ├── product_schemas.py      # Product catalog schemas (includes source_url)
 │       ├── persona_schemas.py      # Persona schemas
 │       ├── mapping_schemas.py      # Mapping schemas
 │       ├── outreach_schemas.py     # Outreach sequence schemas
 │       ├── pipeline_schemas.py     # Full pipeline schemas
 │       ├── three_stage_schemas.py  # 3-stage pipeline schemas
-│       ├── two_stage_schemas.py    # 2-stage baseline schemas
-│       ├── baseline_schemas.py     # Baseline generation schemas
+│       ├── two_stage_schemas.py    # 2-stage pipeline schemas
 │       └── crm_schemas.py          # CRM data schemas
 ├── crm-data/                        # CRM CSV files (user-created, not in git)
 ├── pdf-data/                        # PDF documents (user-created, not in git)
@@ -771,13 +741,10 @@ crm-pipeline/
 │   ├── fixtures/
 │   │   └── mock_crm_data.csv       # Sample CRM data for testing
 │   ├── test_crm_service.py         # CRM service tests
-│   ├── test_llm_mock.py            # LLM mock tests
 │   ├── test_outreach.py            # Outreach generation tests
-│   ├── test_baseline.py            # Baseline generation tests
 │   ├── test_product_generator_perplexity.py  # Product generator with Perplexity tests
 │   └── conftest.py                 # Shared test fixtures
 ├── frontend/                        # React frontend application
-├── test_llm_web_search.py          # LLM web search test script
 ├── requirements.txt                 # Dependencies
 └── .env                             # API keys (create this)
 ```
@@ -794,9 +761,9 @@ All generated content is automatically saved to `data/generated/` with timestamp
 - **Personas**: `{company}_personas_{timestamp}.json`
 - **Mappings**: `{company}_mappings_{timestamp}.json`
 - **Outreach Sequences**: `{company}_outreach_{timestamp}.json`
+- **4-Stage Pipeline**: `{company}_pipeline_{timestamp}.json` (all components in one file)
 - **3-Stage Pipeline**: `{company}_three_stage_{timestamp}.json` (mappings + sequences in one file)
-- **2-Stage Baseline**: `{company}_two_stage_{timestamp}.json` (personas + mappings + sequences)
-- **Baseline**: `{company}_baseline_{timestamp}.json` (all 4 outputs in one file)
+- **2-Stage Pipeline**: `{company}_two_stage_{timestamp}.json` (personas + mappings + sequences)
 
 ### Scraped Data Storage
 

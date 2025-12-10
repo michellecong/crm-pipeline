@@ -25,13 +25,9 @@ class ThreeStageGenerateRequest(BaseModel):
         le=12, 
         description="Number of personas to generate"
     )
-    use_llm_search: Optional[bool] = Field(
-        default=None,
-        description="Use LLM-planned web search"
-    )
     provider: Optional[Literal["google", "perplexity"]] = Field(
         default=None,
-        description="Search provider"
+        description="Search provider (google or perplexity)"
     )
     
     class Config:
@@ -39,7 +35,6 @@ class ThreeStageGenerateRequest(BaseModel):
             "example": {
                 "company_name": "Salesforce",
                 "generate_count": 5,
-                "use_llm_search": True,
                 "provider": "google"
             }
         }

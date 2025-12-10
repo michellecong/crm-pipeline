@@ -1,5 +1,5 @@
 """
-Two-stage baseline generator with FULL guidance from 4-stage pipeline.
+Two-stage pipeline generator with FULL guidance from 4-stage pipeline.
 
 This version ensures fair comparison by including ALL guidance from:
 - persona_generator.py
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class TwoStageGenerator(BaseGenerator):
     """
-    Two-stage baseline with complete guidance parity to 3-stage.
+    Two-stage pipeline with complete guidance parity to 3-stage.
     
     Experimental Design:
     - Same prompt content as 3-stage (personas + mappings + outreach)

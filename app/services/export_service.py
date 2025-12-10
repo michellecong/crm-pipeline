@@ -41,7 +41,7 @@ class ExportService:
                     ExportService._export_mappings_to_csv(data, f)
                 elif content_type == "sequences" or content_type == "outreach":
                     ExportService._export_sequences_to_csv(data, f)
-                elif content_type in ["baseline", "two_stage", "three_stage", "pipeline"]:
+                elif content_type in ["two_stage", "three_stage", "pipeline"]:
                     ExportService._export_pipeline_to_csv(data, f)
                 else:
                     raise ValueError(f"Unsupported content type for CSV export: {content_type}")
@@ -285,7 +285,7 @@ class ExportService:
                     ExportService._export_mappings_to_markdown(data, f)
                 elif content_type == "sequences" or content_type == "outreach":
                     ExportService._export_sequences_to_markdown(data, f)
-                elif content_type in ["baseline", "two_stage", "three_stage", "pipeline"]:
+                elif content_type in ["two_stage", "three_stage", "pipeline"]:
                     ExportService._export_pipeline_to_markdown(data, f)
                 else:
                     raise ValueError(f"Unsupported content type for Markdown export: {content_type}")

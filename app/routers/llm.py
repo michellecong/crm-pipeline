@@ -32,10 +32,6 @@ from ..schemas.outreach_schemas import (
     OutreachGenerationResponse,
     OutreachSequence
 )
-from ..schemas.baseline_schemas import (
-    BaselineGenerateRequest,
-    BaselineGenerateResponse
-)
 from ..schemas.two_stage_schemas import (
     TwoStageGenerateRequest,
     TwoStageGenerateResponse
@@ -188,11 +184,8 @@ async def generate_buyer_personas(request: PersonaGenerateRequest):
             "generate_count": request.generate_count
         }
         # Optional search controls
-        extra_search_kwargs = {
-            "use_llm_search": getattr(request, "use_llm_search", None),
-            "provider": getattr(request, "provider", None)
-        }
-        generator_kwargs.update({k: v for k, v in extra_search_kwargs.items() if v is not None})
+        if hasattr(request, "provider") and request.provider is not None:
+            generator_kwargs["provider"] = request.provider
         
         # Add products if provided
         if request.products:
@@ -257,11 +250,9 @@ async def generate_products(request: ProductGenerateRequest):
         generator_service = get_generator_service()
         
         # Generate products using the generator service
-        extra_search_kwargs = {
-            "use_llm_search": getattr(request, "use_llm_search", None),
-            "provider": getattr(request, "provider", None)
-        }
-        generator_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+        generator_kwargs = {}
+        if hasattr(request, "provider") and request.provider is not None:
+            generator_kwargs["provider"] = request.provider
         result = await generator_service.generate(
             generator_type="products",
             company_name=request.company_name,
@@ -325,11 +316,9 @@ async def generate_mappings(request: MappingGenerateRequest):
         generator_service = get_generator_service()
         
         # Generate mappings (auto-loads products + personas)
-        extra_search_kwargs = {
-            "use_llm_search": getattr(request, "use_llm_search", None),
-            "provider": getattr(request, "provider", None)
-        }
-        generator_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+        generator_kwargs = {}
+        if hasattr(request, "provider") and request.provider is not None:
+            generator_kwargs["provider"] = request.provider
         result = await generator_service.generate(
             generator_type="mappings",
             company_name=request.company_name,
@@ -391,26 +380,21 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         content_processing_tokens = {}
 
         # Common search kwargs passed through to DataAggregator
-        extra_search_kwargs = {
-            "use_llm_search": getattr(request, "use_llm_search", None),
-            "provider": getattr(request, "provider", None)
-        }
-        extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+        provider = getattr(request, "provider", None) or "google"
 
         # PRE-LOAD AND CACHE DATA (not timed or counted in tokens)
         logger.info(f"[Pipeline] Pre-loading data for {request.company_name} (excluded from metrics)...")
         data_aggregator = generator_service.data_aggregator
         
-        # For personas/mappings/baseline: ensure data is cached before timing starts
+        # For personas/mappings: ensure data is cached before timing starts
         try:
             _, content_proc_tokens = await data_aggregator.prepare_context(
                 request.company_name,
-                request.max_context_chars,
-                request.include_news,
-                request.include_case_studies,
-                request.max_urls,
-                extra_search_kwargs.get('use_llm_search', False),
-                extra_search_kwargs.get('provider', 'google')
+                getattr(request, 'max_context_chars', 15000),
+                getattr(request, 'include_news', True),
+                getattr(request, 'include_case_studies', True),
+                getattr(request, 'max_urls', 10),
+                provider
             )
             if content_proc_tokens:
                 content_processing_tokens = content_proc_tokens
@@ -431,7 +415,7 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
         products_result = await generator_service.generate(
             generator_type="products",
             company_name=request.company_name,
-            **extra_search_kwargs
+            provider=provider
         )
         if not products_result.get("success"):
             raise ValueError("Product generation failed")
@@ -455,7 +439,7 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             company_name=request.company_name,
             products=products_data,
             generate_count=request.generate_count,
-            **extra_search_kwargs
+            provider=provider
         )
         if not personas_result.get("success"):
             raise ValueError("Persona generation failed")
@@ -477,7 +461,7 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
             company_name=request.company_name,
             products=products_data,
             personas=personas_data,
-            **extra_search_kwargs
+            provider=provider
         )
         if not mappings_result.get("success"):
             raise ValueError("Mapping generation failed")
@@ -579,134 +563,14 @@ async def generate_full_pipeline(request: PipelineGenerateRequest):
 
 
 @router.post(
-    "/llm/baseline/generate",
-    response_model=BaselineGenerateResponse,
-    summary="Baseline: Single-shot generation of all outputs",
-    description="Generate products, personas, mappings, and sequences in ONE LLM call (baseline comparison)"
-)
-async def generate_baseline(request: BaselineGenerateRequest):
-    """
-    Baseline single-shot generation for comparison with multi-stage pipeline.
-    Generates all 4 outputs in one LLM call without inter-stage information flow.
-    """
-    import time
-    
-    try:
-        logger.info(f"[Baseline] Starting for company: {request.company_name}")
-        generator_service = get_generator_service()
-        
-        # Common search kwargs passed through to DataAggregator
-        extra_search_kwargs = {
-            "use_llm_search": getattr(request, "use_llm_search", None),
-            "provider": getattr(request, "provider", None)
-        }
-        extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
-        
-        # PRE-LOAD AND CACHE DATA (not timed or counted in tokens)
-        logger.info(f"[Baseline] Pre-loading data for {request.company_name} (excluded from metrics)...")
-        data_aggregator = generator_service.data_aggregator
-        content_processing_tokens = {}
-        
-        try:
-            _, content_proc_tokens = await data_aggregator.prepare_context(
-                request.company_name,
-                15000,
-                True,
-                True,
-                10,
-                extra_search_kwargs.get('use_llm_search', False),
-                extra_search_kwargs.get('provider', 'google')
-            )
-            if content_proc_tokens:
-                content_processing_tokens = content_proc_tokens
-                logger.info(
-                    f"[Baseline] Data pre-loaded. Content processing used "
-                    f"{content_proc_tokens.get('total_tokens', 0)} tokens "
-                    f"(excluded from baseline metrics)"
-                )
-        except Exception as e:
-            logger.warning(f"[Baseline] Data pre-loading encountered issue: {e}")
-        
-        # Prepare kwargs (aligned with pipeline)
-        generator_kwargs = {
-            "generate_count": request.generate_count
-        }
-        generator_kwargs.update(extra_search_kwargs)
-        
-        # NOW START TIMER - after all data is loaded
-        baseline_start_time = time.time()
-        logger.info(f"[Baseline] Starting timed generation...")
-        
-        # Single generation call
-        result = await generator_service.generate(
-            generator_type="baseline",
-            company_name=request.company_name,
-            **generator_kwargs
-        )
-        
-        if not result.get("success"):
-            raise ValueError("Baseline generation failed")
-        
-        data = result["result"]
-        
-        # Calculate statistics (generation only, excluding content processing)
-        total_runtime = time.time() - baseline_start_time
-        token_usage = data.get("usage", {})
-        
-        # Only count baseline generation tokens, not content processing
-        total_tokens = token_usage.get("total_tokens", 0)
-        
-        # Build token breakdown (generation only)
-        token_breakdown_dict = {
-            "prompt_tokens": token_usage.get("prompt_tokens", 0),
-            "completion_tokens": token_usage.get("completion_tokens", 0),
-            "total_tokens": token_usage.get("total_tokens", 0)
-        }
-        
-        # Build statistics
-        from ..schemas.baseline_schemas import BaselineStatistics
-        statistics = BaselineStatistics(
-            total_runtime_seconds=total_runtime,
-            total_tokens=total_tokens,
-            token_breakdown=token_breakdown_dict
-        )
-        
-        # Log completion with generation-only metrics
-        log_msg = f"[Baseline] Completed in {total_runtime:.2f}s using {total_tokens} tokens (generation only)"
-        if content_processing_tokens:
-            log_msg += f" | Content processing: {content_processing_tokens.get('total_tokens', 0)} tokens (excluded)"
-        log_msg += f" - Generated: {len(data.get('products', []))} products, {len(data.get('personas', []))} personas"
-        logger.info(log_msg)
-        
-        # Build typed response
-        response = BaselineGenerateResponse(
-            products=[Product(**p) for p in data.get("products", [])],
-            personas=[BuyerPersona(**p) for p in data.get("personas", [])],
-            personas_with_mappings=[PersonaWithMappings(**pm) for pm in data.get("personas_with_mappings", [])],
-            sequences=[OutreachSequence(**s) for s in data.get("sequences", [])] if data.get("sequences") else None,
-            artifacts=PipelineArtifacts(sequences_file=result.get("saved_filepath")),
-            statistics=statistics
-        )
-        
-        return response
-        
-    except ValueError as e:
-        logger.error(f"[Baseline] Validation error: {str(e)}")
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        logger.error(f"[Baseline] Failed: {str(e)}", exc_info=True)
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.post(
     "/llm/two-stage/generate",
     response_model=TwoStageGenerateResponse,
-    summary="Two-stage baseline: Products (Stage 1) + Consolidated Personas/Mappings/Sequences (Stage 2)",
+    summary="Two-stage pipeline: Products (Stage 1) + Consolidated Personas/Mappings/Sequences (Stage 2)",
     description="Generate products in Stage 1, then personas, mappings, and sequences in one consolidated Stage 2 call"
 )
 async def generate_two_stage(request: TwoStageGenerateRequest):
     """
-    Two-stage baseline generation for ablation study.
+    Two-stage pipeline generation for comparison.
     
     Stage 1: Products generation (reuses ProductGenerator)
     Stage 2: Personas + Mappings + Sequences (consolidated in one call)
@@ -721,11 +585,7 @@ async def generate_two_stage(request: TwoStageGenerateRequest):
         generator_service = get_generator_service()
         
         # Common search kwargs passed through to DataAggregator
-        extra_search_kwargs = {
-            "use_llm_search": getattr(request, "use_llm_search", None),
-            "provider": getattr(request, "provider", None)
-        }
-        extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+        provider = getattr(request, "provider", None) or "google"
         
         # Stage 1: Products (reuse existing ProductGenerator)
         stage1_start = time.time()
@@ -733,7 +593,7 @@ async def generate_two_stage(request: TwoStageGenerateRequest):
         products_result = await generator_service.generate(
             generator_type="products",
             company_name=request.company_name,
-            **extra_search_kwargs
+            provider=provider
         )
         if not products_result.get("success"):
             raise ValueError("Product generation failed in Stage 1")
@@ -751,7 +611,7 @@ async def generate_two_stage(request: TwoStageGenerateRequest):
             company_name=request.company_name,
             products=products_data,  # Pass Stage 1 output
             generate_count=request.generate_count,
-            **extra_search_kwargs
+            provider=provider
         )
         if not consolidated_result.get("success"):
             raise ValueError("Consolidated generation failed in Stage 2")
@@ -863,11 +723,7 @@ async def generate_three_stage(request: ThreeStageGenerateRequest):
         content_processing_tokens = {}
         
         # Common search kwargs passed through to DataAggregator
-        extra_search_kwargs = {
-            "use_llm_search": getattr(request, "use_llm_search", None),
-            "provider": getattr(request, "provider", None)
-        }
-        extra_search_kwargs = {k: v for k, v in extra_search_kwargs.items() if v is not None}
+        provider = getattr(request, "provider", None) or "google"
         
         # PRE-LOAD AND CACHE DATA (not timed or counted in tokens)
         logger.info(f"[Three-Stage] Pre-loading data for {request.company_name} (excluded from metrics)...")
@@ -880,8 +736,7 @@ async def generate_three_stage(request: ThreeStageGenerateRequest):
                 True,
                 True,
                 10,
-                extra_search_kwargs.get('use_llm_search', False),
-                extra_search_kwargs.get('provider', 'google')
+                provider
             )
             if content_proc_tokens:
                 content_processing_tokens = content_proc_tokens
@@ -903,7 +758,7 @@ async def generate_three_stage(request: ThreeStageGenerateRequest):
         products_result = await generator_service.generate(
             generator_type="products",
             company_name=request.company_name,
-            **extra_search_kwargs
+            provider=provider
         )
         if not products_result.get("success"):
             raise ValueError("Product generation failed in Stage 1")
@@ -921,7 +776,7 @@ async def generate_three_stage(request: ThreeStageGenerateRequest):
             company_name=request.company_name,
             products=products_data,  # Pass Stage 1 output
             generate_count=request.generate_count,
-            **extra_search_kwargs
+            provider=provider
         )
         if not personas_result.get("success"):
             raise ValueError("Persona generation failed in Stage 2")
@@ -942,7 +797,7 @@ async def generate_three_stage(request: ThreeStageGenerateRequest):
             company_name=request.company_name,
             products=products_data,  # Pass Stage 1 output
             personas=personas_data,  # Pass Stage 2 output
-            **extra_search_kwargs
+            provider=provider
         )
         if not consolidated_result.get("success"):
             raise ValueError("Consolidated generation failed in Stage 3")

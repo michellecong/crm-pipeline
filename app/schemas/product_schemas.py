@@ -94,13 +94,9 @@ class ProductGenerateRequest(BaseModel):
     )
     
     # Optional search behavior controls (used to collect web content when needed)
-    use_llm_search: Optional[bool] = Field(
-        default=None,
-        description="Use LLM-planned web search; if False, use selected provider. If omitted, system default is used."
-    )
     provider: Optional[Literal["google", "perplexity"]] = Field(
         default=None,
-        description="Search provider when not using LLM search"
+        description="Search provider (e.g., 'google' or 'perplexity')"
     )
     
     class Config:

@@ -6,9 +6,6 @@ from .search import (
     SearchRequest,
     SearchResultItem,
     SearchResponse,
-    LLMCompanyWebSearchRequest,
-    LLMCompanyWebSearchResponse,
-    LLMWebSearchResponse,
 )
 from .scraping import ScrapeRequest, ScrapedContent, ScrapeResponse
 from .common import ErrorResponse, HealthResponse
@@ -19,9 +16,6 @@ __all__ = [
     "SearchRequest",
     "SearchResultItem", 
     "SearchResponse",
-    "LLMCompanyWebSearchRequest",
-    "LLMCompanyWebSearchResponse",
-    "LLMWebSearchResponse",
     # Scraping
     "ScrapeRequest",
     "ScrapedContent",

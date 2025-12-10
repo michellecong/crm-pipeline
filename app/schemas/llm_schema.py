@@ -49,9 +49,6 @@ class LLMConfigResponse(BaseModel):
     model: str
     temperature: float
     max_completion_tokens: int
-    top_p: float
-    frequency_penalty: float
-    presence_penalty: float
 
 
 class LLMConfigUpdateRequest(BaseModel):
@@ -62,6 +59,3 @@ class LLMConfigUpdateRequest(BaseModel):
         description="Temperature for GPT-5 models is fixed at 1.0 (cannot be modified)"
     )
     max_completion_tokens: Optional[int] = Field(None, ge=1, le=8000)
-    top_p: Optional[float] = Field(None, ge=0.0, le=1.0)
-    frequency_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)
-    presence_penalty: Optional[float] = Field(None, ge=-2.0, le=2.0)

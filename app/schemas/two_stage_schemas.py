@@ -1,6 +1,6 @@
 # schemas/two_stage_schemas.py
 """
-Pydantic schemas for two-stage baseline generation
+Pydantic schemas for two-stage pipeline generation
 """
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal, Dict, Any
@@ -12,7 +12,7 @@ from .pipeline_schemas import PipelineArtifacts
 
 
 class TwoStageGenerateRequest(BaseModel):
-    """Request for two-stage baseline generation"""
+    """Request for two-stage pipeline generation"""
     
     company_name: str = Field(
         ..., 
@@ -25,13 +25,9 @@ class TwoStageGenerateRequest(BaseModel):
         le=12, 
         description="Number of personas to generate"
     )
-    use_llm_search: Optional[bool] = Field(
-        default=None,
-        description="Use LLM-planned web search"
-    )
     provider: Optional[Literal["google", "perplexity"]] = Field(
         default=None,
-        description="Search provider"
+        description="Search provider (google or perplexity)"
     )
     
     class Config:
@@ -39,7 +35,6 @@ class TwoStageGenerateRequest(BaseModel):
             "example": {
                 "company_name": "Salesforce",
                 "generate_count": 5,
-                "use_llm_search": True,
                 "provider": "google"
             }
         }
@@ -57,7 +52,7 @@ class TwoStageStatistics(BaseModel):
 
 
 class TwoStageGenerateResponse(BaseModel):
-    """Response from two-stage baseline generation"""
+    """Response from two-stage pipeline generation"""
     
     products: List[Product]
     personas: List[BuyerPersona]

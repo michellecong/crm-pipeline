@@ -13,8 +13,7 @@ class ScrapeRequest(BaseModel):
     include_case_studies: bool = Field(default=True, description="Include case studies")
     max_urls: int = Field(default=10, description="Maximum URLs to scrape")
     save_to_file: bool = Field(default=False, description="If True, save to file only (skip database)")
-    use_llm_search: bool = Field(default=True, description="Use LLM-planned web search; if False, use standard provider search")
-    provider: Literal["google", "perplexity"] = Field(default="google", description="Search provider when not using LLM")
+    provider: Literal["google", "perplexity"] = Field(default="google", description="Search provider (google or perplexity)")
 
 
 class ScrapedContent(BaseModel):

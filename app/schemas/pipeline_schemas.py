@@ -13,8 +13,7 @@ from .outreach_schemas import OutreachSequence
 class PipelineGenerateRequest(BaseModel):
     company_name: str = Field(..., description="Company name to analyze", min_length=2)
     generate_count: int = Field(default=5, ge=3, le=12, description="Number of personas to generate")
-    use_llm_search: Optional[bool] = Field(default=None, description="Use LLM-planned web search")
-    provider: Optional[Literal["google", "perplexity"]] = Field(default=None, description="Search provider")
+    provider: Optional[Literal["google", "perplexity"]] = Field(default=None, description="Search provider (google or perplexity)")
 
 
 class PipelineArtifacts(BaseModel):

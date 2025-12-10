@@ -5,11 +5,8 @@ from ..schemas import (
     SearchResponse,
     SearchResultItem,
     HealthResponse,
-    LLMCompanyWebSearchRequest,
-    LLMCompanyWebSearchResponse,
 )
 from ..services.search_service import search_company_async
-from ..services.llm_web_search_service import llm_company_web_search_structured
 from datetime import datetime
 import logging
 
@@ -97,57 +94,6 @@ async def test_search():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Search test failed: {str(e)}"
-        )
-
-
-@router.post(
-    "/search/web",
-    response_model=LLMCompanyWebSearchResponse,
-    summary="LLM Web Search (structured JSON)",
-    description="Input company name; LLM plans queries, uses web_search, and returns structured JSON with guaranteed official website"
-)
-async def search_web(request: LLMCompanyWebSearchRequest):
-    """
-    LLM-powered web search that returns structured, validated JSON.
-    
-    Key features:
-    - Guarantees official website is included
-    - Returns structured data with official sources, news, and case studies
-    - Validates all data with Pydantic schemas
-    """
-    try:
-        if not request.company_name.strip():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Company name cannot be empty"
-            )
-
-        # Use the new structured search function that validates and ensures official website
-        result = await llm_company_web_search_structured(request.company_name)
-        
-        logger.info(
-            f"LLM web search completed for {request.company_name}: "
-            f"{len(result.official_website)} official URLs, "
-            f"{len(result.news)} news items, "
-            f"{len(result.case_studies)} case studies"
-        )
-        
-        return result
-
-    except HTTPException:
-        raise
-    except ValueError as e:
-        # This catches validation errors (e.g., missing official website)
-        logger.error(f"LLM web search validation failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(e)
-        )
-    except Exception as e:
-        logger.error(f"LLM web search failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"LLM web search failed: {str(e)}"
         )
 
  
