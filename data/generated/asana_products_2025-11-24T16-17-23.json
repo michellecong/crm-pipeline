@@ -1,0 +1,85 @@
+{
+  "company_name": "Asana",
+  "generator_type": "products",
+  "generated_at": "2025-11-24T16:17:23.205124",
+  "result": {
+    "products": [
+      {
+        "product_name": "Asana Premium",
+        "description": "Enhanced work management platform offering advanced features like timeline view, reporting dashboards, and custom fields. Helps teams plan, track, and manage projects with greater efficiency and clarity. Scales to accommodate growing teams and complex workflows.",
+        "source_url": "https://asana.com/premium"
+      },
+      {
+        "product_name": "Asana Business",
+        "description": "Comprehensive work management solution with advanced integrations, workload management, and project milestones. Enables teams to coordinate work across departments, ensuring alignment and accountability. Suitable for organizations requiring robust project tracking and reporting capabilities.",
+        "source_url": "https://asana.com/business"
+      },
+      {
+        "product_name": "Asana Enterprise",
+        "description": "Tailored work management platform designed for large organizations, offering advanced security, compliance, and administrative controls. Supports complex workflows and large-scale project management. Ensures enterprise-level security and governance for critical business operations.",
+        "source_url": "https://asana.com/enterprise"
+      },
+      {
+        "product_name": "Asana for iOS",
+        "description": "Mobile application that allows teams to manage tasks and projects on the go. Provides access to project details, task assignments, and team communications from anywhere. Enhances team productivity and collaboration, especially for remote or traveling team members.",
+        "source_url": "https://apps.apple.com/us/app/asana-organize-work-tasks/id489969512"
+      },
+      {
+        "product_name": "Asana for Android",
+        "description": "Mobile app enabling teams to stay connected and manage work from their Android devices. Offers features like task creation, project tracking, and team messaging. Facilitates seamless collaboration and task management for teams on the move.",
+        "source_url": "https://play.google.com/store/apps/details?id=com.asana.app"
+      },
+      {
+        "product_name": "Asana Templates",
+        "description": "Pre-built templates for various workflows, including product launches, marketing campaigns, and event planning. Helps teams get started quickly with structured processes and best practices. Saves time and ensures consistency across projects.",
+        "source_url": "https://asana.com/templates"
+      },
+      {
+        "product_name": "Asana Workload",
+        "description": "Feature that provides a visual overview of team capacity and workload. Helps managers balance team assignments and prevent burnout. Ensures optimal resource allocation and project delivery.",
+        "source_url": "https://asana.com/workload"
+      },
+      {
+        "product_name": "Asana Goals",
+        "description": "Tool for setting, tracking, and aligning team goals with company objectives. Helps teams stay focused on strategic priorities and measure progress. Enhances transparency and accountability across the organization.",
+        "source_url": "https://asana.com/goals"
+      },
+      {
+        "product_name": "Asana Portfolios",
+        "description": "Feature that allows tracking of multiple projects in a single view. Helps teams monitor progress, manage dependencies, and ensure alignment with business objectives. Provides insights for informed decision-making and resource management.",
+        "source_url": "https://asana.com/portfolios"
+      },
+      {
+        "product_name": "Asana Timeline",
+        "description": "Visual project planning tool that maps out project tasks and deadlines. Helps teams plan and execute projects with clear timelines and dependencies. Improves project visibility and coordination.",
+        "source_url": "https://asana.com/timeline"
+      },
+      {
+        "product_name": "Asana Reporting",
+        "description": "Feature that provides customizable reports on project progress, team performance, and workload. Helps teams analyze data and make informed decisions. Enhances transparency and accountability within teams.",
+        "source_url": "https://asana.com/reporting"
+      },
+      {
+        "product_name": "Asana Forms",
+        "description": "Tool for creating custom forms to collect information from team members or external stakeholders. Helps streamline data collection and ensure consistency. Facilitates efficient project intake and feedback processes.",
+        "source_url": "https://asana.com/forms"
+      },
+      {
+        "product_name": "Asana Custom Fields",
+        "description": "Feature that allows addition of custom fields to tasks and projects for capturing specific information. Helps teams tailor Asana to their unique workflows and data requirements. Enhances data organization and reporting capabilities.",
+        "source_url": "https://asana.com/custom-fields"
+      },
+      {
+        "product_name": "Asana Rules",
+        "description": "Automation feature that streamlines workflows by setting up triggers and actions. Helps teams automate repetitive tasks and processes. Increases efficiency and reduces manual errors.",
+        "source_url": "https://asana.com/rules"
+      },
+      {
+        "product_name": "Asana Workload Management",
+        "description": "Tool that provides a visual overview of team capacity and workload. Helps managers balance team assignments and prevent burnout. Ensures optimal resource allocation and project delivery.",
+        "source_url": "https://asana.com/workload"
+      }
+    ],
+    "model": "gpt-4o-mini-search-preview-2025-03-11"
+  }
+}

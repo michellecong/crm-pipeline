@@ -1,0 +1,525 @@
+{
+  "company_name": "Asana",
+  "generator_type": "baseline",
+  "generated_at": "2025-11-03T11:01:11.167584",
+  "result": {
+    "products": [
+      {
+        "product_name": "Asana Work Management",
+        "description": "Enterprise-grade work management platform that centralizes projects, tasks, and timelines. Helps teams across marketing, product, and operations coordinate work and increase accountability. Delivers visibility, repeatability, and cross-team alignment at scale."
+      },
+      {
+        "product_name": "Asana AI",
+        "description": "AI-powered assistant suite that accelerates work planning, summarization, and task automation. Helps teams reduce manual work and generate context-aware suggestions. Drives faster decision-making and time-to-value with generative and automation features."
+      },
+      {
+        "product_name": "AI Workflows Gallery",
+        "description": "Prebuilt AI workflows and templates designed for common business processes like campaign briefs and incident response. Helps teams deploy proven automations quickly with minimal configuration. Shortens implementation time and standardizes best practices across teams."
+      },
+      {
+        "product_name": "AI Studio",
+        "description": "Low-code environment for building, customizing, and deploying organization-specific AI workflows. Helps power users and admins tailor AI-driven automations to unique processes. Enables scale with governance controls and repeatable workflow templates."
+      },
+      {
+        "product_name": "Permissions Management",
+        "description": "Enterprise add-on that provides role-based access control and granular permissioning across workspaces and projects. Helps large organizations enforce least-privilege and reduce accidental data exposure. Simplifies compliance and governance for distributed teams."
+      },
+      {
+        "product_name": "Compliance Management",
+        "description": "Compliance-focused add-on delivering audit trails, controls, and reporting for regulated environments. Helps security, legal, and compliance teams demonstrate controls and speed audit responses. Reduces audit prep time and supports regulated procurement."
+      },
+      {
+        "product_name": "Templates Gallery",
+        "description": "Curated library of templates for campaigns, product launches, onboarding, intake, and resource planning. Helps teams start projects faster with best-practice structures and fields. Improves consistency and reduces project kickoff time across departments."
+      },
+      {
+        "product_name": "Integrations & Connectors",
+        "description": "300+ integrations (Slack, Salesforce, Microsoft Teams, Tableau, Power BI, Figma) that connect Asana to enterprise toolchains. Helps IT and ops unify data, reduce tool switching, and centralize work context. Enables cross-app reporting and automated handoffs."
+      },
+      {
+        "product_name": "Enterprise Services & Support",
+        "description": "Commercial offerings including onboarding, professional services, and priority support for enterprise customers. Helps organizations accelerate adoption, configure governance, and measure ROI. Provides dedicated guidance for large-scale rollouts and change management."
+      }
+    ],
+    "personas": [
+      {
+        "persona_name": "US Enterprise Marketing - Marketing Leaders",
+        "tier": "tier_1",
+        "target_decision_makers": [
+          "CMO",
+          "VP Marketing",
+          "Director Marketing",
+          "VP Sales Enablement",
+          "Director Sales Enablement",
+          "VP Sales",
+          "Director Sales",
+          "VP Revenue Operations",
+          "Director Sales Operations",
+          "CRO"
+        ],
+        "industry": "Marketing & Advertising",
+        "company_size_range": "2000-10000 employees",
+        "company_type": "Large marketing-led enterprises with cross-functional campaign teams",
+        "location": "United States",
+        "description": "Marketing organizations with 100-500 staff. $200K-$1M annual deal sizes for enterprise tools. Sales cycle 4-8 months. Typically 4-6 stakeholders (CMO, VP Marketing, Ops, Legal, IT)."
+      },
+      {
+        "persona_name": "Global Enterprise Product - Ops & PM",
+        "tier": "tier_1",
+        "target_decision_makers": [
+          "COO",
+          "VP Distribution",
+          "Director Sales Operations",
+          "VP Revenue Operations",
+          "VP Sales",
+          "Director Sales",
+          "VP Sales Enablement",
+          "Director Sales Enablement",
+          "CRO",
+          "CMO"
+        ],
+        "industry": "Technology",
+        "company_size_range": "2000-10000 employees",
+        "company_type": "Global product organizations managing cross-functional releases and operations",
+        "location": "Global / Multi-country",
+        "description": "Product and ops teams with 200-800 staff. $300K-$1.5M annual contracts. Sales cycle 6-12 months. Stakeholders 5-8 including PMs, Ops, IT, Security, and Finance."
+      },
+      {
+        "persona_name": "US Midmarket Creative Agencies - Campaign Ops",
+        "tier": "tier_2",
+        "target_decision_makers": [
+          "CMO",
+          "VP Marketing",
+          "Director Marketing",
+          "VP Digital Commerce",
+          "Director E-commerce",
+          "VP Sales",
+          "Director Sales",
+          "VP Sales Enablement",
+          "Director Sales Enablement",
+          "Director Sales Operations"
+        ],
+        "industry": "Creative Agencies",
+        "company_size_range": "200-1000 employees",
+        "company_type": "Midmarket creative and digital agencies running client campaigns",
+        "location": "United States",
+        "description": "Agencies with 50-250 staff. $50K-$250K annual contracts. Sales cycle 2-4 months. Stakeholders 3-5 including marketing leads, account ops, and production."
+      },
+      {
+        "persona_name": "Regional Healthcare Systems - Revenue Cycle",
+        "tier": "tier_2",
+        "target_decision_makers": [
+          "CAO",
+          "VP Revenue Cycle",
+          "Director Revenue Cycle",
+          "COO",
+          "VP Distribution",
+          "Director Sales Operations",
+          "VP Sales Enablement",
+          "Director Sales Enablement",
+          "VP Marketing",
+          "Director Marketing"
+        ],
+        "industry": "Healthcare Providers",
+        "company_size_range": "500-2000 employees",
+        "company_type": "Regional hospital systems and health networks managing clinical and back-office workflows",
+        "location": "United States - Regional",
+        "description": "Healthcare systems with 500-2,000 staff. $150K-$600K annual deals for enterprise tools. Sales cycle 6-10 months. Stakeholders 4-6 including clinical leaders, revenue cycle, IT, and compliance."
+      },
+      {
+        "persona_name": "Public Sector Agencies - Large Gov Orgs",
+        "tier": "tier_3",
+        "target_decision_makers": [
+          "COO",
+          "CAO",
+          "VP Distribution",
+          "VP Revenue Operations",
+          "Director Sales Operations",
+          "Director Sales",
+          "VP Sales",
+          "Director Sales Enablement",
+          "VP Sales Enablement",
+          "Director Marketing"
+        ],
+        "industry": "Public Sector",
+        "company_size_range": "5000-10000 employees",
+        "company_type": "Large government agencies and public institutions seeking secure work management",
+        "location": "United States - Federal / State",
+        "description": "Government agencies with 1,000-10,000 staff. $250K-$2M annual procurement. Sales cycle 9-18 months. Stakeholders 6-10 including procurement, security, legal, and program leads."
+      }
+    ],
+    "personas_with_mappings": [
+      {
+        "persona_name": "US Enterprise Marketing - Marketing Leaders",
+        "mappings": [
+          {
+            "pain_point": "Campaign planning is fragmented across emails, spreadsheets, and tools, causing missed deadlines and lost context.",
+            "value_proposition": "Asana Work Management centralizes campaign work and Templates Gallery to standardize launches, cutting time-to-launch by 30% and improving on-time delivery by 25%."
+          },
+          {
+            "pain_point": "Marketing teams spend hours consolidating status for exec reporting, delaying decisions.",
+            "value_proposition": "Integrations & Connectors feed Asana Work Management into Tableau/Power BI, reducing reporting prep time by 70% and accelerating executive decisions."
+          },
+          {
+            "pain_point": "Creative handoffs create version and bottleneck issues between design and production.",
+            "value_proposition": "Templates Gallery plus Integrations & Connectors with Figma streamlines handoffs, reducing iteration cycles by 40% and saving ~10 hours per project."
+          },
+          {
+            "pain_point": "Difficulty scaling repeatable campaign workflows across global teams.",
+            "value_proposition": "AI Workflows Gallery provides repeatable campaign automations in Asana AI, enabling teams to scale playbooks and reduce setup time by 50%."
+          },
+          {
+            "pain_point": "Security and access control concerns slow enterprise approvals for marketing tooling.",
+            "value_proposition": "Permissions Management enforces role-based access in Asana Work Management so marketing can onboard enterprise users 3x faster while meeting governance."
+          }
+        ]
+      },
+      {
+        "persona_name": "Global Enterprise Product - Ops & PM",
+        "mappings": [
+          {
+            "pain_point": "Cross-functional releases lack a single source of truth, causing missed dependencies and scope drift.",
+            "value_proposition": "Asana Work Management creates a centralized release hub so PMs and Ops reduce missed dependencies by 35% and improve release predictability."
+          },
+          {
+            "pain_point": "Spending too much time coordinating status across Jira, spreadsheets, and email.",
+            "value_proposition": "Integrations & Connectors sync Asana with engineering tools, cutting coordination overhead by 40% and saving program managers 8+ hours weekly."
+          },
+          {
+            "pain_point": "Custom automation needs can't be met by out-of-the-box tools, slowing throughput.",
+            "value_proposition": "AI Studio lets teams build tailored AI workflows inside Asana AI to automate triage and assignment, reducing manual task routing by 60%."
+          },
+          {
+            "pain_point": "Executives need cross-product KPIs in one place for portfolio decisions.",
+            "value_proposition": "Asana Work Management plus Integrations & Connectors into Power BI centralizes KPIs, improving executive decision speed by 25% and shortening review cycles."
+          },
+          {
+            "pain_point": "Enterprise security and auditability are required for global rollouts.",
+            "value_proposition": "Compliance Management and Permissions Management give audit trails and controls, cutting audit prep time from weeks to days and lowering compliance risk."
+          }
+        ]
+      },
+      {
+        "persona_name": "US Midmarket Creative Agencies - Campaign Ops",
+        "mappings": [
+          {
+            "pain_point": "Agencies onboard new clients slowly due to inconsistent intake forms and unclear responsibilities.",
+            "value_proposition": "Templates Gallery and Asana Work Management standardize intake and client onboarding, reducing client ramp time by 40% and increasing billable utilization."
+          },
+          {
+            "pain_point": "Client approvals are lost across email chains leading to scope creep and rework.",
+            "value_proposition": "Asana Work Management centralizes approvals and comments, cutting revision cycles by 35% and improving client satisfaction metrics."
+          },
+          {
+            "pain_point": "Multiple tools for creative, comms, and delivery increase tool switching and context loss.",
+            "value_proposition": "Integrations & Connectors link Asana with Figma and Slack so teams reduce context switching by 30% and shorten delivery times."
+          },
+          {
+            "pain_point": "Smaller ops teams lack automation to scale repeatable deliverables.",
+            "value_proposition": "AI Workflows Gallery and Asana AI automate recurring tasks and brief generation, saving agencies ~5-10 hours per week per PM."
+          },
+          {
+            "pain_point": "Difficulty proving ROI to clients on long programs.",
+            "value_proposition": "Asana Work Management reporting and Integrations & Connectors into BI show delivery metrics, improving renewals and supporting 10-20% higher retention."
+          }
+        ]
+      },
+      {
+        "persona_name": "Regional Healthcare Systems - Revenue Cycle",
+        "mappings": [
+          {
+            "pain_point": "Revenue cycle tasks are siloed, causing delayed claims processing and revenue leakage.",
+            "value_proposition": "Asana Work Management centralizes revenue workflows and Templates Gallery to reduce claim lag by 25% and accelerate cash collections."
+          },
+          {
+            "pain_point": "Audit and compliance preparation for billing is manual and resource-intensive.",
+            "value_proposition": "Compliance Management provides audit trails and reporting, cutting audit prep time by up to 70% and lowering risk in regulated environments."
+          },
+          {
+            "pain_point": "Change requests across departments cause coordination delays and missed SLAs.",
+            "value_proposition": "AI Studio plus AI Workflows Gallery automates intake triage and routing, reducing SLA breaches by 40% and saving staff time."
+          },
+          {
+            "pain_point": "Integrating clinical and back-office systems is complex and error-prone.",
+            "value_proposition": "Integrations & Connectors link Asana to EMR-adjacent systems and BI tools, reducing manual reconciliation and improving reporting accuracy."
+          },
+          {
+            "pain_point": "Permission control and patient-data governance slow digital transformation.",
+            "value_proposition": "Permissions Management enforces role-based access in Asana Work Management, enabling faster, compliant deployments with clear auditability."
+          }
+        ]
+      },
+      {
+        "persona_name": "Public Sector Agencies - Large Gov Orgs",
+        "mappings": [
+          {
+            "pain_point": "Procurement and long procurement cycles require FedRAMP-ready solutions and strict controls.",
+            "value_proposition": "Compliance Management (FedRAMP in process) and Permissions Management help public agencies meet procurement controls, reducing approval friction and procurement timeline risk."
+          },
+          {
+            "pain_point": "Programs across departments lack standardized processes, producing inefficiencies and duplicated work.",
+            "value_proposition": "Templates Gallery and Asana Work Management standardize program delivery, reducing duplicated effort by up to 30% and improving cross-agency coordination."
+          },
+          {
+            "pain_point": "Manual reporting for stakeholders consumes significant staff time for monthly briefings.",
+            "value_proposition": "Integrations & Connectors to Power BI and Tableau automate exports from Asana Work Management, cutting reporting time by 60% and freeing staff for mission work."
+          },
+          {
+            "pain_point": "Security and audit requirements demand fine-grained access controls and logs.",
+            "value_proposition": "Permissions Management and Compliance Management provide role-based controls and audit trails, lowering audit remediation time and helping satisfy regulatory checks."
+          },
+          {
+            "pain_point": "Scaling digital transformation across large orgs lacks consistent governance.",
+            "value_proposition": "Enterprise Services & Support combined with AI Studio enable governed rollout of Asana AI workflows, accelerating adoption while maintaining oversight."
+          }
+        ]
+      }
+    ],
+    "sequences": [
+      {
+        "name": "Seq - US Enterprise Marketing - Intro & Campaign ROI",
+        "persona_name": "US Enterprise Marketing - Marketing Leaders",
+        "objective": "Engage marketing leaders on campaign orchestration, reporting, and governance wins.",
+        "total_touches": 4,
+        "duration_days": 14,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce campaign fragmentation problem and Asana value",
+            "subject_line": "Reduce campaign launch time by 30%",
+            "content_suggestion": "Hi {{first_name}}, many enterprise marketing teams I work with juggle briefs, assets, and approvals across multiple tools and miss launch dates. Asana Work Management + Templates Gallery helped one peer cut time-to-launch 30% and improve on-time delivery. Could we explore how your campaign process looks?",
+            "hints": "Reference a recent campaign or product launch on their site; mention the specific region or brand."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Social proof and quick value nudge",
+            "subject_line": "How top marketing teams standardize launches",
+            "content_suggestion": "Hi {{first_name}}, noticed your team recently launched {{recent_campaign}}. We helped similar teams standardize playbooks using Templates Gallery and Asana AI automations to reduce rework by 40%. Happy to share a short example?",
+            "hints": "Personalize with campaign name or LinkedIn post they made; reference mutual connections if any."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Share concrete metric-driven example and call to action",
+            "subject_line": "Quick example: 70% faster reporting for marketing execs",
+            "content_suggestion": "Hi {{first_name}}, to follow up — one CMO we worked with used Integrations & Connectors into Tableau + Asana Work Management to cut reporting prep 70%, freeing the team to focus on strategy. Would you be open to a 20-minute call to see similar dashboards for your team?",
+            "hints": "Attach or link to a one-pager case study; mention a specific KPI they care about (e.g., time-to-market)."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "phone",
+            "timing_days": 9,
+            "objective": "Phone follow-up to book meeting",
+            "subject_line": null,
+            "content_suggestion": "Hi {{first_name}}, this is {{your_name}} from Asana — I emailed about reducing campaign launch time and improving exec reporting. Do you have 20 minutes next week to discuss how Templates Gallery and Asana AI might help your team?",
+            "hints": "If voicemail, reference a specific campaign or metric from the emails and propose two calendar slots."
+          }
+        ]
+      },
+      {
+        "name": "Seq - Global Enterprise Product - Release Ops",
+        "persona_name": "Global Enterprise Product - Ops & PM",
+        "objective": "Open dialog about release coordination, dependency tracking, and automation.",
+        "total_touches": 5,
+        "duration_days": 16,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce central release hub and dependency improvements",
+            "subject_line": "Make cross-team releases 35% more predictable",
+            "content_suggestion": "Hi {{first_name}}, distributed releases often miss dependencies between PM, Eng, and Ops. Asana Work Management centralizes release work and Integrations & Connectors sync engineering tools — customers see ~35% fewer missed dependencies. Can we schedule a short demo?",
+            "hints": "Reference a recent product launch, release notes, or engineering blog post from their company."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Introduce AI Studio as a customization option",
+            "subject_line": "Custom AI workflows for release triage",
+            "content_suggestion": "Hi {{first_name}}, Asana AI and AI Studio let teams automate triage and assignment for releases, cutting manual routing by ~60%. Happy to show a quick example tailored to your release model.",
+            "hints": "Mention a pain point seen in their org (multiple repos, multiple PMs) and offer a brief case study."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Share integration + reporting wins",
+            "subject_line": "Central dashboards from Power BI + Asana",
+            "content_suggestion": "Hi {{first_name}}, teams using Integrations & Connectors into Power BI combine Asana Work Management data for portfolio-level KPIs, shortening exec review prep by 25%. Would you like an example dashboard?",
+            "hints": "Attach a mock dashboard image or link to a public demo dashboard if available."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "linkedin",
+            "timing_days": 10,
+            "objective": "Nudge with governance & compliance angle",
+            "subject_line": "Governed rollouts with Compliance controls",
+            "content_suggestion": "Hi {{first_name}}, for global rollouts, Compliance Management + Permissions Management help maintain auditability while scaling. If governance is on your roadmap, worth a 15-minute chat?",
+            "hints": "If they have compliance initiatives, reference them and offer to include a security lead on the call."
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "phone",
+            "timing_days": 13,
+            "objective": "Direct ask to book a discovery call",
+            "subject_line": null,
+            "content_suggestion": "Hi {{first_name}}, following up on coordinating releases and AI automation in Asana. Do you have 20 minutes next week to explore a pilot that targets your next release?",
+            "hints": "Propose concrete pilot scope (one product line) and anticipated ROI (reduced missed dependencies)."
+          }
+        ]
+      },
+      {
+        "name": "Seq - US Midmarket Creative Agencies - Client Ops",
+        "persona_name": "US Midmarket Creative Agencies - Campaign Ops",
+        "objective": "Show how agencies shorten client onboarding and approvals with Asana.",
+        "total_touches": 4,
+        "duration_days": 12,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Highlight intake and onboarding improvements",
+            "subject_line": "Onboard new clients 40% faster",
+            "content_suggestion": "Hi {{first_name}}, agencies often struggle with inconsistent intake and slow client ramp. Templates Gallery + Asana Work Management standardized one agency's intake and cut client ramp time 40%. Interested in a quick walkthrough?",
+            "hints": "Name a recent client or campaign they've posted about to personalize the note."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Short social proof and offer case study",
+            "subject_line": "Example: faster creative handoffs",
+            "content_suggestion": "Hi {{first_name}}, saw your agency's portfolio — we helped a similar shop reduce handoff iterations by 40% using Integrations & Connectors with Figma and Asana. Can I share the short case study?",
+            "hints": "Reference a client type (retail/tech) that matches their portfolio."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Offer a short demo focused on billable utilization",
+            "subject_line": "Increase billable utilization with automation",
+            "content_suggestion": "Hi {{first_name}}, automating brief generation with AI Workflows Gallery and Asana AI saved one PM ~8 hours/week. I can demo a 15-minute workflow tailored to your client intake — does Thursday or Friday work?",
+            "hints": "Offer specific day/time options and reference potential hours saved as a selling point."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "phone",
+            "timing_days": 9,
+            "objective": "Phone follow-up to confirm meeting",
+            "subject_line": null,
+            "content_suggestion": "Hi {{first_name}}, it's {{your_name}} from Asana — checking in on a short demo to show how Templates Gallery and Asana AI reduce onboarding time. Do you have 20 minutes this week?",
+            "hints": "If voicemail, mention a quick concrete benefit (hours saved or faster client approvals)."
+          }
+        ]
+      },
+      {
+        "name": "Seq - Regional Healthcare Systems - Revenue Cycle",
+        "persona_name": "Regional Healthcare Systems - Revenue Cycle",
+        "objective": "Start conversations about compliance, revenue cycle efficiency, and audit readiness.",
+        "total_touches": 5,
+        "duration_days": 14,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce revenue cycle inefficiency and compliance benefits",
+            "subject_line": "Reduce claim lag and speed audit prep",
+            "content_suggestion": "Hi {{first_name}}, revenue cycle teams often face siloed tasks and heavy audit prep. Asana Work Management with Compliance Management reduced audit prep time by up to 70% and lowered claim lag 25% in peer systems. Can we discuss your current workflows?",
+            "hints": "Reference their system size or a public regulatory requirement they face to personalize."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Reinforce compliance and automation advantages",
+            "subject_line": "Automate intake & routing for revenue tasks",
+            "content_suggestion": "Hi {{first_name}}, AI Studio + AI Workflows Gallery can automate intake and routing for billing triage, reducing SLA breaches by ~40%. Happy to share a short pilot plan.",
+            "hints": "Mention a known revenue cycle challenge (denials, appeals) from industry reports."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 7,
+            "objective": "Share case example and propose pilot",
+            "subject_line": "Pilot idea: cut audit prep from weeks to days",
+            "content_suggestion": "Hi {{first_name}}, a pilot using Compliance Management and Asana Work Management reduced audit prep from weeks to days for a regional provider. Would you be open to a 30-minute call to scope a similar pilot?",
+            "hints": "Propose a small-scope pilot (one department) and include expected time savings."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "linkedin",
+            "timing_days": 10,
+            "objective": "Follow-up nudge focused on compliance controls",
+            "subject_line": "Permissions & audit trails for health systems",
+            "content_suggestion": "Hi {{first_name}}, as you evaluate tools, Permissions Management ensures role-based access for PHI workflows while maintaining audit logs. Can we align on your compliance requirements?",
+            "hints": "If they list certifications or compliance on LinkedIn, reference it."
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "phone",
+            "timing_days": 13,
+            "objective": "Direct ask to schedule discovery",
+            "subject_line": null,
+            "content_suggestion": "Hi {{first_name}}, following up on streamlining revenue cycle and audit readiness. Do you have 20 minutes to discuss a scoped pilot and expected ROI?",
+            "hints": "Propose two short windows and mention who from their team should join (revenue cycle lead, IT)."
+          }
+        ]
+      },
+      {
+        "name": "Seq - Public Sector Agencies - Compliance & Procurement",
+        "persona_name": "Public Sector Agencies - Large Gov Orgs",
+        "objective": "Start procurement conversations emphasizing compliance readiness and governance.",
+        "total_touches": 4,
+        "duration_days": 10,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Lead with procurement & FedRAMP readiness",
+            "subject_line": "Compliance-ready work management for agencies",
+            "content_suggestion": "Hi {{first_name}}, public sector teams need governed work tools. Asana's Compliance Management and Permissions Management (FedRAMP in process) provide audit trails and controls to reduce procurement friction. Can we discuss timelines and requirements?",
+            "hints": "Reference their agency's procurement timeline or an RFP if available publicly."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 2,
+            "objective": "Social proof and quick ROI nudge",
+            "subject_line": "Standardize program delivery across departments",
+            "content_suggestion": "Hi {{first_name}}, agencies standardize program delivery with Templates Gallery and Asana Work Management to cut duplicated effort by ~30%. Happy to share a public-sector case study.",
+            "hints": "Mention any Fed or state program related to their agency to personalize."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 5,
+            "objective": "Offer compliance briefing and procurement path",
+            "subject_line": "Briefing: audit trails, roles, and procurement fit",
+            "content_suggestion": "Hi {{first_name}}, happy to arrange a short briefing on Permissions Management, Compliance Management, and AWS Marketplace procurement paths to accelerate approval. Do you have 20 minutes next week?",
+            "hints": "Offer to include a security/compliance engineer from your team to address technical questions."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "phone",
+            "timing_days": 9,
+            "objective": "Phone follow-up to confirm briefing",
+            "subject_line": null,
+            "content_suggestion": "Hi {{first_name}}, it's {{your_name}} from Asana — following up on a compliance briefing to support your procurement. Would 20 minutes next Tuesday or Wednesday work?",
+            "hints": "If voicemail, reference FedRAMP progress and AWS Marketplace as procurement accelerants."
+          }
+        ]
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07"
+  }
+}

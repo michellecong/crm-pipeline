@@ -1,0 +1,103 @@
+{
+  "company_name": "Salesforce",
+  "generator_type": "mappings",
+  "generated_at": "2025-12-07T16:28:59.529115",
+  "result": {
+    "personas_with_mappings": [
+      {
+        "persona_name": "US Enterprise Financial Services - Revenue Leaders",
+        "mappings": [
+          {
+            "pain_point": "Revenue leaders lack real-time visibility into distributed sales performance, causing missed forecasts and revenue leakage across national channels.",
+            "value_proposition": "Revenue Intelligence aggregates sales signals and pipeline data to identify gaps and improve forecast accuracy up to 30%, reducing quarter-end surprises."
+          },
+          {
+            "pain_point": "Sales ops teams spend days reconciling quotes across legacy systems, delaying deal closes and increasing days sales outstanding (DSO).",
+            "value_proposition": "Configure Price Quote (CPQ) automates pricing, approvals, and contract generation to cut quote turnaround ~60% and accelerate cash collection."
+          },
+          {
+            "pain_point": "Renewal managers fail to spot at‑risk accounts from distributed channels, driving churn and recurring revenue loss.",
+            "value_proposition": "Data Cloud unifies customer and transaction data to surface churn risk and enable targeted renewals, improving retention by ~15%."
+          },
+          {
+            "pain_point": "Finance and compliance teams struggle to audit revenue across disconnected systems, increasing regulatory risk and audit costs.",
+            "value_proposition": "Revenue Cloud centralizes quote‑to‑cash and revenue recognition to enforce controls and reduce audit preparation time by ~40%."
+          },
+          {
+            "pain_point": "IT teams struggle to integrate CRM with core banking and ledger systems, delaying product launches and slowing partner enablement.",
+            "value_proposition": "MuleSoft Anypoint Platform connects core banking, CRM, and downstream systems via APIs to cut integration time up to 50% and speed launches."
+          },
+          {
+            "pain_point": "Frontline sellers lose selling time to manual CRM updates, producing underreported pipeline and missed quota attainment.",
+            "value_proposition": "Sales Cloud automates CRM updates and surfaces AI-driven next actions with Salesforce AI, freeing 6–8 hours per rep weekly and improving pipeline coverage."
+          }
+        ]
+      },
+      {
+        "persona_name": "UK Mid-Market Retail - Marketing Leaders",
+        "mappings": [
+          {
+            "pain_point": "Marketing leaders lack a unified customer profile across web, mobile and stores, causing generic campaigns and lower conversion during peak seasons.",
+            "value_proposition": "Data Cloud builds a single customer view to power personalized journeys, increasing campaign conversion rates by ~20%."
+          },
+          {
+            "pain_point": "E‑commerce teams can't iterate storefront experiences quickly, slowing promotions and losing seasonal revenue.",
+            "value_proposition": "Composable Storefronts enables rapid PWA experiments and deployments, reducing launch time by ~70% and improving conversion on promotions."
+          },
+          {
+            "pain_point": "Marketing can't attribute multi‑channel spend accurately, producing opaque ROI and overspending on underperforming channels.",
+            "value_proposition": "Marketing Cloud centralizes campaign tracking and attribution to show channel ROI and cut wasted ad spend by ~25%."
+          },
+          {
+            "pain_point": "Checkout friction during UK peak events causes high cart abandonment and lost transactions.",
+            "value_proposition": "Pay Now embeds secure payments into Commerce Cloud checkouts to streamline payment flow and reduce cart abandonment by ~15%."
+          },
+          {
+            "pain_point": "Operations teams struggle to fulfill omnichannel orders across stores and warehouses, increasing delays and returns.",
+            "value_proposition": "Order Management unifies orders and inventory across channels to improve fulfillment accuracy and reduce returns by ~20%."
+          },
+          {
+            "pain_point": "GDPR compliance concerns slow data activation for campaigns, exposing marketing to regulatory risk and lost personalization opportunities.",
+            "value_proposition": "Data Cloud enforces consent and governance controls while activating profiles for marketing, lowering compliance risk and enabling lawful personalization."
+          }
+        ]
+      },
+      {
+        "persona_name": "DACH Large Manufacturing - Operations Leaders",
+        "mappings": [
+          {
+            "pain_point": "Field service managers lack real‑time technician location and job status, causing inefficient dispatch, missed SLAs and higher service costs.",
+            "value_proposition": "Field Service optimizes AI-driven scheduling and dispatch to reduce travel time and increase first‑time fix rates by ~25%, lowering service cost."
+          },
+          {
+            "pain_point": "Operations teams can't predict equipment failures from scattered telemetry, causing unplanned downtime and lost production hours.",
+            "value_proposition": "Salesforce IoT Cloud connects device telemetry to workflows to trigger predictive maintenance, cutting unplanned downtime up to ~30%."
+          },
+          {
+            "pain_point": "Integrations between ERP, MES and field service tools are manual, delaying parts sourcing and prolonging mean time to repair (MTTR).",
+            "value_proposition": "MuleSoft Anypoint Platform automates APIs between ERP, MES, and service apps to sync parts and work orders, reducing MTTR by ~40%."
+          },
+          {
+            "pain_point": "Service technicians lack mobile access to parts inventory and service manuals, increasing repeat visits and warranty costs.",
+            "value_proposition": "Field Service combined with Salesforce Platform mobile apps delivers parts visibility and guided repairs, raising first‑time fix by ~20%."
+          },
+          {
+            "pain_point": "Compliance teams must compile disparate service records across EU regions, increasing audit overhead and regulatory exposure.",
+            "value_proposition": "Service Cloud centralizes case and service histories with auditable trails to cut audit prep time ~50% and reduce compliance risk."
+          },
+          {
+            "pain_point": "Ops leaders struggle to balance workforce across regions, driving overtime and inflated operational spend during peak demand.",
+            "value_proposition": "Field Service's AI scheduling optimizes assignments and capacity across regions, lowering overtime by ~30% and improving utilization."
+          }
+        ]
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07",
+    "usage": {
+      "prompt_tokens": 3606,
+      "completion_tokens": 3027,
+      "total_tokens": 6633
+    },
+    "generation_time_seconds": 36.71402096748352
+  }
+}

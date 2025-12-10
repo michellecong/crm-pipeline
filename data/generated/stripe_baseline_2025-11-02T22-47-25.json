@@ -1,0 +1,597 @@
+{
+  "company_name": "Stripe",
+  "generator_type": "baseline",
+  "generated_at": "2025-11-02T22:47:25.852588",
+  "result": {
+    "products": [
+      {
+        "product_name": "Payments",
+        "description": "Unified payments platform to accept online and mobile payments globally. Helps merchants and platforms simplify processing across cards, wallets, and local methods. Increases conversion and reduces integration time with a single API and global reach."
+      },
+      {
+        "product_name": "Billing",
+        "description": "Subscription and invoicing engine for recurring and usage-based revenue. Helps SaaS and digital services automate billing, metering, and revenue recognition. Reduces billing disputes, speeds cash collection, and supports complex pricing models."
+      },
+      {
+        "product_name": "Checkout",
+        "description": "Prebuilt, customizable checkout experience that increases conversion and reduces dev time. Helps merchants deploy a PCI-compliant checkout with local payment methods. Boosts authorization rates and shortens time-to-revenue with minimal integration."
+      },
+      {
+        "product_name": "Connect",
+        "description": "Platform payments and onboarding toolkit for marketplaces and platforms. Helps marketplaces split payouts, manage compliance, and scale seller onboarding. Streamlines commissions, reduces fraud exposure, and automates payouts to sub-merchants."
+      },
+      {
+        "product_name": "Radar",
+        "description": "AI-driven fraud prevention built into Stripe payments to detect and block suspicious transactions. Helps risk teams reduce chargebacks and false declines. Improves authorization rates and cuts fraud losses with adaptive machine learning signals."
+      },
+      {
+        "product_name": "Terminal",
+        "description": "In-person point-of-sale hardware and SDKs to accept card-present payments. Helps retailers, hospitality, and omnichannel businesses unify online and offline payments. Simplifies reconciliation, improves customer experience, and centralizes reporting."
+      },
+      {
+        "product_name": "Treasury",
+        "description": "Programmable financial accounts and cash management for platforms and businesses. Helps fintechs and marketplaces hold funds, earn yield, and automate flows. Embeds banking features without building bank integrations, speeding go-to-market for finance products."
+      },
+      {
+        "product_name": "Issuing",
+        "description": "Card issuance platform to create physical and virtual cards for customers or employees. Helps platforms manage spend controls, automate reimbursements, and create branded card programs. Lowers fraud exposure and accelerates expense workflows."
+      },
+      {
+        "product_name": "Capital",
+        "description": "Lending and financing product to provide advances and credit to platform businesses. Helps growing merchants access working capital tied to sales volume. Speeds funding decisions and aligns repayments to cash flow, reducing churn from capital constraints."
+      },
+      {
+        "product_name": "Tax",
+        "description": "Automated sales tax and VAT calculation, collection, and reporting for global commerce. Helps businesses stay compliant across jurisdictions with minimal manual work. Reduces tax errors, audit risk, and time spent on filing and registration."
+      },
+      {
+        "product_name": "Identity",
+        "description": "Identity verification and KYC for platform onboarding and compliance. Helps marketplaces and financial services verify users quickly and meet regulatory requirements. Cuts fraud, accelerates onboarding, and centralizes document collection."
+      },
+      {
+        "product_name": "Invoicing",
+        "description": "Flexible invoicing tools to send, track, and collect payments for one-off and B2B sales. Helps service businesses and enterprises automate billing cycles and reminders. Improves DSO, reduces manual follow-up, and integrates with payments and accounting."
+      },
+      {
+        "product_name": "Sigma",
+        "description": "SQL-based analytics and reporting built on Stripe data for finance and ops teams. Helps teams generate custom reports without moving data. Accelerates insights, reduces reconciliation time, and supports real-time decision making."
+      },
+      {
+        "product_name": "Elements",
+        "description": "UI components and SDKs for building custom payment forms and flows. Helps product and design teams implement secure, branded payment experiences quickly. Minimizes PCI scope and accelerates feature rollout with prebuilt components."
+      },
+      {
+        "product_name": "Payment Links",
+        "description": "No-code tool to create shareable checkout links and payment pages instantly. Helps small merchants and teams collect payments without developer time. Speeds testing, market launches, and one-off collections with a simple link."
+      },
+      {
+        "product_name": "Apps & App Marketplace",
+        "description": "Ecosystem of third-party integrations and apps that extend Stripe products. Helps businesses connect accounting, CRM, and ops tools to their payments stack. Reduces integration effort and accelerates workflows across finance tools."
+      }
+    ],
+    "personas": [
+      {
+        "persona_name": "US Midmarket Fintech - Revenue Leaders",
+        "tier": "tier_1",
+        "target_decision_makers": [
+          "CRO",
+          "VP Sales",
+          "VP Revenue Operations",
+          "Director Sales",
+          "COO",
+          "Director Sales Operations",
+          "VP Marketing",
+          "Director Marketing",
+          "VP Distribution",
+          "VP Sales Enablement",
+          "Director Sales Enablement"
+        ],
+        "industry": "Fintech Platforms",
+        "company_size_range": "500-2000 employees",
+        "company_type": "Fast-growing fintechs offering financial services and payments",
+        "location": "United States",
+        "description": "Revenue teams of 50-200 staff. Typical deal size $250K-$1M annually. Sales cycles 4-8 months. Buying committees 4-6 stakeholders including sales, ops, and finance."
+      },
+      {
+        "persona_name": "EU Enterprise Retail - Payments Ops",
+        "tier": "tier_1",
+        "target_decision_makers": [
+          "CRO",
+          "VP Sales",
+          "Director Sales",
+          "CMO",
+          "VP Digital Commerce",
+          "Director E-commerce",
+          "VP Revenue Operations",
+          "Director Sales Operations",
+          "VP Marketing",
+          "Director Marketing",
+          "Director Sales Enablement"
+        ],
+        "industry": "Retail & E-commerce",
+        "company_size_range": "2000-10000 employees",
+        "company_type": "Large omni-channel retail brands and marketplaces",
+        "location": "Europe (multi-country)",
+        "description": "Payments and ops teams 100-400 staff. Deal sizes $500K-$3M annually. Sales cycles 6-12 months. Stakeholders 6-9 across payments, commerce, legal, and finance."
+      },
+      {
+        "persona_name": "US SMB SaaS - Product & Finance",
+        "tier": "tier_2",
+        "target_decision_makers": [
+          "VP Revenue Operations",
+          "Director Sales",
+          "CRO",
+          "VP Sales",
+          "VP Sales Enablement",
+          "Director Sales Enablement",
+          "CMO",
+          "VP Marketing",
+          "Director Marketing",
+          "Director Sales Operations"
+        ],
+        "industry": "B2B SaaS",
+        "company_size_range": "50-500 employees",
+        "company_type": "High-growth SaaS vendors selling subscriptions",
+        "location": "United States",
+        "description": "GT M teams 10-60 staff. Deal sizes $20K-$200K annually. Sales cycles 1-4 months. Stakeholders 3-5 including product, finance, and sales ops."
+      },
+      {
+        "persona_name": "Global Marketplace - Platform Ops",
+        "tier": "tier_2",
+        "target_decision_makers": [
+          "COO",
+          "Director Sales Operations",
+          "VP Revenue Operations",
+          "Director Sales",
+          "VP Sales",
+          "VP Distribution",
+          "VP Sales Enablement",
+          "Director Sales Enablement",
+          "Director Marketing",
+          "VP Marketing"
+        ],
+        "industry": "Marketplaces & Platforms",
+        "company_size_range": "200-2000 employees",
+        "company_type": "Multi-sided marketplaces with seller onboarding and payouts",
+        "location": "Multi-country",
+        "description": "Operations teams 30-150 staff. Deal sizes $100K-$1.5M annually. Sales cycles 3-9 months. Stakeholders 4-7 covering ops, compliance, and finance."
+      },
+      {
+        "persona_name": "Healthcare Revenue Cycle - US Regional",
+        "tier": "tier_3",
+        "target_decision_makers": [
+          "CAO",
+          "VP Revenue Cycle",
+          "Director Revenue Cycle",
+          "COO",
+          "Director Sales Operations",
+          "VP Sales Enablement",
+          "Director Sales"
+        ],
+        "industry": "Healthcare Providers",
+        "company_size_range": "50-500 employees",
+        "company_type": "Regional healthcare systems and clinics",
+        "location": "United States",
+        "description": "Revenue cycle teams 20-100 staff. Deal sizes $50K-$500K annually. Sales cycles 3-6 months. Stakeholders 4-6 across revenue, compliance, and IT."
+      }
+    ],
+    "personas_with_mappings": [
+      {
+        "persona_name": "US Midmarket Fintech - Revenue Leaders",
+        "mappings": [
+          {
+            "pain_point": "Multiple payment partners fragment reconciliation and increase ops time by 20-30%.",
+            "value_proposition": "Payments unifies processing and reporting, reducing reconciliation time by up to 40% and consolidating payouts into one ledger."
+          },
+          {
+            "pain_point": "High false declines and fraud investigations reduce conversion and growth.",
+            "value_proposition": "Radar reduces fraud losses while improving approvals; customers see up to a 10-15% lift in authorization rates using Radar alongside Payments."
+          },
+          {
+            "pain_point": "Scaling embedded finance requires banking primitives without long bank contracts.",
+            "value_proposition": "Treasury and Issuing enable fintechs to offer accounts and cards quickly; reduces time-to-market by months and lowers integration costs 30%."
+          },
+          {
+            "pain_point": "Billing complexity for mixed subscription and usage pricing causes revenue leakage.",
+            "value_proposition": "Billing automates metering and invoicing; customers often cut billing disputes and manual adjustments by 50% and accelerate cash collection."
+          },
+          {
+            "pain_point": "Lack of visibility into payments data slows strategic pricing and ops decisions.",
+            "value_proposition": "Sigma provides SQL-driven reports on Stripe data, trimming reporting cycles by 60% and surfacing revenue trends within days instead of weeks."
+          }
+        ]
+      },
+      {
+        "persona_name": "EU Enterprise Retail - Payments Ops",
+        "mappings": [
+          {
+            "pain_point": "Local payment methods and cross-border taxes lower conversions in key EU markets.",
+            "value_proposition": "Checkout plus Payments supports local methods and multi-currency flows, increasing regional conversion by 8-20% and simplifying tax handling."
+          },
+          {
+            "pain_point": "Chargebacks and fraud spikes during peak seasons strain risk teams.",
+            "value_proposition": "Radar's ML models and rules reduce chargebacks and manual reviews, cutting fraud-related costs by up to 30% during high volume."
+          },
+          {
+            "pain_point": "Reconciling in-store and online sales creates reporting mismatches.",
+            "value_proposition": "Terminal integrates in-person payments with Payments and Sigma, centralizing reporting and reducing reconciliation mismatches by 70%."
+          },
+          {
+            "pain_point": "Global VAT and tax compliance adds operational overhead and audit risk.",
+            "value_proposition": "Tax automates calculation and reporting across jurisdictions, decreasing tax processing time by 50% and lowering audit exposure."
+          },
+          {
+            "pain_point": "Onboarding marketplace sellers across countries is slow and compliance-heavy.",
+            "value_proposition": "Connect combined with Identity speeds onboarding and KYC, cutting seller activation time by 40% and reducing manual compliance checks."
+          }
+        ]
+      },
+      {
+        "persona_name": "US SMB SaaS - Product & Finance",
+        "mappings": [
+          {
+            "pain_point": "Manual invoicing and dunning consumes finance team time and delays payments.",
+            "value_proposition": "Invoicing and Billing automate bill delivery and dunning, improving collections and reducing DSO by up to 20%."
+          },
+          {
+            "pain_point": "Subscription plan changes and usage billing cause revenue recognition headaches.",
+            "value_proposition": "Billing's metered and usage features automate complex billing scenarios and integrate with revenue workflows to reduce errors by 60%."
+          },
+          {
+            "pain_point": "Limited dev resources slow checkout launches and conversion testing.",
+            "value_proposition": "Checkout and Elements let product teams deploy secure payment forms quickly, cutting dev time by weeks and improving checkout conversion."
+          },
+          {
+            "pain_point": "Lack of analytics hampers pricing experiments and churn reduction.",
+            "value_proposition": "Sigma exposes customer and revenue cohorts in SQL, enabling pricing tests and churn reduction initiatives with 30-40% faster insight cycles."
+          },
+          {
+            "pain_point": "Fear of PCI and compliance prevents adding new payment methods.",
+            "value_proposition": "Elements and Payments minimize PCI scope and enable rapid addition of methods, lowering compliance overhead and accelerating launches."
+          }
+        ]
+      },
+      {
+        "persona_name": "Global Marketplace - Platform Ops",
+        "mappings": [
+          {
+            "pain_point": "Complex payout splits and tax reporting across sellers increase manual workload.",
+            "value_proposition": "Connect automates split payouts and tax collection for platforms, reducing manual payout reconciliations by up to 70%."
+          },
+          {
+            "pain_point": "Onboarding sellers across regions is delayed by KYC and identity verification.",
+            "value_proposition": "Identity plus Connect streamlines KYC, cutting onboarding time by ~40% and reducing failed verifications."
+          },
+          {
+            "pain_point": "Holding funds for marketplace flows requires banking partnerships and compliance.",
+            "value_proposition": "Treasury provides programmable accounts and cash movement without building bank integrations, saving months of development and reducing partner fees."
+          },
+          {
+            "pain_point": "Disputes and chargebacks from third-party sellers cause ops overhead.",
+            "value_proposition": "Radar and platform dispute tools centralize risk controls for marketplaces, lowering chargeback processing time by 50% and fraud expenses."
+          },
+          {
+            "pain_point": "Integrations with accounting and ERPs are brittle and slow down reporting.",
+            "value_proposition": "Apps & App Marketplace offers ready connectors to major ERPs, accelerating reconciliations and reducing custom integration costs by 60%."
+          }
+        ]
+      },
+      {
+        "persona_name": "Healthcare Revenue Cycle - US Regional",
+        "mappings": [
+          {
+            "pain_point": "Patient payments and insurance collections create fragmented receivables and longer DSO.",
+            "value_proposition": "Invoicing and Payments centralize patient collections and payment links, shortening DSO by up to 25% and simplifying patient payments."
+          },
+          {
+            "pain_point": "Strict KYC and identity requirements for financial transactions increase onboarding time.",
+            "value_proposition": "Identity reduces verification friction for patients and payers, accelerating onboarding while meeting compliance standards."
+          },
+          {
+            "pain_point": "Manual reconciliation between patient billing systems and bank statements is error-prone.",
+            "value_proposition": "Sigma and Payments deliver consolidated reporting and automated reconciliation, cutting reconciliation time by 60%."
+          },
+          {
+            "pain_point": "Healthcare providers need PCI-compliant payment options for call centers and portals.",
+            "value_proposition": "Checkout and Elements provide secure, PCI-reducing payment forms for portals and call centers, lowering compliance burden and time to deploy."
+          },
+          {
+            "pain_point": "Tax and regulatory rules for self-pay patients across states create complexity.",
+            "value_proposition": "Tax automates multi-state tax calculations and reporting, reducing compliance effort and audit risk for revenue cycle teams."
+          }
+        ]
+      }
+    ],
+    "sequences": [
+      {
+        "name": "Midmarket Fintech - Executive Outreach",
+        "persona_name": "US Midmarket Fintech - Revenue Leaders",
+        "objective": "Position Payments + Radar + Treasury to consolidate payments, reduce fraud, and enable embedded finance.",
+        "total_touches": 6,
+        "duration_days": 15,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce consolidation pain and ROI",
+            "subject_line": "Reduce reconciliation time 40% with a single stack",
+            "content_suggestion": "Hi {{first_name}}, many fintech revenue leaders I speak with juggle multiple payment partners and spend 20-30% of ops time on reconciliation. Stripe Payments + Sigma can consolidate reporting and cut reconciliation by ~40%. Can we explore a short call?",
+            "hints": "Reference a recent funding round or product launch to show relevance."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Social touch referencing fraud/authorization gains",
+            "subject_line": "Quick note on fraud & authorization lifts",
+            "content_suggestion": "Hi {{first_name}}, saw your work on scaling payments. Radar + Payments often lifts auth rates 10-15% while reducing fraud ops. Happy to share a short case study if you're interested.",
+            "hints": "Mention a relevant customer or public metric (e.g., authorization improvements)."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Share a concrete savings example and CTA",
+            "subject_line": "How to embed banking without new bank contracts",
+            "content_suggestion": "Hi {{first_name}}, fintech peers use Treasury + Issuing to launch account and card programs months faster, cutting integration costs ~30%. If reducing time-to-market for embedded finance is on your roadmap, can we set 20 minutes?",
+            "hints": "Attach a one-pager about Treasury use cases for fintech platforms."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "linkedin",
+            "timing_days": 9,
+            "objective": "Nudge and offer resource",
+            "subject_line": "Case study: fintech authorization + embedded cards",
+            "content_suggestion": "Following up — I can share a short case study where a peer reduced manual reconciliation and increased auths using Radar and Payments. Interested?",
+            "hints": "Tag a mutual connection or shared group to increase response."
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "email",
+            "timing_days": 12,
+            "objective": "Final value push before phone",
+            "subject_line": "15-minute review on payments consolidation?",
+            "content_suggestion": "Hi {{first_name}}, last note — teams typically see 30-50% faster reconciliations and measurable auth uplifts after adopting Stripe. Are you available for 15 minutes next week to review specific ROI for {{company}}?",
+            "hints": "Include proposed meeting times and a succinct ROI snapshot."
+          },
+          {
+            "sort_order": 6,
+            "touch_type": "phone",
+            "timing_days": 15,
+            "objective": "Direct ask for meeting",
+            "subject_line": null,
+            "content_suggestion": "Voicemail script: Hi {{first_name}}, this is [Your name] from Stripe. I emailed about consolidating payments and reducing fraud ops. I’d love 15 minutes to show how peers cut reconciliation time ~40%. Is Thursday morning possible?",
+            "hints": "If voicemail, reference exact email subject and offer two time slots."
+          }
+        ]
+      },
+      {
+        "name": "EU Enterprise Retail - Payments Ops Sequence",
+        "persona_name": "EU Enterprise Retail - Payments Ops",
+        "objective": "Showcase Checkout + Radar + Tax + Terminal to improve conversion, reduce fraud, and centralize reporting across channels.",
+        "total_touches": 6,
+        "duration_days": 15,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Open with conversion and local payment pain",
+            "subject_line": "Increase EU checkout conversion 8-20%",
+            "content_suggestion": "Hi {{first_name}}, many EU retailers lose conversions from missing local methods and VAT complexity. Stripe Checkout + Tax supports local payment methods and tax calc, often improving regional conversion 8-20%. Can we discuss your EU roadmap?",
+            "hints": "Personalize with the country where they expanded or top SKU markets."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Share fraud-control angle",
+            "subject_line": "Reduce peak-season fraud & manual reviews",
+            "content_suggestion": "Hi {{first_name}}, retailers often see fraud spikes seasonally. Radar's ML helps reduce manual reviews and chargebacks — worth a quick chat?",
+            "hints": "Reference last quarter's seasonality or a public market expansion."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Demonstrate omnichannel reconciliation benefits",
+            "subject_line": "Unify in-store and online reporting",
+            "content_suggestion": "We help teams centralize Terminal and Payments data with Sigma, cutting reconciliation mismatches by ~70%. If recon is taking days each period, a short review could help.",
+            "hints": "Attach a screenshot sample of consolidated reporting or a one-page summary."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "linkedin",
+            "timing_days": 9,
+            "objective": "Prompt for meeting with peer example",
+            "subject_line": "Retail case: tax automation + higher approval rates",
+            "content_suggestion": "Quick share — a retailer integrated Checkout + Tax and saw faster settlements and higher approvals. Could I send a 2-page case study relevant to {{country}}?",
+            "hints": "Mention a relevant regional retailer or marketplace as context."
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "email",
+            "timing_days": 12,
+            "objective": "Final email with meeting ask",
+            "subject_line": "15 mins to review your payments stack?",
+            "content_suggestion": "Hi {{first_name}}, would you be open to 15 minutes to review how Checkout, Radar, Terminal and Tax could improve conversion and reduce fraud costs for {{company}} next quarter?",
+            "hints": "Include bespoke benefit numbers tied to their market or a competitor benchmark."
+          },
+          {
+            "sort_order": 6,
+            "touch_type": "phone",
+            "timing_days": 15,
+            "objective": "Direct outreach and meeting close",
+            "subject_line": null,
+            "content_suggestion": "Voicemail: Hi {{first_name}}, [Name] from Stripe — I sent details on Checkout and Tax. We’ve seen 8-20% conversion lifts in EU markets. Quick 15-minute slot to see if there’s fit?",
+            "hints": "If no answer, leave two specific time suggestions and reference which email was sent."
+          }
+        ]
+      },
+      {
+        "name": "SMB SaaS - Product & Finance Cadence",
+        "persona_name": "US SMB SaaS - Product & Finance",
+        "objective": "Promote Billing, Checkout, Invoicing and Sigma to reduce DSO and enable pricing experiments.",
+        "total_touches": 5,
+        "duration_days": 12,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce billing pain and quick wins",
+            "subject_line": "Cut DSO and billing overhead by 20%",
+            "content_suggestion": "Hi {{first_name}}, small SaaS finance teams often lose time on manual invoicing and dunning. Stripe Billing + Invoicing can automate collections and reduce DSO by ~20%. Interested in a 20-minute walkthrough?",
+            "hints": "Reference their current pricing model or a recent product update."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Product team angle on launch speed",
+            "subject_line": "Launch checkout faster with less dev time",
+            "content_suggestion": "Hi {{first_name}}, Checkout + Elements help product teams ship secure payment forms fast — ideal for A/B pricing tests. Happy to share a quick implementation checklist.",
+            "hints": "Mention a public blog post or changelog item they may have published."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Share analytics and experimentation value",
+            "subject_line": "Run pricing tests with fast analytics",
+            "content_suggestion": "Billing combined with Sigma reduces the time to analyze pricing experiments by ~30-40%. If improving retention or trial conversion is a priority, let's review a quick plan.",
+            "hints": "Include a short sample SQL or a link to a demo dashboard."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "linkedin",
+            "timing_days": 9,
+            "objective": "Social proof and nudge",
+            "subject_line": "Customer example: faster pricing iterations",
+            "content_suggestion": "Following up — I can share a short case where a SaaS peer reduced billing ops and accelerated pricing tests. Want the 2-page brief?",
+            "hints": "Name a similar-sized company or vertical where possible."
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "phone",
+            "timing_days": 12,
+            "objective": "Close for meeting",
+            "subject_line": null,
+            "content_suggestion": "Voicemail: Hi {{first_name}}, this is [Your name] at Stripe — I emailed about cutting DSO and speeding checkout launches. Would 15 minutes next week work to map solution to {{company}}?",
+            "hints": "Offer two time slots and reference the exact email subject line."
+          }
+        ]
+      },
+      {
+        "name": "Marketplace Ops - Platform Efficiency Play",
+        "persona_name": "Global Marketplace - Platform Ops",
+        "objective": "Highlight Connect, Treasury, Identity and Apps to speed seller onboarding, payouts, and compliance.",
+        "total_touches": 5,
+        "duration_days": 12,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Open with onboarding and payout pain",
+            "subject_line": "Speed seller onboarding 40% and simplify payouts",
+            "content_suggestion": "Hi {{first_name}}, marketplaces often spend weeks on onboarding and payout reconciliation. Connect + Identity + Treasury can cut onboarding time ~40% and automate split payouts. Can we review your current flow?",
+            "hints": "Reference number of active sellers or a recent marketplace expansion if public."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Social proof on compliance and KYC",
+            "subject_line": "Streamline KYC across markets",
+            "content_suggestion": "Hi {{first_name}}, Identity + Connect reduces manual KYC checks and false rejections; many platforms see activation rates improve. Happy to share a brief case study.",
+            "hints": "Mention a regulatory market they operate in to show awareness."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Technical/ops benefits and integrations",
+            "subject_line": "Integrate payouts with your ERP quickly",
+            "content_suggestion": "Apps & App Marketplace provides connectors to ERPs and accounting tools, reducing custom integration effort by ~60%. If faster reconciliations matter, let's align calendars.",
+            "hints": "Offer a short technical architecture diagram for their team."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "linkedin",
+            "timing_days": 9,
+            "objective": "Nudge to schedule a demo",
+            "subject_line": "15-min demo of Connect flows?",
+            "content_suggestion": "Quick follow-up — can I show a 15-minute demo of Connect + Treasury flows tailored to marketplaces? It highlights onboarding, payouts, and KYC automation.",
+            "hints": "Tag a platform engineering or ops leader to increase relevancy."
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "phone",
+            "timing_days": 12,
+            "objective": "Direct ask for meeting",
+            "subject_line": null,
+            "content_suggestion": "Voicemail: Hi {{first_name}}, [Your name] from Stripe — I sent details on Connect and Treasury for marketplaces. We’ve helped platforms cut onboarding time ~40%. Quick 15-minute call to explore?",
+            "hints": "If voicemail, mention the specific benefit (40% faster onboarding) and propose two times."
+          }
+        ]
+      },
+      {
+        "name": "Healthcare Revenue Cycle - Compliance & Collections",
+        "persona_name": "Healthcare Revenue Cycle - US Regional",
+        "objective": "Demonstrate Invoicing, Payments, Identity, and Sigma to improve patient collections, compliance, and reconciliation.",
+        "total_touches": 5,
+        "duration_days": 10,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Surface patient payment and DSO pain",
+            "subject_line": "Shorten DSO and simplify patient payments",
+            "content_suggestion": "Hi {{first_name}}, many revenue cycle teams struggle with fragmented patient billing. Stripe Payments + Invoicing and Payment Links can centralize collections and shorten DSO by ~20-25%. Can we schedule 15 minutes?",
+            "hints": "Reference their region's payer mix or a public quality metric."
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 2,
+            "objective": "Support compliance/KYC message",
+            "subject_line": "Faster verifications with Identity",
+            "content_suggestion": "Hi {{first_name}}, Identity helps reduce verification friction while meeting compliance for financial transactions — it’s been useful for patient portals and payer onboarding.",
+            "hints": "Mention recent regulatory updates in their state if applicable."
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 5,
+            "objective": "Data-driven reconciliation benefit",
+            "subject_line": "Automate reconciliation and reporting",
+            "content_suggestion": "Using Payments + Sigma, teams consolidate receipts and cut reconciliation time ~60%, freeing staff for patient outreach. Would a short demo of a reconciliation dashboard help?",
+            "hints": "Attach a sample reconciliation dashboard image or PDF."
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "linkedin",
+            "timing_days": 8,
+            "objective": "Share a relevant case study and nudge",
+            "subject_line": "Case study: patient collections improved",
+            "content_suggestion": "Following up — I can share a brief case where a regional provider reduced manual billing work and improved patient collections using Stripe. Interested?",
+            "hints": "If available, reference a similar-sized provider to build trust."
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "phone",
+            "timing_days": 10,
+            "objective": "Direct meeting request",
+            "subject_line": null,
+            "content_suggestion": "Voicemail: Hi {{first_name}}, [Name] at Stripe — I emailed about improving collections and compliance with Invoicing and Identity. Could we schedule 15 minutes next week to discuss specifics for {{organization}}?",
+            "hints": "Offer two precise time options and reference the original email subject."
+          }
+        ]
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07"
+  }
+}

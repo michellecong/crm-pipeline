@@ -1,0 +1,42 @@
+{
+  "company_name": "hubspot",
+  "generator_type": "products",
+  "generated_at": "2025-11-14T14:08:32.737565",
+  "result": {
+    "products": [
+      {
+        "product_name": "Smart CRM",
+        "description": "Centralized CRM platform that organizes contacts, deals, and company interactions. Helps sales and marketing teams track relationships and automate routine tasks. Improves pipeline visibility and aligns teams to drive predictable growth."
+      },
+      {
+        "product_name": "Marketing Hub",
+        "description": "Marketing automation platform for creating campaigns, capturing leads, and measuring performance. Helps marketing teams deliver personalized messages across email, web, and social to generate qualified demand. Increases ROI with built-in analytics and optimization."
+      },
+      {
+        "product_name": "Sales Hub",
+        "description": "Sales productivity suite that automates outreach, tracks deals, and supports forecasting. Helps sales reps prioritize prospects, shorten sales cycles, and close more business. Boosts team efficiency with pipeline visibility and sales automation."
+      },
+      {
+        "product_name": "Service Hub",
+        "description": "Customer service platform that centralizes tickets, knowledge, and customer feedback. Helps support teams resolve issues faster and deliver consistent experiences across channels. Improves retention with self-service tools and actionable performance insights."
+      },
+      {
+        "product_name": "Content Hub",
+        "description": "Website and content management platform for building pages, blogs, and landing pages. Helps marketing and web teams create on-brand experiences that convert visitors without heavy developer dependence. Optimizes content for SEO and personalization."
+      },
+      {
+        "product_name": "Data Hub",
+        "description": "Data management platform that centralizes and syncs customer data across systems. Helps operations and analytics teams clean, connect, and govern data for reliable reporting and automation. Reduces silos to improve decision-making and operational efficiency."
+      },
+      {
+        "product_name": "Commerce Hub",
+        "description": "E-commerce platform to manage storefronts, orders, and customer buying experiences. Helps retailers and brands create unified journeys that boost conversions and repeat purchases. Integrates commerce data with CRM for personalized shopping experiences."
+      },
+      {
+        "product_name": "Breeze",
+        "description": "AI toolkit that automates content creation, summarization, and routine workflows across the platform. Helps marketing, sales, and service teams speed work, generate ideas, and personalize communications. Scales AI assistance to improve productivity securely."
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07"
+  }
+}

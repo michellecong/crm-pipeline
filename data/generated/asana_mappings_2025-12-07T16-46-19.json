@@ -1,0 +1,95 @@
+{
+  "company_name": "Asana",
+  "generator_type": "mappings",
+  "generated_at": "2025-12-07T16:46:19.803244",
+  "result": {
+    "personas_with_mappings": [
+      {
+        "persona_name": "United States Enterprise SaaS - Product Leaders",
+        "mappings": [
+          {
+            "pain_point": "Product leaders at enterprise SaaS companies struggle to coordinate cross-functional releases, causing delayed launches and lost revenue.",
+            "value_proposition": "Asana Work Management centralizes release plans and dependency tracking across teams, reducing cross-team coordination time by up to 40% and accelerating time-to-market."
+          },
+          {
+            "pain_point": "PMOs lack visibility into feature dependencies and technical debt, causing scope creep and unexpected engineering effort.",
+            "value_proposition": "Asana Work Management maps dependencies and surfaces technical debt in a single roadmap, improving estimate accuracy and cutting scope surprises by ~30%."
+          },
+          {
+            "pain_point": "Individual product managers waste hours reconciling status across spreadsheets and chat, reducing strategic work and slowing feature delivery.",
+            "value_proposition": "Asana Work Management consolidates status, automates updates and frees 5+ hours/week per PM for roadmap and strategy work."
+          },
+          {
+            "pain_point": "Cross-functional handoffs between product and engineering result in rework and quality issues, raising defect rates and support costs.",
+            "value_proposition": "Asana Work Management standardizes handoff workflows and integrates with engineering tools to reduce rework and lower defect rates by up to 25%."
+          },
+          {
+            "pain_point": "Senior leaders can't aggregate portfolio health across 50–200 PMs, causing missed targets and poor resource prioritization.",
+            "value_proposition": "Asana Work Management provides real-time portfolio dashboards and roll-up metrics to improve release predictability and forecast accuracy by ~30%."
+          },
+          {
+            "pain_point": "Scaling product orgs struggle to enforce consistent processes across distributed PM teams, creating onboarding bottlenecks and uneven delivery.",
+            "value_proposition": "Asana Work Management scales templates and governance across teams, cutting onboarding time by ~50% and enforcing consistent delivery practices."
+          }
+        ]
+      },
+      {
+        "persona_name": "United Kingdom Mid-Market Marketing - Campaign Leads",
+        "mappings": [
+          {
+            "pain_point": "Campaign leads at UK mid-market agencies juggle multiple client campaigns with manual task lists, causing missed deadlines and cost overruns.",
+            "value_proposition": "Asana Work Management centralizes campaign tasks, timelines and briefs so teams deliver on time, reducing missed deadlines by ~35% and lowering delivery costs."
+          },
+          {
+            "pain_point": "Approval bottlenecks from clients and internal stakeholders extend campaign timelines and increase unpaid revision work.",
+            "value_proposition": "Asana Work Management automates approval flows and version tracking, cutting approval cycles by up to 50% and reducing revision churn."
+          },
+          {
+            "pain_point": "Creative teams lose time searching files and reworking assets due to poor version control, decreasing billable hours.",
+            "value_proposition": "Asana Work Management integrates with Figma and Drive to centralize assets, improve version control and free ~8+ billable hours per creative per week."
+          },
+          {
+            "pain_point": "Resource managers can't allocate designers and producers across 10–60 staff efficiently, leading to overbooking and late deliveries.",
+            "value_proposition": "Asana Work Management's workload views balance assignments across teams, reducing overbooking incidents by ~60% and improving on-time delivery."
+          },
+          {
+            "pain_point": "Agencies struggle to demonstrate campaign ROI to UK clients, weakening renewals and upsell conversations.",
+            "value_proposition": "Asana Work Management consolidates campaign metrics and client-ready reports, improving renewal conversations and increasing upsell win-rates by ~20%."
+          }
+        ]
+      },
+      {
+        "persona_name": "US Federal Large Public Sector - Program Leads",
+        "mappings": [
+          {
+            "pain_point": "Program leads in federal agencies lack auditable, centralized records of decisions and task histories, risking non-compliance during inspections.",
+            "value_proposition": "Asana Work Management creates centralized task histories and permissioned logs to support audits, ensuring traceability for 100% of program actions."
+          },
+          {
+            "pain_point": "Large multi-year modernization programs suffer schedule slippage due to siloed workstreams, risking funding and citizen-service delays.",
+            "value_proposition": "Asana Work Management aligns portfolios, enforces milestone cadence and highlights risks across workstreams, reducing schedule slippage by up to 30%."
+          },
+          {
+            "pain_point": "PMOs spend weeks assembling status reports for oversight bodies, diverting staff from delivery and increasing operational cost.",
+            "value_proposition": "Asana Work Management automates roll-up reporting and exports for oversight, cutting reporting time by up to 70% and freeing program staff for delivery."
+          },
+          {
+            "pain_point": "Inter-agency coordination is impeded by inconsistent processes and manual handoffs, increasing contract and vendor management risk.",
+            "value_proposition": "Asana Work Management standardizes cross-agency intake and vendor workflows, reducing coordination overhead by ~40% and lowering vendor disputes."
+          },
+          {
+            "pain_point": "Security and access controls across 100–500 staff are complex, increasing risk of unauthorized data exposure and compliance gaps.",
+            "value_proposition": "Asana Work Management enforces enterprise access controls, SSO and admin policies to reduce administrative access errors by ~80% and support federal governance."
+          }
+        ]
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07",
+    "usage": {
+      "prompt_tokens": 2389,
+      "completion_tokens": 2835,
+      "total_tokens": 5224
+    },
+    "generation_time_seconds": 31.794419050216675
+  }
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-测试完整的CRM Pipeline流程：从抓取数据到生成内容
+Test complete CRM Pipeline flow: from data scraping to content generation
 """
 import asyncio
 import json
@@ -8,7 +8,7 @@ import sys
 import os
 from pathlib import Path
 
-# 添加项目根目录到Python路径
+# Add project root to Python path
 sys.path.append(str(Path(__file__).parent))
 
 from app.controllers.scraping_controller import get_scraping_controller
@@ -17,189 +17,189 @@ from app.services.generator_service import get_generator_service
 from app.services.data_store import get_data_store
 import logging
 
-# 配置日志
+# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
 async def test_full_pipeline():
-    """测试完整的CRM Pipeline流程"""
+    """Test complete CRM Pipeline flow"""
     
-    print("🚀 开始测试完整的CRM Pipeline流程")
+    print("🚀 Starting complete CRM Pipeline flow test")
     print("=" * 60)
     
     # Test company
     company_name = "Tesla"
     
     try:
-        # Step 1: 抓取数据
-        print(f"\n📡 Step 1: 抓取 {company_name} 的数据...")
+        # Step 1: Scrape data
+        print(f"\n📡 Step 1: Scraping data for {company_name}...")
         controller = get_scraping_controller()
         
         scrape_result = await controller.scrape_company(
             company_name=company_name,
             include_news=True,
             include_case_studies=True,
-            max_urls=5,  # 限制URL数量以加快测试
-            save_to_file=True  # 保存到文件
+            max_urls=5,  # Limit URLs to speed up test
+            save_to_file=True  # Save to file
         )
         
-        print(f"✅ 抓取完成!")
-        print(f"   - 找到URL数量: {scrape_result['total_urls_found']}")
-        print(f"   - 成功抓取: {scrape_result['successful_scrapes']}")
-        print(f"   - 保存文件: {scrape_result.get('saved_filepath', 'N/A')}")
+        print(f"✅ Scraping completed!")
+        print(f"   - URLs found: {scrape_result['total_urls_found']}")
+        print(f"   - Successfully scraped: {scrape_result['successful_scrapes']}")
+        print(f"   - Saved file: {scrape_result.get('saved_filepath', 'N/A')}")
         
-        # 显示内容处理统计
+        # Show content processing statistics
         content_processing = scrape_result.get('content_processing', {})
-        print(f"   - 处理的内容项: {content_processing.get('processed_items', 0)}/{content_processing.get('total_items', 0)}")
+        print(f"   - Processed items: {content_processing.get('processed_items', 0)}/{content_processing.get('total_items', 0)}")
         
-        # Step 2: 验证保存的数据
-        print(f"\n💾 Step 2: 验证保存的数据...")
+        # Step 2: Verify saved data
+        print(f"\n💾 Step 2: Verifying saved data...")
         data_store = get_data_store()
         saved_data = data_store.load_latest_scraped_data(company_name)
         
         if saved_data:
-            print(f"✅ 成功加载保存的数据")
-            print(f"   - 公司名称: {saved_data['company_name']}")
-            print(f"   - 官方网站: {saved_data.get('official_website', 'N/A')}")
-            print(f"   - 内容项数量: {len(saved_data.get('scraped_content', []))}")
+            print(f"✅ Successfully loaded saved data")
+            print(f"   - Company name: {saved_data['company_name']}")
+            print(f"   - Official website: {saved_data.get('official_website', 'N/A')}")
+            print(f"   - Content items: {len(saved_data.get('scraped_content', []))}")
             
-            # 检查是否有处理后的数据
+            # Check if there's processed data
             processed_items = [item for item in saved_data.get('scraped_content', []) 
                              if 'processed_markdown' in item]
-            print(f"   - 已处理的内容项: {len(processed_items)}")
+            print(f"   - Processed items: {len(processed_items)}")
             
-            # 显示第一个内容项的统计
+            # Show statistics for first content item
             if processed_items:
                 first_item = processed_items[0]
-                print(f"   - 第一个内容项:")
+                print(f"   - First content item:")
                 print(f"     URL: {first_item.get('url', 'N/A')}")
-                print(f"     类型: {first_item.get('content_type', 'N/A')}")
-                print(f"     原始长度: {first_item.get('original_markdown_length', 0)}")
-                print(f"     处理后长度: {first_item.get('processed_markdown_length', 0)}")
-                print(f"     压缩比例: {first_item.get('compression_ratio', 0):.2f}")
+                print(f"     Type: {first_item.get('content_type', 'N/A')}")
+                print(f"     Original length: {first_item.get('original_markdown_length', 0)}")
+                print(f"     Processed length: {first_item.get('processed_markdown_length', 0)}")
+                print(f"     Compression ratio: {first_item.get('compression_ratio', 0):.2f}")
         else:
-            print("❌ 无法加载保存的数据")
+            print("❌ Unable to load saved data")
             return
         
-        # Step 3: 准备上下文
-        print(f"\n🔧 Step 3: 准备生成上下文...")
+        # Step 3: Prepare context
+        print(f"\n🔧 Step 3: Preparing generation context...")
         data_aggregator = get_data_aggregator()
         
         context = await data_aggregator.prepare_context(
             company_name=company_name,
-            max_chars=8000,  # 限制上下文长度
+            max_chars=8000,  # Limit context length
             include_news=True,
             include_case_studies=True,
             max_urls=5
         )
         
-        print(f"✅ 上下文准备完成!")
-        print(f"   - 上下文长度: {len(context)} 字符")
-        print(f"   - 上下文预览: {context[:200]}...")
+        print(f"✅ Context preparation completed!")
+        print(f"   - Context length: {len(context)} characters")
+        print(f"   - Context preview: {context[:200]}...")
         
-        # Step 4: 生成内容
-        print(f"\n🎯 Step 4: 生成Persona内容...")
+        # Step 4: Generate content
+        print(f"\n🎯 Step 4: Generating Persona content...")
         generator_service = get_generator_service()
         
         generation_result = await generator_service.generate(
             generator_type="personas",
             company_name=company_name,
-            generate_count=2,  # 生成2个persona
+            generate_count=2,  # Generate 2 personas
             max_context_chars=8000,
             include_news=True,
             include_case_studies=True,
             max_urls=5
         )
         
-        print(f"✅ 内容生成完成!")
-        print(f"   - 生成结果: {generation_result.get('success', False)}")
+        print(f"✅ Content generation completed!")
+        print(f"   - Generation result: {generation_result.get('success', False)}")
         
         if generation_result.get('success'):
             result_data = generation_result.get('result', {})
             personas = result_data.get('personas', [])
-            print(f"   - 生成的Persona数量: {len(personas)}")
-            print(f"   - 保存文件: {generation_result.get('saved_filepath', 'N/A')}")
+            print(f"   - Generated personas: {len(personas)}")
+            print(f"   - Saved file: {generation_result.get('saved_filepath', 'N/A')}")
             
-            # 显示第一个persona的概要
+            # Show summary of first persona
             if personas:
                 first_persona = personas[0]
-                print(f"   - 第一个Persona:")
-                print(f"     名称: {first_persona.get('name', 'N/A')}")
-                print(f"     职位: {first_persona.get('title', 'N/A')}")
-                print(f"     层级: {first_persona.get('tier', 'N/A')}")
-                print(f"     痛点: {first_persona.get('pain_points', [])[:2]}...")  # 只显示前2个
+                print(f"   - First Persona:")
+                print(f"     Name: {first_persona.get('name', 'N/A')}")
+                print(f"     Title: {first_persona.get('title', 'N/A')}")
+                print(f"     Tier: {first_persona.get('tier', 'N/A')}")
+                print(f"     Pain points: {first_persona.get('pain_points', [])[:2]}...")  # Show first 2 only
         
-        # Step 5: 显示完整流程总结
-        print(f"\n📊 Step 5: 流程总结")
+        # Step 5: Show complete flow summary
+        print(f"\n📊 Step 5: Flow Summary")
         print("=" * 60)
-        print(f"✅ 完整流程测试成功!")
-        print(f"   - 公司: {company_name}")
-        print(f"   - 抓取URL: {scrape_result['total_urls_found']}")
-        print(f"   - 成功抓取: {scrape_result['successful_scrapes']}")
-        print(f"   - 内容处理: {content_processing.get('processed_items', 0)} 项")
-        print(f"   - 上下文长度: {len(context)} 字符")
-        print(f"   - 生成Persona: {len(personas) if generation_result.get('success') else 0} 个")
-        print(f"   - 保存文件: {scrape_result.get('saved_filepath', 'N/A')}")
+        print(f"✅ Complete flow test successful!")
+        print(f"   - Company: {company_name}")
+        print(f"   - URLs scraped: {scrape_result['total_urls_found']}")
+        print(f"   - Successfully scraped: {scrape_result['successful_scrapes']}")
+        print(f"   - Content processing: {content_processing.get('processed_items', 0)} items")
+        print(f"   - Context length: {len(context)} characters")
+        print(f"   - Generated personas: {len(personas) if generation_result.get('success') else 0}")
+        print(f"   - Saved file: {scrape_result.get('saved_filepath', 'N/A')}")
         
         return True
         
     except Exception as e:
-        print(f"❌ 测试失败: {str(e)}")
+        print(f"❌ Test failed: {str(e)}")
         logger.exception("Full pipeline test failed")
         return False
 
 
 async def test_data_flow():
-    """测试数据流"""
-    print(f"\n🔍 测试数据流...")
+    """Test data flow"""
+    print(f"\n🔍 Testing data flow...")
     
     company_name = "Tesla"
     data_store = get_data_store()
     
-    # 检查是否有保存的数据
+    # Check if saved data exists
     saved_data = data_store.load_latest_scraped_data(company_name)
     if not saved_data:
-        print("❌ 没有找到保存的数据，请先运行抓取测试")
+        print("❌ No saved data found, please run scraping test first")
         return False
     
-    print(f"✅ 找到保存的数据")
+    print(f"✅ Found saved data")
     
-    # 检查数据结构
+    # Check data structure
     scraped_content = saved_data.get('scraped_content', [])
     processed_items = [item for item in scraped_content if 'processed_markdown' in item]
     
-    print(f"   - 总内容项: {len(scraped_content)}")
-    print(f"   - 已处理项: {len(processed_items)}")
+    print(f"   - Total content items: {len(scraped_content)}")
+    print(f"   - Processed items: {len(processed_items)}")
     
-    # 显示处理统计
+    # Show processing statistics
     if processed_items:
         total_original = sum(item.get('original_markdown_length', 0) for item in processed_items)
         total_processed = sum(item.get('processed_markdown_length', 0) for item in processed_items)
         avg_compression = total_processed / total_original if total_original > 0 else 0
         
-        print(f"   - 原始总长度: {total_original}")
-        print(f"   - 处理后总长度: {total_processed}")
-        print(f"   - 平均压缩比例: {avg_compression:.2f}")
+        print(f"   - Total original length: {total_original}")
+        print(f"   - Total processed length: {total_processed}")
+        print(f"   - Average compression ratio: {avg_compression:.2f}")
     
     return True
 
 
 if __name__ == "__main__":
-    print("🧪 CRM Pipeline 完整流程测试")
+    print("🧪 CRM Pipeline Complete Flow Test")
     print("=" * 60)
     
     async def main():
-        # 测试完整流程
+        # Test complete flow
         success = await test_full_pipeline()
         
         if success:
-            # 测试数据流
+            # Test data flow
             await test_data_flow()
         
-        print(f"\n🎉 测试完成!")
+        print(f"\n🎉 Test completed!")
     
-    # 运行测试
+    # Run tests
     asyncio.run(main())
 
 

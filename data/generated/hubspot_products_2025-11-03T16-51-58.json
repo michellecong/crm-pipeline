@@ -1,0 +1,70 @@
+{
+  "company_name": "HubSpot",
+  "generator_type": "products",
+  "generated_at": "2025-11-03T16:51:58.802440",
+  "result": {
+    "products": [
+      {
+        "product_name": "Smart CRM",
+        "description": "Unified Smart CRM that stores customer data and powers all HubSpot tools. Helps sales, marketing, and support teams coordinate activities and handoffs for clearer customer journeys. Reduces data silos and speeds decision-making at any company size."
+      },
+      {
+        "product_name": "Marketing Hub",
+        "description": "Marketing Hub for creating, personalizing, and measuring campaigns across email, web, and ads. Helps marketing teams attract and nurture leads with automation and analytics. Improves campaign ROI and simplifies cross-channel execution for teams of any size."
+      },
+      {
+        "product_name": "Sales Hub",
+        "description": "Sales Hub for managing pipelines, automating outreach, and tracking deals. Helps sales teams prioritize leads, shorten sales cycles, and forecast revenue with clear activity tracking. Boosts rep productivity and increases close rates at scale."
+      },
+      {
+        "product_name": "Service Hub",
+        "description": "Service Hub unifies support channels, ticketing, and customer feedback in one place. Helps support teams respond faster, route issues intelligently, and measure satisfaction. Drives higher retention and faster issue resolution for growing businesses."
+      },
+      {
+        "product_name": "Content Hub",
+        "description": "Content Hub for building and managing websites, landing pages, and content experiences. Helps marketers publish personalized web content that converts visitors into leads. Speeds go-to-market with reusable templates, hosting, and SEO-friendly tools."
+      },
+      {
+        "product_name": "Data Hub",
+        "description": "Data Hub centralizes customer data, syncs systems, and creates a single source of truth for teams. Helps ops and analytics teams combine marketing, sales, and service data for clearer insights. Enables reliable reporting and powers AI-driven workflows across the platform."
+      },
+      {
+        "product_name": "Commerce Hub",
+        "description": "Commerce Hub manages e-commerce storefronts, orders, and checkout tied to customer records. Helps retailers and B2B sellers personalize buying journeys, streamline payments, and handle pricing and CPQ needs. Improves conversion and simplifies order management."
+      },
+      {
+        "product_name": "Breeze",
+        "description": "Breeze delivers AI agents and assistants that automate routine tasks, answer questions, and assist teams across marketing, sales, and support. Helps businesses reduce manual work and scale customer interactions with intelligent assistants. Speeds productivity and responsiveness."
+      },
+      {
+        "product_name": "Breeze Studio",
+        "description": "Breeze Studio provides tools to build, customize, and test AI agents tailored to your workflows. Helps teams design assistants that reflect company knowledge and automate complex tasks. Accelerates deployment of reliable AI agents without heavy engineering."
+      },
+      {
+        "product_name": "Breeze Marketplace",
+        "description": "Breeze Marketplace offers prebuilt AI agents and templates you can install and adapt. Helps teams accelerate AI adoption by using vetted assistants for common tasks like support triage or lead qual. Cuts setup time with ready-made, reusable solutions."
+      },
+      {
+        "product_name": "Small Business Bundle",
+        "description": "Small Business Bundle packages core Hubs and tools into a single offer for agile small teams. Helps startups and local businesses get CRM, marketing, sales, and service capabilities quickly and affordably. Simplifies procurement and scales as the business grows."
+      },
+      {
+        "product_name": "Payments",
+        "description": "Payments enables businesses to accept and reconcile online and in-person payments within HubSpot. Helps commerce and service teams streamline billing, reduce reconciliation time, and speed order fulfillment. Integrates payment data with customer records for clearer cash flow."
+      },
+      {
+        "product_name": "App Marketplace",
+        "description": "App Marketplace connects HubSpot to 1,900+ third-party apps and integrations to extend functionality. Helps teams link ecommerce, ads, analytics, and communication tools to a single platform. Simplifies integrations and accelerates time-to-value with vetted partners."
+      },
+      {
+        "product_name": "HubSpot Partner Program",
+        "description": "Partner Program supports agencies and service providers that implement and customize HubSpot for customers. Helps partners access training, co-selling resources, and marketplace opportunities to grow their businesses. Expands HubSpot expertise available to customers."
+      },
+      {
+        "product_name": "Professional Services",
+        "description": "Professional Services offers implementation, onboarding, and custom consulting to accelerate HubSpot adoption. Helps companies migrate systems, clean data, and design tailored workflows for faster ROI. Provides expert support for complex or enterprise deployments."
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07"
+  }
+}

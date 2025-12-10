@@ -1,0 +1,60 @@
+{
+  "company_name": "Shopify",
+  "generator_type": "products",
+  "generated_at": "2025-11-24T20:40:15.488640",
+  "result": {
+    "products": [
+      {
+        "product_name": "Shopify Plus",
+        "description": "Enterprise e-commerce platform designed for high-volume merchants, brands, and retailers managing complex operations. Provides dedicated infrastructure, advanced customization capabilities, and priority support to scale global commerce operations. Includes APIs, webhooks, and Shopify Functions for unlimited flexibility and integration with existing systems.",
+        "source_url": "https://www.shopify.com/plus"
+      },
+      {
+        "product_name": "Shopify B2B Commerce",
+        "description": "Dedicated platform enabling manufacturers and distributors to sell to other businesses with wholesale-specific features. Provides company profiles, customer-specific catalogs, volume pricing, flexible payment terms, and net payment options. Helps B2B sellers manage multiple buyer locations, purchasing rules, and tax exemptions from a unified admin.",
+        "source_url": "https://www.shopify.com/plus/solutions/b2b-ecommerce"
+      },
+      {
+        "product_name": "Shopify POS",
+        "description": "Point-of-sale system that unifies online and in-store commerce operations on a single platform. Enables retailers to manage inventory, process payments, and track sales across multiple physical locations and online channels. Includes hardware options, staff management, and real-time inventory synchronization.",
+        "source_url": "https://www.shopify.com/pos"
+      },
+      {
+        "product_name": "Shopify Payments",
+        "description": "Payment processing solution that enables merchants to accept credit cards, digital wallets, and local payment methods directly in their storefront. Simplifies payment reconciliation by depositing funds directly into merchant bank accounts with no setup fees. Provides fraud detection, chargeback management, and settlement reporting.",
+        "source_url": "https://www.shopify.com/payments"
+      },
+      {
+        "product_name": "Shopify Markets",
+        "description": "Multi-region commerce platform enabling merchants to sell across different countries and markets with localized pricing, currencies, and languages. Streamlines international expansion by managing regional catalogs, tax compliance, duties, and shipping rates. Supports B2C and B2B selling in multiple markets from a centralized admin.",
+        "source_url": "https://www.shopify.com/markets"
+      },
+      {
+        "product_name": "Shopify Fulfillment Network",
+        "description": "Distributed fulfillment solution that automates order routing to optimal fulfillment locations for faster delivery and reduced shipping costs. Manages inventory across multiple fulfillment centers, handles order picking and packing, and provides tracking information. Enables merchants to offer faster shipping and improved customer experience.",
+        "source_url": "https://www.shopify.com/fulfillment"
+      },
+      {
+        "product_name": "Shopify Shipping",
+        "description": "Integrated shipping management platform that connects merchants with major carriers for discounted shipping rates and streamlined label generation. Automates shipping label creation, tracking updates, and carrier selection based on delivery speed and cost. Provides real-time rate shopping and integration with inventory management.",
+        "source_url": "https://www.shopify.com/shipping"
+      },
+      {
+        "product_name": "Shop App",
+        "description": "Mobile shopping application connecting consumers directly with Shopify merchants for personalized shopping experiences across brands. Enables consumers to browse, purchase, and track orders from multiple Shopify stores in one app. Provides personalized recommendations, saved shops, and integrated checkout for frictionless mobile commerce.",
+        "source_url": "https://www.shopify.com/shop"
+      },
+      {
+        "product_name": "Shopify Email",
+        "description": "Email marketing tool enabling merchants to create, send, and track marketing campaigns directly from their Shopify admin. Provides pre-built templates, automation workflows, and segmentation based on customer purchase history and behavior. Includes performance analytics and A/B testing capabilities.",
+        "source_url": "https://www.shopify.com/email-marketing"
+      },
+      {
+        "product_name": "Shopify Social Commerce",
+        "description": "Platform enabling merchants to sell directly through social media channels including Facebook, Instagram, TikTok, and Pinterest. Manages product catalogs, pricing, and inventory across social platforms while tracking sales and customer data. Streamlines social selling without requiring customers to leave their favorite social apps.",
+        "source_url": "https://www.shopify.com/social-commerce"
+      }
+    ],
+    "model": "sonar"
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "company_name": "Asana",
+  "generator_type": "mappings",
+  "generated_at": "2025-11-03T11:06:39.770967",
+  "result": {
+    "personas_with_mappings": [
+      {
+        "persona_name": "US Enterprise Tech - Revenue Leaders",
+        "mappings": [
+          {
+            "pain_point": "Revenue leaders lack real-time pipeline visibility across 200-500 reps, causing forecast misses and unexpected revenue exposure.",
+            "value_proposition": "Power BI and Tableau connectors export Asana data into executive dashboards, improving pipeline visibility and cutting forecast variance by up to 30%."
+          },
+          {
+            "pain_point": "Long 8-12 month sales cycles stall during handoffs between sales, product, and legal, reducing win rates and deal velocity.",
+            "value_proposition": "Asana Work Management standardizes deal handoffs and action ownership, shortening stage durations and increasing win rates by ≈15%."
+          },
+          {
+            "pain_point": "New rep ramp is slow across regions, leaving territories undercovered and depressing quota attainment.",
+            "value_proposition": "Asana Templates combined with AI Teammates automate ramp plans and task drafts, cutting time-to-productivity by ~25%."
+          },
+          {
+            "pain_point": "Forecasts rely on manual CRM updates and tribal knowledge, causing inaccurate projections and missed targets.",
+            "value_proposition": "Asana AI surfaces blockers and auto-summarizes status into connected systems via Asana Integrations, reducing manual updates by ~60% and improving forecast accuracy."
+          },
+          {
+            "pain_point": "Cross-functional approvals for large deals create bottlenecks and hidden risks, delaying closes and increasing discounting.",
+            "value_proposition": "AI Workflows codifies approval paths and automates escalations, cutting handoff delays by ~40% and reducing negotiation time."
+          },
+          {
+            "pain_point": "Data silos across Salesforce, Slack, and creative tools hide deal context, increasing time wasted on context-switching.",
+            "value_proposition": "Asana Integrations sync tasks and attachments across tools, eliminating context-switches and saving reps 5–8 hours/week."
+          },
+          {
+            "pain_point": "Enterprise security needs slow access provisioning for sensitive deal data, blocking scaling of GTM operations.",
+            "value_proposition": "Permissions Management enforces role-based access across projects, halving provisioning time and preserving secure scale."
+          }
+        ]
+      },
+      {
+        "persona_name": "US Enterprise Financial Services - Ops Leaders",
+        "mappings": [
+          {
+            "pain_point": "Ops leaders struggle to produce audit trails across distributed workflows, increasing compliance risk and audit effort.",
+            "value_proposition": "Compliance Management captures immutable project histories and reports, producing audit-ready trails and cutting audit prep time by up to 70%."
+          },
+          {
+            "pain_point": "Manual approval routing across 100-300 distributors slows product rollouts, costing revenue and market responsiveness.",
+            "value_proposition": "AI Workflows automates approval routing and compliance checks, accelerating product launches by ~30%."
+          },
+          {
+            "pain_point": "Fragmented task ownership causes missed submissions and chargebacks, increasing operational costs.",
+            "value_proposition": "Asana Work Management centralizes tasks, SLAs, and ownership, reducing submission errors and chargebacks by ~25%."
+          },
+          {
+            "pain_point": "Ad hoc access control raises insider-risk and complicates regulator reviews, increasing remediation costs.",
+            "value_proposition": "Permissions Management enforces granular access controls and simplifies attestations, cutting security incidents and audit prep by ~50%."
+          },
+          {
+            "pain_point": "Regulatory reporting requires manual pulls from multiple systems, delaying responses to regulators and boards.",
+            "value_proposition": "Power BI and Tableau connectors push Asana data into regulator-ready dashboards, slashing report assembly time by ~80%."
+          },
+          {
+            "pain_point": "Ops teams repeat manual intake and approval tasks, wasting specialist time and extending SLAs.",
+            "value_proposition": "AI Studio lets ops build tailored automations for intake and approvals, automating repeat work and saving 20+ hours/week across the team."
+          }
+        ]
+      },
+      {
+        "persona_name": "California Mid-Market Marketing - Marketing VPs",
+        "mappings": [
+          {
+            "pain_point": "Marketing VPs miss client campaign deadlines because creative handoffs are disjointed, hurting retention and revenue.",
+            "value_proposition": "Asana Work Management coordinates campaign tasks and deadlines across teams, improving on-time delivery by ~35%."
+          },
+          {
+            "pain_point": "Creative contributors spend hours on briefs and status updates, reducing billable creative time.",
+            "value_proposition": "AI Teammates drafts briefs and summarizes project status, saving contributors 3–6 hours/week."
+          },
+          {
+            "pain_point": "Repeated campaign setups slow launches across clients, increasing time-to-market and costs.",
+            "value_proposition": "Asana Templates provide prebuilt campaign frameworks, cutting setup time by ~50% and enforcing best practices."
+          },
+          {
+            "pain_point": "Proofing and feedback are fragmented across Figma and Slack, causing rework and longer review cycles.",
+            "value_proposition": "Asana Integrations sync proofs and comments from Figma and Slack into tasks, reducing review cycles by ~40%."
+          },
+          {
+            "pain_point": "CMOs lack consolidated ROI reporting across channels, complicating budget decisions and optimization.",
+            "value_proposition": "Power BI and Tableau connectors export Asana outcomes to executive dashboards, enabling faster ROI reporting and improving budget allocation by ~20%."
+          }
+        ]
+      },
+      {
+        "persona_name": "UK Public Sector - Program Delivery Leaders",
+        "mappings": [
+          {
+            "pain_point": "Program leaders can't easily present transparent audit trails for multi-year programs, delaying approvals and funding.",
+            "value_proposition": "Compliance Management captures project controls and histories to deliver audit-ready trails, reducing approval delays by ~60%."
+          },
+          {
+            "pain_point": "Procurement and stakeholder sign-offs create bottlenecks that push timelines and inflate program costs.",
+            "value_proposition": "AI Workflows automates sign-off routing and escalation rules, cutting approval cycle times by ~40%."
+          },
+          {
+            "pain_point": "Distributed delivery teams lack a single source of truth for plans and budgets, causing duplicated work and overruns.",
+            "value_proposition": "Asana Work Management centralizes plans, tasks, and budgets, reducing duplicated work and lowering program costs by ~15%."
+          },
+          {
+            "pain_point": "Preparing reports for ministers and boards is manual and slow, reducing responsiveness and stakeholder confidence.",
+            "value_proposition": "Power BI and Tableau connectors produce executive-ready dashboards from Asana, slashing report prep time by ~70%."
+          },
+          {
+            "pain_point": "Strict external partner access rules complicate collaboration and security reviews, delaying partner onboarding.",
+            "value_proposition": "Permissions Management enforces granular access controls for external collaborators, cutting security review cycles by ~50% while preserving collaboration."
+          }
+        ]
+      },
+      {
+        "persona_name": "Global Media & Entertainment - Creative Ops Leaders",
+        "mappings": [
+          {
+            "pain_point": "Creative ops faces long multi-region approval loops, delaying releases and ad/streaming revenue windows.",
+            "value_proposition": "Asana Work Management standardizes review stages and owners, shortening approval loops and speeding releases by ~30%."
+          },
+          {
+            "pain_point": "Teams waste time finding the latest asset versions and history, causing rework and missed deadlines.",
+            "value_proposition": "Asana Integrations sync files and versioning from Figma and Drive into tasks, cutting asset search and rework time by ~60%."
+          },
+          {
+            "pain_point": "Scaling production lacks repeatable processes, limiting throughput for campaigns and shows.",
+            "value_proposition": "Asana Templates paired with AI Workflows create repeatable production frames, increasing throughput by ~25%."
+          },
+          {
+            "pain_point": "Creative leads spend hours drafting briefs and QA checklists, reducing time for high-value direction.",
+            "value_proposition": "AI Teammates drafts briefs and QA checklists on demand, saving leads 4+ hours/week and accelerating reviews."
+          },
+          {
+            "pain_point": "Global teams suffer meeting overload to coordinate across time zones, cutting creative time.",
+            "value_proposition": "Asana Work Management clarifies asynchronous handoffs and task ownership, cutting recurring status meetings by ~50%."
+          }
+        ]
+      },
+      {
+        "persona_name": "US Healthcare - Revenue Cycle Leaders",
+        "mappings": [
+          {
+            "pain_point": "Revenue cycle leaders face long denial resolution times, reducing cash flow and increasing days sales outstanding (DSO).",
+            "value_proposition": "AI Workflows automates denial routing and task assignment, reducing denial resolution time by up to ~40% and accelerating cash recovery."
+          },
+          {
+            "pain_point": "Manual claims tracking and follow-ups cause missed deadlines and revenue leakage.",
+            "value_proposition": "Asana Work Management centralizes claim workflows, SLAs, and escalations, improving on-time filing and reducing leakage by ~20%."
+          },
+          {
+            "pain_point": "PHI-related compliance and audit trails are heavy and error-prone, exposing regulatory risk and fines.",
+            "value_proposition": "Compliance Management provides audit trails and controls for PHI workflows, simplifying audits and cutting compliance effort by ~60%."
+          },
+          {
+            "pain_point": "Inconsistent role access to billing tasks increases insider-risk and lengthens audit responses.",
+            "value_proposition": "Permissions Management enforces role-based access across billing projects, reducing access incidents and speeding audits by ~50%."
+          },
+          {
+            "pain_point": "Finance lacks consolidated denial and AR aging reporting, delaying operational decisions.",
+            "value_proposition": "Power BI and Tableau connectors feed Asana data into AR dashboards, reducing report prep time by ~80% and accelerating decision-making."
+          }
+        ]
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07"
+  }
+}

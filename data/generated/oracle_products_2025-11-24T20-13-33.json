@@ -1,0 +1,60 @@
+{
+  "company_name": "Oracle",
+  "generator_type": "products",
+  "generated_at": "2025-11-24T20:13:33.407382",
+  "result": {
+    "products": [
+      {
+        "product_name": "Oracle B2B Commerce",
+        "description": "B2B ecommerce platform enabling businesses to deliver personalized shopping experiences with custom catalogs, negotiated pricing, and account-specific terms. Helps B2B companies accelerate online sales with intelligent product recommendations, guided navigation, and seamless integration with ERP and supply chain systems. Supports complex ordering workflows including configuration, bundling, and subscription-based models.",
+        "source_url": "https://www.oracle.com/cx/ecommerce/b2b/"
+      },
+      {
+        "product_name": "Oracle Sales Cloud",
+        "description": "Comprehensive sales automation and CRM platform designed for sales teams to manage pipelines, forecast revenue, and close deals faster. Provides lead management, sales forecasting, workflow automation, and mobile access for remote sales teams. Integrates with Oracle CX suite to deliver AI-powered insights and seamless customer data visibility.",
+        "source_url": "https://www.oracle.com/crm/sales/"
+      },
+      {
+        "product_name": "Oracle Service Cloud",
+        "description": "Omnichannel customer service platform that unifies support across email, phone, chat, social media, and field service. Helps service teams resolve customer issues faster with knowledge management, intelligent case routing, and complete customer context. Scales from small contact centers to enterprise-wide service operations.",
+        "source_url": "https://www.oracle.com/service-cloud/"
+      },
+      {
+        "product_name": "Oracle Marketing Cloud",
+        "description": "Marketing automation and campaign management platform for creating personalized customer experiences across channels. Enables marketers to build targeted campaigns, nurture leads, and measure ROI through email marketing, social media engagement, and analytics-driven segmentation. Integrates with Sales Cloud for seamless lead-to-revenue attribution.",
+        "source_url": "https://www.oracle.com/marketingcloud/"
+      },
+      {
+        "product_name": "Oracle Configure, Price, and Quote (CPQ)",
+        "description": "Sales enablement platform that simplifies complex product configuration, bundling, and pricing for B2B sales teams. Guides customers through self-service quoting with accurate pricing, variable configurations, and custom asset-based ordering. Reduces sales cycles and operational costs through automation of quote-to-order processes.",
+        "source_url": "https://www.oracle.com/applications/cpq/"
+      },
+      {
+        "product_name": "Oracle Subscription Management",
+        "description": "Billing and subscription platform for managing recurring revenue models, variable billing, and flexible payment options. Enables businesses to offer subscription-based services and mixed goods/service orders with automated invoicing and payment tracking. Supports complex subscription scenarios including tiered pricing and usage-based billing.",
+        "source_url": "https://www.oracle.com/applications/subscription-management/"
+      },
+      {
+        "product_name": "Oracle B2B",
+        "description": "Secure business-to-business document exchange and integration platform for exchanging business documents between retailers, suppliers, and manufacturers. Provides end-to-end business process management with document routing, exception handling, and partner management capabilities. Works in conjunction with Oracle SOA Suite for unified process visibility and governance.",
+        "source_url": "https://www.oracle.com/middleware/technologies/b2b.html"
+      },
+      {
+        "product_name": "Oracle Digital Business Experience Commercial Catalog",
+        "description": "Product catalog management solution enabling rapid creation and launch of commercial offers with business agility and automation. Provides collaborative environment for business and IT teams to define products, promotions, and services with comprehensive lifecycle management. Supports multi-vendor landscapes with open standards and low/no-code integration.",
+        "source_url": "https://www.oracle.com/a/ocom/docs/industries/communications/comm-dbe-commercial-catalog-ds.pdf"
+      },
+      {
+        "product_name": "Oracle Cloud Financials",
+        "description": "Global financial management platform for accounting, tax, payments, and financial reporting across multiple countries and currencies. Enables large enterprises to model complex organizational structures with unlimited accounting representations and statutory reporting in a single instance. Includes cash management, collections, expenses, payables, and receivables modules.",
+        "source_url": "https://www.oracle.com/webfolder/technetwork/tutorials/tutorial/cloud/r13/nfs/erp-cloud-global-catalog.pdf"
+      },
+      {
+        "product_name": "Oracle Analytics Cloud",
+        "description": "Business intelligence and analytics platform for deriving insights from enterprise data through dashboards, reporting, and predictive analytics. Helps business users create self-service analytics and data visualizations without IT support. Integrates with Oracle applications and third-party data sources for comprehensive business intelligence.",
+        "source_url": "https://www.oracle.com/business-analytics/analytics-cloud/"
+      }
+    ],
+    "model": "sonar"
+  }
+}

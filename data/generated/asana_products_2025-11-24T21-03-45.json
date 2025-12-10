@@ -1,0 +1,15 @@
+{
+  "company_name": "Asana",
+  "generator_type": "products",
+  "generated_at": "2025-11-24T21:03:45.744821",
+  "result": {
+    "products": [
+      {
+        "product_name": "Asana Work Management",
+        "description": "A comprehensive work management platform designed to help businesses organize, track, and manage projects, tasks, and workflows in one place. Ideal for teams of all sizes, it enhances cross-departmental collaboration, increases transparency, and automates routine work to boost productivity. Scales from small teams to global enterprises with robust security and integration capabilities.",
+        "source_url": "https://asana.com/product"
+      }
+    ],
+    "model": "sonar"
+  }
+}

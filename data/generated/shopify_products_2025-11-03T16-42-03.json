@@ -1,0 +1,102 @@
+{
+  "company_name": "Shopify",
+  "generator_type": "products",
+  "generated_at": "2025-11-03T16:42:03.074634",
+  "result": {
+    "products": [
+      {
+        "product_name": "Hosted storefronts",
+        "description": "Hosted storefronts for building and launching online stores quickly. Ideal for merchants who want a managed website to sell products without infrastructure work. Delivers fast launch, responsive design, and built-in commerce features for any size store."
+      },
+      {
+        "product_name": "Shopify Checkout",
+        "description": "Shopify Checkout provides fast, secure checkout flows optimized for conversion. Helps merchants reduce cart abandonment and speed purchases across web and mobile. Offers payment flexibility, fraud protection, and a frictionless end-to-end buying experience."
+      },
+      {
+        "product_name": "Shopify POS & hardware",
+        "description": "Shopify POS & hardware power in-person selling with integrated registers, card readers, and accessories. Suits retailers and pop-up sellers who need seamless inventory and order sync across channels. Streamlines payments, receipts, and omnichannel sales workflows."
+      },
+      {
+        "product_name": "Shopify Admin",
+        "description": "Shopify Admin centralizes store operations, inventory, orders, and reporting in one dashboard. Helps merchants manage daily commerce tasks faster and keep teams aligned. Provides actionable insights and controls that scale from solo founders to enterprise merchants."
+      },
+      {
+        "product_name": "Shopify App Store",
+        "description": "Shopify App Store is a marketplace for apps and integrations that extend store capabilities. Helps merchants add marketing, fulfillment, analytics, and custom features without heavy development. Enables rapid customization with vetted apps from a large partner ecosystem."
+      },
+      {
+        "product_name": "Shopify Payments",
+        "description": "Shopify Payments is integrated payment processing that accepts cards and local payment methods. Helps merchants simplify billing, reduce setup time, and get paid faster without third-party accounts. Offers consolidated payouts and streamlined reconciliation for any-sized business."
+      },
+      {
+        "product_name": "Shopify Shipping",
+        "description": "Shopify Shipping simplifies buying labels, managing carriers, and fulfilling orders from one place. Helps merchants reduce shipping costs and speed delivery with discounted rates and print-ready labels. Streamlines fulfillment across channels to improve customer experience."
+      },
+      {
+        "product_name": "Shopify Markets",
+        "description": "Shopify Markets centralizes international selling with local pricing, duties, and payment options. Helps merchants expand globally by simplifying market configuration and cross-border logistics. Reduces friction for buyers and speeds time-to-market across regions."
+      },
+      {
+        "product_name": "Shopify Audiences",
+        "description": "Shopify Audiences helps merchants find high-value customers with tailored audience data for advertising. Enables brands to run more efficient ad campaigns by identifying shoppers likely to convert. Reduces customer acquisition cost and improves return on ad spend."
+      },
+      {
+        "product_name": "Shopify Capital",
+        "description": "Shopify Capital offers financing and cash advances to merchants to fuel inventory and growth. Helps merchants access fast, flexible funding without traditional loan hurdles. Supports scaling, seasonal buys, and cash-flow smoothing with simple repayment terms."
+      },
+      {
+        "product_name": "Hydrogen",
+        "description": "Hydrogen is Shopify's headless storefront framework for building fast, custom shopping experiences. Helps developers and brands create tailored, high-performance storefronts while connecting to Shopify backend services. Ideal for teams needing design flexibility and speed."
+      },
+      {
+        "product_name": "APIs & developer tools",
+        "description": "APIs & developer tools provide programmatic access to Shopify's platform for custom integrations. Helps agencies, developers, and enterprises build tailored storefronts, apps, and automations. Accelerates development with official tools and platform support."
+      },
+      {
+        "product_name": "GraphQL Admin API",
+        "description": "GraphQL Admin API enables efficient data operations and store management for developers. Helps apps and integrations read and write store data with minimal requests and better performance. Supports custom workflows and scalable platform automation."
+      },
+      {
+        "product_name": "Functions API",
+        "description": "Functions API lets developers create custom commerce logic that runs within Shopify's platform. Helps partners implement tailored pricing, discounts, and checkout behaviors without external servers. Enables flexible business rules that scale with the store."
+      },
+      {
+        "product_name": "Polaris",
+        "description": "Polaris is Shopify's design system and UI components for building consistent admin experiences. Helps developers and partners create user-friendly apps and themes that match Shopify's look and usability. Speeds product development with reusable, accessible components."
+      },
+      {
+        "product_name": "Shop Minis SDK",
+        "description": "Shop Minis SDK lets developers build lightweight shopping experiences inside the Shop app using React. Helps brands reach Shop users with compact, interactive mini-apps without a full storefront. Offers a way to test features and drive discovery in the Shop ecosystem."
+      },
+      {
+        "product_name": "Built for Shopify",
+        "description": "Built for Shopify is a certification program that highlights trusted apps and partners. Helps merchants find vetted integrations and professional services with elevated quality standards. Reduces selection risk and speeds safe adoption of third-party solutions."
+      },
+      {
+        "product_name": "Shop app",
+        "description": "Shop app connects shoppers with brands, orders, and discovery in a consumer-facing shopping app. Helps merchants reach customers through personalized recommendations, tracking, and in-app commerce. Increases discovery and repeat purchases via a direct consumer channel."
+      },
+      {
+        "product_name": "Shop Campaigns",
+        "description": "Shop Campaigns enables merchants to run targeted advertising and acquisition campaigns within the Shop network. Helps brands drive traffic and sales with merchant-focused ad placements and performance tracking. Simplifies advertising to attract high-intent shoppers."
+      },
+      {
+        "product_name": "Shopify Magic",
+        "description": "Shopify Magic offers AI-powered assistance to help merchants generate content and speed tasks. Helps small teams create product copy, emails, and creative assets faster without hiring extra staff. Improves productivity and marketing consistency at scale."
+      },
+      {
+        "product_name": "Sidekick",
+        "description": "Sidekick is Shopify's AI assistant for merchant workflows and decision support. Helps merchants get recommendations, answers, and guided actions across the admin to save time. Boosts productivity by surfacing insights and automating routine tasks."
+      },
+      {
+        "product_name": "Shopify Tax",
+        "description": "Shopify Tax automates tax calculation, collection, and reporting for merchants selling across regions. Helps businesses stay compliant by estimating duties, VAT, and taxes at checkout. Reduces manual tax work and lowers cross-border selling friction."
+      },
+      {
+        "product_name": "Flow",
+        "description": "Flow is Shopify's automation tool that creates custom workflows to automate repetitive tasks. Helps merchants and teams automate order routing, inventory updates, and notifications without code. Saves time, reduces errors, and scales operational efficiency."
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07"
+  }
+}

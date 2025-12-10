@@ -1,0 +1,21 @@
+{
+  "company_name": "Asana",
+  "generator_type": "products",
+  "generated_at": "2025-12-07T16:44:55.202422",
+  "result": {
+    "products": [
+      {
+        "product_name": "Asana Work Management",
+        "description": "A scalable work management platform that enables organizations to plan, track, and manage projects, workflows, and goals on a single unified platform. Helps business leaders and teams increase visibility, align objectives, and collaborate efficiently. Trusted by over 100,000 enterprises for operational agility and cross-team coordination.",
+        "source_url": "https://asana.com/product"
+      }
+    ],
+    "model": "sonar",
+    "usage": {
+      "prompt_tokens": 3692,
+      "completion_tokens": 100,
+      "total_tokens": 3792
+    },
+    "generation_time_seconds": 4.707683086395264
+  }
+}

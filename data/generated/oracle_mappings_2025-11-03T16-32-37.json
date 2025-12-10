@@ -1,0 +1,160 @@
+{
+  "company_name": "Oracle",
+  "generator_type": "mappings",
+  "generated_at": "2025-11-03T16:32:37.188377",
+  "result": {
+    "personas_with_mappings": [
+      {
+        "persona_name": "US Enterprise Financial Services - Revenue Leaders",
+        "mappings": [
+          {
+            "pain_point": "Commercial sales leaders lack real-time pipeline health across long enterprise deals, causing missed forecasts and revenue leakage.",
+            "value_proposition": "Oracle Analytics delivers unified pipeline dashboards and alerts that surface at-risk deals and improve forecast accuracy by up to 30%."
+          },
+          {
+            "pain_point": "Field and distribution teams miss cross-sell and renewal signals because customer data is fragmented across legacy systems, reducing wallet share.",
+            "value_proposition": "Oracle AI Data Platform consolidates customer sources and surfaces AI-driven cross-sell signals, increasing deal expansion rates by ~15%."
+          },
+          {
+            "pain_point": "Technical POCs take weeks to provision for major prospects, delaying contract cycles and slowing time-to-revenue.",
+            "value_proposition": "Oracle Cloud Infrastructure (OCI) provisions compliant POC sandboxes in days, cutting proof-of-value time and accelerating time-to-contract by ~20%."
+          },
+          {
+            "pain_point": "Revenue teams spend hours reconciling pricing exceptions and approvals, delaying closes and increasing legal risk.",
+            "value_proposition": "Oracle Fusion Cloud CX centralizes quotes and automated approval workflows, reducing approval time by ~50% and speeding deal closures."
+          },
+          {
+            "pain_point": "Regulated client interactions lack audited trails across distributed sales teams, increasing compliance exposure and audit work.",
+            "value_proposition": "Oracle Cloud@Customer stores sensitive sales data on-prem with enterprise logging and governance to simplify audits and reduce residency risk."
+          }
+        ]
+      },
+      {
+        "persona_name": "US Public Sector - IT & Procurement Leaders",
+        "mappings": [
+          {
+            "pain_point": "Procurement teams struggle to move legacy contract and case systems, delaying solicitations and inflating operating costs.",
+            "value_proposition": "Oracle Cloud@Customer enables lift-and-shift migrations into a managed on-site cloud, reducing migration timelines by ~40% while controlling OPEX."
+          },
+          {
+            "pain_point": "Agencies face strict data residency and accreditation requirements that block cloud adoption and stall modernization projects.",
+            "value_proposition": "Oracle Dedicated Region Cloud@Customer delivers a fully managed, on-prem cloud region that meets federal residency and accreditation needs while enabling modern workloads."
+          },
+          {
+            "pain_point": "IT staff spend excessive time on database patching and tuning, diverting resources from modernization and security work.",
+            "value_proposition": "Oracle Autonomous Database automates patching, tuning and security tasks, cutting DBA operational hours by up to 70%."
+          },
+          {
+            "pain_point": "Procurement lacks a vetted catalog of validated vendor solutions, slowing procurement cycles and increasing program risk.",
+            "value_proposition": "Oracle Marketplace provides a prevalidated catalog of solutions that accelerates procurement and can reduce procurement cycles by ~25%."
+          },
+          {
+            "pain_point": "Distributed legacy databases drive high license and support spend across agencies, compressing IT budgets.",
+            "value_proposition": "Exadata consolidates database workloads with predictable performance to lower total cost of ownership by up to ~30% through consolidation."
+          },
+          {
+            "pain_point": "Program teams cannot provision compliant test environments for multi-agency projects, delaying testing and deployments.",
+            "value_proposition": "OCI provides isolated compartments and compliance controls so teams can provision compliant test environments in hours, accelerating delivery."
+          }
+        ]
+      },
+      {
+        "persona_name": "US Large Healthcare - Revenue Cycle Leaders",
+        "mappings": [
+          {
+            "pain_point": "Revenue cycle managers see high claim denial rates because patient and billing data are siloed, reducing AR recovery.",
+            "value_proposition": "Oracle Autonomous Database consolidates billing and EHR data to enable faster denial analytics and can reduce denial rates by up to ~20%."
+          },
+          {
+            "pain_point": "Patient financial teams spend days on manual outreach and payment follow-ups, increasing labor costs and lowering collections.",
+            "value_proposition": "AI Agent Studio automates patient outreach and payment workflows, reclaiming 8+ staff hours per week and improving collections."
+          },
+          {
+            "pain_point": "Lack of real-time cash forecasting across hospitals causes liquidity gaps and budgeting errors for the system CFO.",
+            "value_proposition": "Oracle Analytics provides rolling cash forecasts and facility-level drilldowns, improving forecast accuracy by ~25%."
+          },
+          {
+            "pain_point": "PHI and compliance concerns slow cloud migrations and create audit risk during revenue cycle modernization.",
+            "value_proposition": "Oracle Cloud@Customer keeps PHI on-site with cloud controls and auditability to accelerate compliant modernization."
+          },
+          {
+            "pain_point": "Billing systems struggle with seasonal patient surges, causing slow claim processing and delayed cash collections.",
+            "value_proposition": "OCI autoscaling supports peak billing workloads and reduces processing time by up to ~60% versus constrained on-prem systems."
+          }
+        ]
+      },
+      {
+        "persona_name": "DACH Mid-Market Manufacturing - Operations Leaders",
+        "mappings": [
+          {
+            "pain_point": "Operations leaders lack real-time visibility into multi-site inventory, causing stockouts and inflated carrying costs across plants.",
+            "value_proposition": "Oracle Fusion Cloud SCM centralizes inventory planning and orchestration across sites, reducing stockouts by ~35% and lowering carrying costs."
+          },
+          {
+            "pain_point": "Engineering and IT can't modernize plant-floor apps fast enough due to limited dev resources and compliance needs, slowing efficiency gains.",
+            "value_proposition": "Oracle APEX enables secure low-code factory apps that IT governs centrally, cutting development time from months to weeks."
+          },
+          {
+            "pain_point": "Production planners can't rapidly model supplier disruptions, extending lead times and delaying customer deliveries.",
+            "value_proposition": "Oracle AI Data Platform ingests supplier signals and runs disruption simulations to shorten response time and reduce lead-time variance by ~20%."
+          },
+          {
+            "pain_point": "Increasing product variants force manual BOM and change-order work for small teams, adding cost and errors.",
+            "value_proposition": "NetSuite standardizes product, BOM and order processes for mid-market manufacturers, reducing manual BOM updates by ~50%."
+          },
+          {
+            "pain_point": "Remote plants experience high latency to cloud services, degrading remote monitoring and real-time control performance.",
+            "value_proposition": "OCI local regions and predictable networking deliver lower latency for EU plants, improving telemetry responsiveness and control reliability."
+          }
+        ]
+      },
+      {
+        "persona_name": "CA Mid-Market B2B SaaS - Sales & RevOps",
+        "mappings": [
+          {
+            "pain_point": "RevOps can't route high-intent leads to the right reps fast enough, losing meetings and ARR during critical growth windows.",
+            "value_proposition": "Oracle Fusion Cloud CX automates lead scoring and routing to reps in real time, improving conversion of high-intent leads by ~20%."
+          },
+          {
+            "pain_point": "SaaS infrastructure costs spike unpredictably during usage surges, compressing gross margins for growth-stage teams.",
+            "value_proposition": "OCI provides predictable pricing and autoscaling for SaaS workloads, reducing infra overprovisioning and cost variance by ~30%."
+          },
+          {
+            "pain_point": "Revenue teams lack a single source of truth across billing, CRM and product telemetry, delaying actionable insights.",
+            "value_proposition": "Oracle Analytics unifies revenue and product data into dashboards that speed monthly close and reduce time-to-insight by ~40%."
+          },
+          {
+            "pain_point": "Product engineers spend cycles building internal admin and ops tools, slowing feature delivery velocity.",
+            "value_proposition": "Oracle APEX lets teams build secure internal admin tools with low-code, shaving weeks off delivery and freeing engineers for core product work."
+          },
+          {
+            "pain_point": "International privacy rules complicate data residency for multi-region customers, delaying contract signings.",
+            "value_proposition": "Oracle Cloud@Customer enables regional data residency hosting so SaaS vendors can meet privacy rules and accelerate cross-border deals."
+          }
+        ]
+      },
+      {
+        "persona_name": "UK Mid-Market Retail & E-commerce - Digital Leaders",
+        "mappings": [
+          {
+            "pain_point": "Digital teams lose revenue from cart abandonment when personalization is slow or inconsistent during peak campaigns.",
+            "value_proposition": "Oracle Fusion Cloud CX delivers real-time personalization and offers across channels, improving conversion rates by up to ~15% during campaigns."
+          },
+          {
+            "pain_point": "Marketing lacks a unified customer 360, causing inconsistent messaging and lower lifetime value across channels.",
+            "value_proposition": "Oracle AI Data Platform consolidates customer signals into unified profiles, increasing repeat purchase rates by ~10%."
+          },
+          {
+            "pain_point": "E-commerce platforms suffer slowdowns during seasonal spikes, degrading UX and costing sales.",
+            "value_proposition": "OCI scales storefronts and delivery infrastructure to maintain performance, reducing page load times by ~60% and preserving revenue."
+          },
+          {
+            "pain_point": "Limited campaign analytics prevent rapid reallocation of spend, wasting marketing budget and slowing growth.",
+            "value_proposition": "Oracle Analytics provides daily attribution and ROI dashboards so teams reallocate spend within 24 hours and lift campaign ROI."
+          }
+        ]
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07"
+  }
+}

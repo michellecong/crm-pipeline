@@ -1,0 +1,110 @@
+{
+  "company_name": "Oracle",
+  "generator_type": "products",
+  "generated_at": "2025-11-24T20:32:04.147037",
+  "result": {
+    "products": [
+      {
+        "product_name": "Oracle Cloud Infrastructure (OCI)",
+        "description": "A comprehensive cloud platform offering compute, storage, networking, and database services. Enables enterprises to build, deploy, and manage applications with high performance and security. Supports diverse workloads and scales from startups to global enterprises.",
+        "source_url": "https://www.oracle.com/cloud/"
+      },
+      {
+        "product_name": "Oracle ERP Cloud",
+        "description": "Integrated suite of enterprise resource planning applications that automate and streamline finance, procurement, project management, and risk management. Helps CFOs and finance teams improve operational efficiency and gain real-time insights for better business decisions.",
+        "source_url": "https://www.oracle.com/erp/"
+      },
+      {
+        "product_name": "Oracle HCM Cloud",
+        "description": "Human capital management platform for recruiting, workforce management, payroll, and talent development. Supports HR leaders to engage employees, optimize workforce productivity, and ensure compliance across global operations with intuitive and scalable solutions.",
+        "source_url": "https://www.oracle.com/human-capital-management/"
+      },
+      {
+        "product_name": "Oracle CX Sales",
+        "description": "Customer relationship management solution designed to enhance sales productivity by delivering AI-driven insights and automating sales processes. Assists sales leaders in managing pipelines, forecasting revenue, and personalizing buyer interactions to accelerate deal closure.",
+        "source_url": "https://www.oracle.com/cx/sales/"
+      },
+      {
+        "product_name": "Oracle CX Service",
+        "description": "Customer service platform that centralizes support across channels including chat, email, phone, and social media. Empowers support teams to resolve customer issues rapidly with AI-powered automation and unified customer data for personalized experiences.",
+        "source_url": "https://www.oracle.com/cx/service/"
+      },
+      {
+        "product_name": "Oracle CX Marketing",
+        "description": "Marketing automation platform for designing personalized campaigns, nurturing leads, and measuring marketing effectiveness. Helps marketing teams deliver targeted messaging leveraging AI analytics and integrate seamlessly with sales for better lead conversion.",
+        "source_url": "https://www.oracle.com/cx/marketing/"
+      },
+      {
+        "product_name": "Oracle Supply Chain Management (SCM) Cloud",
+        "description": "Comprehensive suite for supply chain planning, logistics, manufacturing, and procurement. Supports operations leaders in optimizing supply chain efficiency, improving product quality, and enabling agile response to market changes with end-to-end visibility.",
+        "source_url": "https://www.oracle.com/scm/"
+      },
+      {
+        "product_name": "Oracle Analytics Cloud",
+        "description": "Business intelligence platform providing data visualization, self-service analytics, and AI-powered insights. Enables business users and analysts to explore data, identify trends, and make informed decisions without needing deep technical skills.",
+        "source_url": "https://www.oracle.com/analytics/"
+      },
+      {
+        "product_name": "Oracle Autonomous Database",
+        "description": "Self-driving, self-securing, and self-repairing database service that automates routine database management tasks. Helps database administrators and developers reduce operational costs while improving performance, reliability, and security.",
+        "source_url": "https://www.oracle.com/database/autonomous-database/"
+      },
+      {
+        "product_name": "Oracle B2B Commerce",
+        "description": "B2B e-commerce platform designed to create personalized digital buying experiences with custom catalogs, negotiated pricing, and self-service capabilities. Helps sellers streamline complex ordering processes and enhance buyer engagement across multiple channels.",
+        "source_url": "https://www.oracle.com/cx/ecommerce/b2b/"
+      },
+      {
+        "product_name": "Oracle Configure, Price, Quote (CPQ) Cloud",
+        "description": "Solution that automates product configuration, pricing, and quote generation for complex sales. Enables sales teams to deliver accurate, tailor-made quotes faster, reducing sales cycles and improving customer satisfaction.",
+        "source_url": "https://www.oracle.com/applications/cpq/"
+      },
+      {
+        "product_name": "Oracle NetSuite ERP",
+        "description": "Cloud-based ERP system providing financials, CRM, ecommerce, and inventory management in a unified platform. Suitable for small to midsize businesses seeking to drive operational efficiency and scalability globally.",
+        "source_url": "https://www.netsuite.com/portal/products/erp.shtml"
+      },
+      {
+        "product_name": "Oracle Fusion Middleware",
+        "description": "Comprehensive middleware suite offering integration, business process management, and analytics tools. Helps IT and business leaders enable agility, streamline processes, and integrate applications across hybrid cloud environments.",
+        "source_url": "https://www.oracle.com/middleware/"
+      },
+      {
+        "product_name": "Oracle Exadata Database Machine",
+        "description": "Engineered system optimized for running Oracle Database workloads with extreme performance and high availability. Ideal for enterprises requiring fast transactional and analytic processing with simplified database management.",
+        "source_url": "https://www.oracle.com/exadata/"
+      },
+      {
+        "product_name": "Oracle ERP Cloud Procurement",
+        "description": "Procurement management solution that automates source-to-pay processes, controls spend, and enhances supplier collaboration. Helps procurement leaders reduce costs, improve compliance, and accelerate purchasing cycles.",
+        "source_url": "https://www.oracle.com/procurement-cloud/"
+      },
+      {
+        "product_name": "Oracle Financial Services Analytical Applications",
+        "description": "Analytics solutions tailored for financial services institutions to manage risk, regulatory compliance, and profitability. Supports banking executives in making informed decisions by leveraging comprehensive data insights.",
+        "source_url": "https://www.oracle.com/industries/financial-services/"
+      },
+      {
+        "product_name": "Oracle Marketing Cloud (Eloqua)",
+        "description": "Marketing automation and campaign management platform designed to engage B2B buyers with personalized, multi-channel campaigns. Supports marketers in lead generation, nurturing, and ROI measurement with advanced analytics.",
+        "source_url": "https://www.oracle.com/marketingcloud/products/marketing-automation/"
+      },
+      {
+        "product_name": "Oracle Hospitality",
+        "description": "Industry-specific solutions for hotels, restaurants, and casinos to manage POS, property management, inventory, and customer experiences. Facilitates operational efficiency and guest satisfaction in hospitality businesses of all sizes.",
+        "source_url": "https://www.oracle.com/industries/hospitality/"
+      },
+      {
+        "product_name": "Oracle CX Commerce Cloud",
+        "description": "Cloud commerce platform enhancing B2C and B2B buying experiences with personalized storefronts, AI-driven recommendations, and flexible fulfillment. Enables businesses to launch and scale e-commerce quickly with integrated customer data.",
+        "source_url": "https://www.oracle.com/cx/commerce/"
+      },
+      {
+        "product_name": "Oracle Internet of Things (IoT) Cloud",
+        "description": "IoT platform that connects devices to business applications, providing real-time analytics and operational insights. Helps enterprises optimize asset utilization, improve safety, and enhance customer experiences through smart automation.",
+        "source_url": "https://www.oracle.com/internet-of-things/"
+      }
+    ],
+    "model": "sonar"
+  }
+}

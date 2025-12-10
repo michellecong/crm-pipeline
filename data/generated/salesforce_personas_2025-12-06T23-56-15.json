@@ -1,0 +1,144 @@
+{
+  "company_name": "Salesforce",
+  "generator_type": "personas",
+  "generated_at": "2025-12-06T23:56:15.209507",
+  "result": {
+    "personas": [
+      {
+        "persona_name": "US Enterprise Financial Services - Revenue Leaders",
+        "tier": "tier_1",
+        "job_titles": [
+          "CRO",
+          "Chief Revenue Officer",
+          "Chief Sales Officer",
+          "Chief Commercial Officer",
+          "Chief Operating Officer",
+          "Chief Financial Officer",
+          "Chief Digital Officer",
+          "VP of Sales",
+          "Vice President of Sales",
+          "VP Sales",
+          "SVP Sales",
+          "VP Distribution",
+          "Vice President Distribution",
+          "Head of Wealth Management",
+          "Head of Retail Banking",
+          "VP Revenue Operations",
+          "Vice President Revenue Operations",
+          "Head of Client Experience",
+          "Director of Sales",
+          "Sales Director",
+          "Director of Distribution",
+          "Director Sales Operations"
+        ],
+        "excluded_job_titles": [
+          "Software Engineer",
+          "Frontend Developer",
+          "UX Designer",
+          "HR Director",
+          "Payroll Manager",
+          "Legal Counsel (junior)",
+          "Customer Service Representative",
+          "Marketing Coordinator"
+        ],
+        "industry": "Financial Services",
+        "company_size_range": "2000-10000 employees",
+        "company_type": "Large national and multinational banks, asset managers, insurers and wealth-management firms with regulated compliance and complex distribution channels",
+        "location": "United States",
+        "description": "Large financial institutions with centralized relationship and distribution teams and 200-800 relationship managers and enterprise sales staff. $500K-$2M multi-year contract values with 9-12 month sales cycles involving 6-9 stakeholders (CRO, CFO, COO, Head of Security, Procurement, Head of Distribution). Procurement and compliance-heavy decision processes require security reviews, legal approvals and executive sponsorship. Strong fit for Financial Services Cloud, Data Cloud, MuleSoft integrations and Tableau analytics; best engaged through executive briefings, security/compliance workshops and peer references."
+      },
+      {
+        "persona_name": "UK Mid-Market Retail - Commerce Leaders",
+        "tier": "tier_2",
+        "job_titles": [
+          "Chief Marketing Officer",
+          "CMO",
+          "Chief Digital Officer",
+          "CDO",
+          "VP of Commerce",
+          "Vice President of Commerce",
+          "Head of Digital Commerce",
+          "Head of Omnichannel",
+          "VP Marketing",
+          "Vice President of Marketing",
+          "Director of Digital Commerce",
+          "Director of E-commerce",
+          "Director of Customer Experience",
+          "Head of Merchandising",
+          "E-commerce Manager",
+          "Digital Commerce Manager",
+          "Head of Site Experience",
+          "Head of Customer Loyalty",
+          "Director Marketing Operations",
+          "Marketing Operations Manager"
+        ],
+        "excluded_job_titles": [
+          "VP of Sales",
+          "Sales Manager",
+          "Revenue Operations Manager",
+          "Clinical Director",
+          "Network Engineer",
+          "HR Manager",
+          "Customer Service Agent"
+        ],
+        "industry": "Retail & E-commerce",
+        "company_size_range": "200-1000 employees",
+        "company_type": "UK-based omnichannel retailers and direct-to-consumer brands expanding digital commerce and personalization capabilities across web, mobile and in-store channels",
+        "location": "United Kingdom",
+        "description": "Mid-market UK retailers with 20-100 commerce, marketing and customer-experience staff driving digital transformation. £100K-£500K annual platform investments with 3-6 month procurement cycles involving 3-5 decision makers (CMO/CDO, Head of Commerce, Head of IT, CFO). Decisions prioritize omnichannel personalization, fast time-to-value and integrations with POS and inventory systems. Strong fit for Commerce Cloud, Marketing Cloud, Experience Cloud and Tableau; best engaged through product demos, pilot programs, UK-specific case studies and flexible commercial terms."
+      },
+      {
+        "persona_name": "North America Mid-Market Healthcare - Revenue Leaders",
+        "tier": "tier_3",
+        "job_titles": [
+          "Chief Administrative Officer",
+          "CAO",
+          "Chief Financial Officer",
+          "CFO",
+          "VP Revenue Cycle Management",
+          "Vice President Revenue Cycle Management",
+          "VP Patient Financial Services",
+          "Vice President Patient Financial Services",
+          "Director of Revenue Cycle",
+          "Director Patient Financial Services",
+          "Revenue Cycle Manager",
+          "Billing Manager",
+          "Director of Patient Access",
+          "Head of Revenue Integrity",
+          "Director Health Information Management",
+          "Director of Finance",
+          "Clinical Operations Director",
+          "Manager, Revenue Cycle Operations",
+          "Manager of Billing"
+        ],
+        "excluded_job_titles": [
+          "Chief Marketing Officer",
+          "CMO",
+          "Sales Development Representative",
+          "Software Engineer",
+          "Retail Merchandiser",
+          "Supply Chain Manager",
+          "HR Generalist"
+        ],
+        "industry": "Healthcare Revenue Cycle Management",
+        "company_size_range": "200-1000 employees",
+        "company_type": "Mid-market health systems, community hospitals and physician groups focused on improving patient financial experience and revenue recovery while meeting regulatory and privacy requirements",
+        "location": "North America",
+        "description": "Mid-market healthcare providers with 25-100 revenue cycle and patient financial staff supporting billing, claims and collections. $100K-$350K annually with 6-9 month evaluation cycles involving 4-6 stakeholders (CAO, CFO, VP Revenue Cycle, IT, Compliance, Patient Experience). Decision-making emphasizes HIPAA/HITRUST compliance, EHR integration and demonstrable lift in AR days. Best engaged via clinical-finance workshops, security and interoperability proofs-of-concept, and references from peer provider implementations."
+      }
+    ],
+    "generation_reasoning": "Personas were generated from Salesforce's public product portfolio and industry best practices (no CRM data available). I selected three distinct company archetypes that align tightly with Salesforce's product strengths: large financial institutions (strong fit for Financial Services Cloud, Data Cloud, MuleSoft, Tableau), mid-market UK retailers (Commerce Cloud, Marketing Cloud, Experience Cloud) and mid-market North American healthcare revenue-cycle organizations (Health Cloud, Financial Services/Health-specific integrations, Data Cloud). Location choices reflect practical go-to-market targeting (United States, United Kingdom, North America) and company_size_range decisions were based on typical buying behavior and complexity for each vertical. Job title lists and seniority ordering follow the provided master patterns and industry buying mappings; excluded titles remove common false positives and non-decision-maker roles. CRM data was not provided and therefore not used in persona selection or field values.",
+    "data_sources": {
+      "crm_data_used": false,
+      "crm_data_influence": "CRM data not available or not used",
+      "source_url": "https://www.salesforce.com/"
+    },
+    "model": "gpt-5-mini-2025-08-07",
+    "usage": {
+      "prompt_tokens": 7606,
+      "completion_tokens": 3462,
+      "total_tokens": 11068
+    },
+    "generation_time_seconds": 49.57886576652527
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "company_name": "Asana",
+  "generator_type": "products",
+  "generated_at": "2025-11-24T21:19:47.741853",
+  "result": {
+    "products": [
+      {
+        "product_name": "Asana Work Management",
+        "description": "A unified platform for teams to manage projects, workflows, and goals in one place. Helps business leaders increase visibility, reduce duplicate work, and align cross-functional teams. Enables organizations to scale efficiently with enterprise-grade security and integrations.",
+        "source_url": "https://asana.com/product"
+      },
+      {
+        "product_name": "Asana Portfolios",
+        "description": "A solution for tracking and monitoring multiple projects and initiatives across teams. Gives executives and managers real-time visibility into project status, budgets, and progress. Helps organizations prioritize work and remove blockers to drive strategic outcomes.",
+        "source_url": "https://asana.com/product/portfolios"
+      },
+      {
+        "product_name": "Asana Goals",
+        "description": "A tool for setting, tracking, and aligning company-wide objectives and key results. Enables leaders to inspire ownership and measure progress across departments. Integrates with project workflows to ensure strategic plans are executed effectively.",
+        "source_url": "https://asana.com/product/goals"
+      },
+      {
+        "product_name": "Asana Workflows",
+        "description": "Automated workflows to streamline repetitive tasks and processes across teams. Helps organizations standardize operations, reduce manual work, and improve efficiency. Supports custom automation for business processes like approvals, onboarding, and reporting.",
+        "source_url": "https://asana.com/product/workflows"
+      },
+      {
+        "product_name": "Asana Integrations",
+        "description": "A platform for connecting Asana with over 200 business tools and applications. Enables seamless data sync and workflow automation across departments. Helps organizations centralize work and eliminate silos between systems.",
+        "source_url": "https://asana.com/product/integrations"
+      },
+      {
+        "product_name": "Asana for Product Management",
+        "description": "A specialized solution for managing product development, roadmaps, and launches. Helps product teams coordinate backlogs, track features, and communicate with stakeholders. Supports agile and waterfall methodologies for product planning.",
+        "source_url": "https://asana.com/solutions/product-management"
+      },
+      {
+        "product_name": "Asana for Marketing",
+        "description": "A platform for planning, executing, and tracking marketing campaigns and launches. Enables marketing teams to manage content calendars, coordinate cross-functional work, and measure campaign performance. Streamlines collaboration between creative, sales, and operations.",
+        "source_url": "https://asana.com/solutions/marketing"
+      },
+      {
+        "product_name": "Asana for Sales",
+        "description": "A solution for managing sales pipelines, tracking deals, and aligning sales teams. Helps sales leaders monitor progress, forecast revenue, and improve team productivity. Integrates with CRM and communication tools for seamless workflow.",
+        "source_url": "https://asana.com/solutions/sales"
+      },
+      {
+        "product_name": "Asana for Operations",
+        "description": "A platform for managing operational workflows, projects, and cross-team initiatives. Enables operations leaders to standardize processes, track KPIs, and improve organizational efficiency. Supports scalable operations for growing businesses.",
+        "source_url": "https://asana.com/solutions/operations"
+      },
+      {
+        "product_name": "Asana for IT",
+        "description": "A solution for managing IT projects, service requests, and incident response. Helps IT teams track tickets, coordinate with stakeholders, and maintain service levels. Integrates with ITSM tools for end-to-end visibility.",
+        "source_url": "https://asana.com/solutions/it"
+      },
+      {
+        "product_name": "Asana for HR",
+        "description": "A platform for managing HR projects, employee onboarding, and talent initiatives. Enables HR teams to streamline processes, track employee milestones, and improve workforce engagement. Supports scalable HR operations for enterprises.",
+        "source_url": "https://asana.com/solutions/hr"
+      },
+      {
+        "product_name": "Asana for Finance",
+        "description": "A solution for managing financial projects, budgeting, and reporting. Helps finance teams track expenses, coordinate audits, and improve financial planning. Integrates with accounting and ERP systems for seamless data flow.",
+        "source_url": "https://asana.com/solutions/finance"
+      }
+    ],
+    "model": "sonar",
+    "_llm_usage": {
+      "prompt_tokens": 3692,
+      "completion_tokens": 921,
+      "total_tokens": 4613,
+      "model": "sonar"
+    }
+  }
+}

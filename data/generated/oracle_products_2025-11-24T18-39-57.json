@@ -1,0 +1,50 @@
+{
+  "company_name": "Oracle",
+  "generator_type": "products",
+  "generated_at": "2025-11-24T18:39:57.709334",
+  "result": {
+    "products": [
+      {
+        "product_name": "Oracle Database",
+        "description": "Comprehensive database management system for storing, managing, and analyzing data. Helps businesses ensure data integrity, security, and scalability. Suitable for organizations of all sizes, from startups to large enterprises, with flexible deployment options on-premises or in the cloud.",
+        "source_url": "https://www.oracle.com/database/"
+      },
+      {
+        "product_name": "Oracle Cloud Infrastructure (OCI)",
+        "description": "Secure and scalable cloud platform for running applications and workloads. Enables businesses to migrate, build, and run IT operations efficiently. Supports a wide range of applications, from traditional enterprise workloads to cloud-native applications, with global data center availability.",
+        "source_url": "https://www.oracle.com/cloud/infrastructure/"
+      },
+      {
+        "product_name": "Oracle Enterprise Resource Planning (ERP) Cloud",
+        "description": "Integrated suite of applications for financial management, procurement, project management, and more. Helps organizations streamline processes, improve decision-making, and drive business growth. Designed for scalability, supporting businesses from mid-sized companies to large enterprises.",
+        "source_url": "https://www.oracle.com/erp/"
+      },
+      {
+        "product_name": "Oracle Human Capital Management (HCM) Cloud",
+        "description": "Comprehensive suite for managing human resources, talent, and workforce analytics. Assists HR teams in recruiting, developing, and retaining talent. Scalable to meet the needs of organizations ranging from small businesses to global enterprises.",
+        "source_url": "https://www.oracle.com/human-capital-management/"
+      },
+      {
+        "product_name": "Oracle Supply Chain Management (SCM) Cloud",
+        "description": "Integrated suite for managing supply chain processes, including procurement, manufacturing, and logistics. Helps businesses optimize operations, reduce costs, and improve customer satisfaction. Suitable for organizations of all sizes, with flexible deployment options.",
+        "source_url": "https://www.oracle.com/supply-chain/"
+      },
+      {
+        "product_name": "Oracle Customer Experience (CX) Cloud",
+        "description": "Suite of applications for sales, marketing, and customer service. Enables businesses to deliver personalized experiences, drive sales, and enhance customer loyalty. Scalable to support organizations from small teams to large enterprises.",
+        "source_url": "https://www.oracle.com/cx/"
+      },
+      {
+        "product_name": "Oracle NetSuite",
+        "description": "Cloud-based business management suite for financials, CRM, and e-commerce. Helps organizations manage core business processes in a unified system. Designed for scalability, supporting businesses from startups to large enterprises.",
+        "source_url": "https://www.oracle.com/netsuite/"
+      },
+      {
+        "product_name": "Oracle Autonomous Database",
+        "description": "Self-driving database that automates routine tasks like patching, backups, and tuning. Allows businesses to focus on innovation while ensuring high performance and security. Suitable for organizations of all sizes, with flexible deployment options.",
+        "source_url": "https://www.oracle.com/database/autonomous-database/"
+      }
+    ],
+    "model": "gpt-4o-mini-search-preview-2025-03-11"
+  }
+}

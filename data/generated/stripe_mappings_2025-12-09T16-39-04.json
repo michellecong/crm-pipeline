@@ -1,0 +1,91 @@
+{
+  "company_name": "Stripe",
+  "generator_type": "mappings",
+  "generated_at": "2025-12-09T16:39:04.381446",
+  "result": {
+    "personas_with_mappings": [
+      {
+        "persona_name": "US Enterprise B2B SaaS - Revenue Leaders",
+        "mappings": [
+          {
+            "pain_point": "Revenue leaders lose recurring ARR to failed payments and involuntary churn, creating forecast misses and hidden revenue leakage.",
+            "value_proposition": "Stripe Billing automates retry logic, invoices and payment recovery, reducing failed payments and recovering recurring revenue while cutting billing ops by up to 80%."
+          },
+          {
+            "pain_point": "Finance teams at enterprise SaaS spend weeks on complex revenue recognition for long, multi-element contracts, delaying month-end close and distorting ARR.",
+            "value_proposition": "Stripe Billing's built-in revenue recognition and reporting automates accounting for subscriptions and renewals, cutting close time and manual reconciliations by up to 70%."
+          },
+          {
+            "pain_point": "Global GTM suffers from inconsistent checkout and limited local payment methods, increasing declines and slowing international bookings.",
+            "value_proposition": "Stripe Payments and Stripe Checkout provide localized payment methods and a hosted checkout, improving authorization and reducing time-to-market for new regions from months to days."
+          },
+          {
+            "pain_point": "High-value deals face elevated fraud and chargeback risk, forcing conservative acceptance rules and lost revenue on enterprise contracts.",
+            "value_proposition": "Stripe Radar applies ML risk signals in real time to block fraud and automate dispute evidence, lowering chargeback costs while preserving high-ACV conversion."
+          },
+          {
+            "pain_point": "Sales and revenue ops lack live visibility into paid vs. unpaid subscription pipeline, causing forecast gaps and missed renewal opportunities.",
+            "value_proposition": "Stripe Billing centralizes subscription, invoice and payment status into live reports so revenue ops can spot leakage and close gaps in days, not weeks."
+          },
+          {
+            "pain_point": "Large enterprise refunds, adjustments and complex billing plans create heavy manual work for account teams, reducing selling time.",
+            "value_proposition": "Stripe Billing automates invoices, proration and adjustments with developer-friendly APIs, reducing manual billing tasks and freeing reps to focus on renewals."
+          }
+        ]
+      },
+      {
+        "persona_name": "EU Mid-Market Marketplaces - Platform Ops",
+        "mappings": [
+          {
+            "pain_point": "Platform ops struggle with KYC/AML checks that slow seller onboarding and lower activation rates, increasing manual review costs.",
+            "value_proposition": "Stripe Identity and Stripe Connect automate KYC during onboarding and tie verified identities to accounts, cutting manual reviews and onboarding time from days to minutes while keeping compliance."
+          },
+          {
+            "pain_point": "Multi-party payouts and VAT reporting generate reconciliation errors and delayed seller payouts, harming liquidity and partner trust.",
+            "value_proposition": "Stripe Connect combined with Stripe Tax automates fund routing, VAT calculation and payouts, reducing reconciliation effort by ~50% and enabling predictable payouts to sellers."
+          },
+          {
+            "pain_point": "Cross-border settlements and FX friction erode marketplace take-rates and delay seller settlements, squeezing margins.",
+            "value_proposition": "Stripe Treasury with Stripe Connect centralizes currency flows and faster settlement options, reducing FX friction and improving platform economics and seller cash flow."
+          },
+          {
+            "pain_point": "Fraud, fake accounts and disputes drive high investigation workloads and chargeback costs, increasing operational risk across EU marketplaces.",
+            "value_proposition": "Stripe Radar plus Stripe Identity blocks fraudulent accounts and automates dispute evidence collection, cutting investigations and chargeback costs while maintaining marketplace throughput."
+          }
+        ]
+      },
+      {
+        "persona_name": "APAC Large Retail & E-commerce - Commerce Leaders",
+        "mappings": [
+          {
+            "pain_point": "Commerce leaders see high cart abandonment from slow or non‑localized checkout flows, reducing online revenue in APAC markets.",
+            "value_proposition": "Stripe Checkout delivers a prebuilt, localized checkout supporting regional methods, reducing integration time from months to days and improving conversion across APAC channels."
+          },
+          {
+            "pain_point": "Store ops face inconsistent reconciliation between in‑store POS and online sales, causing reporting gaps and manual month-end fixes.",
+            "value_proposition": "Stripe Terminal unifies in‑person transactions with Stripe Payments and centralized reporting, syncing sales in real time and cutting reconciliation time by up to 60%."
+          },
+          {
+            "pain_point": "Tax and GST complexity across APAC leads to manual calculations, refund mistakes and potential compliance fines for cross-border orders.",
+            "value_proposition": "Stripe Tax automates VAT/GST rates, collection and reporting across APAC, reducing manual tax errors and speeding checkout with accurate tax at purchase."
+          },
+          {
+            "pain_point": "Launching loyalty, gift card or employee expense programs is slow and error-prone, delaying promotions and increasing fraud risk.",
+            "value_proposition": "Stripe Issuing enables virtual and physical card programs with real-time controls and spend rules, accelerating program launches and reducing fraud exposure."
+          },
+          {
+            "pain_point": "Omnichannel fraud and chargebacks at scale increase operational costs and erode margins across high-volume retail chains.",
+            "value_proposition": "Stripe Radar protects omnichannel payments with global ML and adaptive rules, reducing fraud and chargebacks while preserving authorization rates and customer experience."
+          }
+        ]
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07",
+    "usage": {
+      "prompt_tokens": 3369,
+      "completion_tokens": 2983,
+      "total_tokens": 6352
+    },
+    "generation_time_seconds": 58.0278799533844
+  }
+}

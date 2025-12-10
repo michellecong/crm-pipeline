@@ -1,0 +1,149 @@
+{
+  "company_name": "Asana",
+  "generator_type": "mappings",
+  "generated_at": "2025-11-24T21:22:06.816389",
+  "result": {
+    "personas_with_mappings": [
+      {
+        "persona_name": "United States Enterprise B2B SaaS - Revenue Leaders",
+        "mappings": [
+          {
+            "pain_point": "Revenue leaders at enterprise SaaS firms lack cross-team visibility into multi-quarter deals, causing forecast inaccuracy and missed revenue targets.",
+            "value_proposition": "Asana Portfolios centralizes deal and program status across Sales, CS, and Product, improving executive visibility and reducing forecast variance by up to 30%."
+          },
+          {
+            "pain_point": "Sales ops and GTM leaders waste time on manual handoffs between Sales and Customer Success, extending onboarding and delaying revenue recognition.",
+            "value_proposition": "Asana Workflows automates sales-to-onboarding handoffs and standardizes tasks, cutting time-to-revenue by up to 20% and reducing manual triage."
+          },
+          {
+            "pain_point": "Chief Revenue Officers struggle with inconsistent playbook execution across 200–500 reps, lowering quota attainment and deal velocity.",
+            "value_proposition": "Asana Work Management standardizes playbooks and templates so reps follow consistent processes, increasing quota attainment and speeding deal cycles by ~15%."
+          },
+          {
+            "pain_point": "Rev leaders can't prioritize strategic deals vs. tactical asks because program-level objectives aren't aligned to revenue goals, diluting resources.",
+            "value_proposition": "Asana Goals links strategic OKRs to active deals and projects, enabling revenue leaders to reallocate effort and improve win rates for target deals."
+          },
+          {
+            "pain_point": "Integrations gaps between CRM, marketing automation, and project trackers force manual updates and create stale pipeline data.",
+            "value_proposition": "Asana Integrations syncs CRM and marketing signals into work plans, automating status updates and trimming manual data work by up to 50%."
+          },
+          {
+            "pain_point": "Revenue analytics teams spend weeks reconciling program spend and ROI across initiatives, delaying budget decisions and harming growth investments.",
+            "value_proposition": "Asana Portfolios provides real-time program budgets and progress, accelerating spend reviews and enabling faster reallocation to high-ROI initiatives."
+          }
+        ]
+      },
+      {
+        "persona_name": "Global Mid-Market Marketing Agencies - Campaign Leads",
+        "mappings": [
+          {
+            "pain_point": "Campaign leads at mid-market agencies suffer missed client deadlines due to fragmented asset approvals and unclear ownership, risking client churn.",
+            "value_proposition": "Asana for Marketing centralizes briefs, approvals, and asset status in one place, cutting review cycles and increasing on-time deliveries by ~40%."
+          },
+          {
+            "pain_point": "Creative and production teams waste hours on repetitive intake and scope-change admin, inflating project costs and reducing margin.",
+            "value_proposition": "Asana Workflows automates intake and scope-change approvals, eliminating manual steps and reducing administrative time by up to 50%."
+          },
+          {
+            "pain_point": "Agency PMs lack a single view of concurrent campaigns and resource conflicts, causing overbooked teams and late launches.",
+            "value_proposition": "Asana Portfolios gives campaign leads a unified dashboard of active campaigns and resource load, improving resource allocation and reducing overbooking."
+          },
+          {
+            "pain_point": "Global agencies struggle to keep client-facing status updated across emails and tools, increasing QA rework and client escalations.",
+            "value_proposition": "Asana Work Management centralizes status updates and client-facing timelines so teams share one source of truth, lowering rework and client escalations."
+          },
+          {
+            "pain_point": "Tool sprawl between design, CMS, and file storage creates inefficiencies when moving assets through campaign stages.",
+            "value_proposition": "Asana Integrations connects Figma, Google Drive, and CMS tools into campaign workflows so assets move seamlessly and handoff time drops."
+          },
+          {
+            "pain_point": "Campaign leads have limited ability to show campaign ROI quickly, slowing renewal conversations and upsell opportunities.",
+            "value_proposition": "Asana Portfolios surfaces campaign KPIs and budgets for client reviews, enabling faster ROI reporting and more effective upsell discussions."
+          }
+        ]
+      },
+      {
+        "persona_name": "United Kingdom Large Financial Services - Ops Leaders",
+        "mappings": [
+          {
+            "pain_point": "Operations leaders in UK financial firms face manual, audit-heavy processes that increase compliance risk and drive up operational cost.",
+            "value_proposition": "Asana for Operations documents workflows and audit trails centrally, reducing manual audit prep and lowering compliance overhead with traceable task histories."
+          },
+          {
+            "pain_point": "Distributed operations teams rely on email and spreadsheets for reconciliations, causing SLA breaches and costly remediation work.",
+            "value_proposition": "Asana Work Management standardizes reconciliations and automates task assignments, cutting SLA breaches and remediation time by up to 40%."
+          },
+          {
+            "pain_point": "Regulatory change projects stall because cross-functional tasks and approvals lack clear owners and timelines, delaying implementation.",
+            "value_proposition": "Asana Portfolios provides program-level timelines and RACI tracking so ops leaders coordinate regulators, legal, and IT to hit compliance deadlines."
+          },
+          {
+            "pain_point": "Ops teams struggle to integrate transaction systems with operational workflows, creating data silos and manual data entry risks.",
+            "value_proposition": "Asana Integrations connects banking and CRM feeds into workflows, automating status updates and reducing manual entry errors."
+          },
+          {
+            "pain_point": "Senior ops managers lack visibility into recurring process failures, increasing client remediation costs and hurting NPS.",
+            "value_proposition": "Asana Workflows captures incident patterns and enforces remediation steps, reducing repeat failures and associated client costs."
+          }
+        ]
+      },
+      {
+        "persona_name": "DACH Healthcare Systems - Administrative Leaders",
+        "mappings": [
+          {
+            "pain_point": "Administrative leaders in DACH healthcare systems face fragmented patient intake workflows, causing billing delays and lost revenue.",
+            "value_proposition": "Asana Workflows automates intake checklists and handoffs from front desk to billing, shortening billing cycles and reducing revenue leakage."
+          },
+          {
+            "pain_point": "Revenue cycle teams spend excessive time resolving claim denials due to unclear ownership and missing documentation.",
+            "value_proposition": "Asana Work Management centralizes denial workflows with attachments and owners, cutting denial resolution time and lowering rework."
+          },
+          {
+            "pain_point": "Regional administrators must prove GDPR-compliant processes across clinics but lack auditable operational trails, increasing privacy risk.",
+            "value_proposition": "Asana Portfolios provides centralized program views and audit-ready task histories to demonstrate compliance across sites."
+          },
+          {
+            "pain_point": "Scheduling mismatches between clinical teams and admin staff create underutilized slots and increased no-shows, reducing revenue per clinic.",
+            "value_proposition": "Asana Integrations syncs scheduling and EHR updates into operational workflows so teams reduce no-shows and improve utilization rates."
+          },
+          {
+            "pain_point": "Scaling administrative processes across 50–300 staff is manual and inconsistent, driving training costs and operational variance.",
+            "value_proposition": "Asana Workflows standardizes repeatable admin processes and templates, enabling scalable rollouts and reducing training time for new hires."
+          }
+        ]
+      },
+      {
+        "persona_name": "North America Mid-Market Retail & Ecom - Marketing Leads",
+        "mappings": [
+          {
+            "pain_point": "Marketing leads at mid-market retailers miss promo deadlines because campaign calendars and merch timelines aren't synchronized, hurting sales lift.",
+            "value_proposition": "Asana for Marketing unifies promo calendars with merchandising tasks, improving on-time launches and preserving expected sales lift."
+          },
+          {
+            "pain_point": "E‑commerce teams waste time reconciling inventory and creative release schedules, leading to out-of-stock promos and lost revenue.",
+            "value_proposition": "Asana Integrations connects inventory and CMS systems into campaign workflows, reducing promo errors and lost revenue from stock mismatches."
+          },
+          {
+            "pain_point": "Cross-channel campaign attribution is unclear, preventing marketing leads from optimizing spend across paid, email, and social.",
+            "value_proposition": "Asana Portfolios aggregates campaign metrics and spend by channel for clearer attribution, enabling faster reallocation to high-ROI channels."
+          },
+          {
+            "pain_point": "Creative teams face repetitive approval loops with retailers and internal stakeholders, slowing time-to-market for seasonal campaigns.",
+            "value_proposition": "Asana Workflows automates approval gates and notifies approvers, shrinking review cycles and accelerating time-to-market."
+          },
+          {
+            "pain_point": "Mid-market marketing teams juggle multiple vendors and lack a single source of truth for briefing and asset delivery, increasing vendor fees.",
+            "value_proposition": "Asana Work Management centralizes briefs, vendor tasks, and delivery milestones so teams reduce coordination overhead and vendor costs."
+          }
+        ]
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07",
+    "_llm_usage": {
+      "prompt_tokens": 3411,
+      "completion_tokens": 2809,
+      "total_tokens": 6220,
+      "model": "gpt-5-mini-2025-08-07"
+    }
+  }
+}

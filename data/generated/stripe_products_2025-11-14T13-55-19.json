@@ -1,0 +1,74 @@
+{
+  "company_name": "Stripe",
+  "generator_type": "products",
+  "generated_at": "2025-11-14T13:55:19.263371",
+  "result": {
+    "products": [
+      {
+        "product_name": "Payments",
+        "description": "Global payments platform to accept cards and local payment methods online and in‑app. Helps businesses of all sizes process transactions, reduce declines, and reconcile revenue. Scales to high volumes with transparent per‑transaction pricing and fast onboarding."
+      },
+      {
+        "product_name": "Billing",
+        "description": "Subscription and billing platform to manage recurring charges, metered usage, and automated invoices. Helps SaaS and subscription businesses automate billing, dunning, and revenue recognition. Reduces billing errors, speeds cash collection, and scales with growth."
+      },
+      {
+        "product_name": "Checkout",
+        "description": "Hosted, mobile‑optimized payment page that simplifies accepting payments without building custom checkout flows. Helps merchants launch fast, conversion‑focused checkouts that support multiple payment methods. Lowers PCI burden and accelerates time to revenue."
+      },
+      {
+        "product_name": "Connect",
+        "description": "Payments orchestration for marketplaces and platforms to onboard sellers, route payments, and manage payouts and compliance. Helps marketplace operators handle split payments, tax and KYC workflows. Scales with platform growth and supports complex revenue models."
+      },
+      {
+        "product_name": "Radar",
+        "description": "Fraud detection service that identifies and blocks risky transactions to reduce chargebacks and losses. Helps payments teams improve authorization rates using machine learning and configurable rules. Lowers fraud costs while preserving legitimate customer conversions at scale."
+      },
+      {
+        "product_name": "Terminal",
+        "description": "In‑person payments solution combining Stripe software with certified card readers to accept face‑to‑face payments. Helps retailers, restaurants, and event vendors unify online and offline revenue and manage receipts. Offers hardware options and managed deployment for scale."
+      },
+      {
+        "product_name": "Treasury",
+        "description": "Embedded banking product offering business accounts, fund custody, payment clearing, and programmable cash management. Helps platforms and businesses hold funds, pay partners, and offer financial services within their apps. Built to scale with partner bank infrastructure and compliance."
+      },
+      {
+        "product_name": "Issuing",
+        "description": "Card issuing platform to create, distribute, and control virtual and physical cards for employees, vendors, or customers. Helps businesses automate expense payments, vendor payouts, and disbursements with programmable controls. Enables tight spend governance and quick issuance at scale."
+      },
+      {
+        "product_name": "Capital",
+        "description": "Business financing service that provides advances and loans based on a company’s Stripe processing history. Helps growing merchants access working capital quickly without traditional bank underwriting. Integrates repayments with sales flows to simplify cash management and scale funding."
+      },
+      {
+        "product_name": "Tax",
+        "description": "Automated tax calculation, collection, and reporting service for sales tax, VAT, and GST across jurisdictions. Helps merchants calculate taxes at checkout, generate filings, and stay compliant when selling globally. Reduces manual tax overhead and audit risk as transaction volume grows."
+      },
+      {
+        "product_name": "Identity",
+        "description": "Identity verification platform to confirm user identities and reduce onboarding fraud while meeting KYC needs. Helps businesses rapidly verify customers for account opening, payments, or high‑risk actions with automated checks and clear decisioning. Scales across geographies and risk profiles."
+      },
+      {
+        "product_name": "Invoicing",
+        "description": "Online invoicing tool to create, send, and collect payments for invoices with automated reminders and payment links. Helps service providers and small businesses professionalize billing, accelerate collections, and track receivables. Works with multiple payment methods and scales with operations."
+      },
+      {
+        "product_name": "Sigma",
+        "description": "Built‑in analytics and reporting that turns Stripe data into custom reports and scheduled dashboards. Helps finance and operations teams analyze revenue, disputes, and payment performance without exporting data. Enables ad‑hoc queries, forecasting, and enterprise reporting at scale."
+      },
+      {
+        "product_name": "Atlas",
+        "description": "Company incorporation and founder toolkit to form a US entity, obtain tax and banking guidance, and access legal documents. Helps early‑stage startups handle incorporation, compliance paperwork, and initial setup quickly with guided services. Ideal for founders launching new companies."
+      },
+      {
+        "product_name": "Climate",
+        "description": "Carbon removal and offset program that enables businesses to fund verified climate projects to reduce their carbon footprint. Helps companies transparently commit a share of revenue or fees to climate impact, with reporting for sustainability goals. Simple integration for continuous contributions."
+      },
+      {
+        "product_name": "Professional Services",
+        "description": "Implementation, integration, and advisory services to plan and deploy Stripe products for complex or enterprise needs. Helps companies accelerate go‑lives, ensure compliance, and optimize payment operations with hands‑on expertise. Delivered as project engagements and ongoing support."
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07"
+  }
+}

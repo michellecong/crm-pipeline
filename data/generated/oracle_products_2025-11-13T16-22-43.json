@@ -1,0 +1,26 @@
+{
+  "company_name": "Oracle",
+  "generator_type": "products",
+  "generated_at": "2025-11-13T16:22:43.667625",
+  "result": {
+    "products": [
+      {
+        "product_name": "Oracle Cloud Infrastructure",
+        "description": "High-performance cloud platform for running enterprise applications, databases, and AI workloads. Helps IT teams migrate, scale, and secure mission‑critical systems while managing costs and performance. Suitable for startups to global enterprises."
+      },
+      {
+        "product_name": "Oracle Fusion Cloud Applications",
+        "description": "Integrated suite of cloud applications for finance, HR, supply chain, and customer experience. Helps business leaders automate processes, improve collaboration, and gain real‑time insights to drive efficiency and growth. Scales across departments and industries."
+      },
+      {
+        "product_name": "Oracle Database",
+        "description": "Enterprise-grade relational database for storing, managing, and protecting critical business data. Helps DBAs and application owners ensure high availability, fast transactions, and regulatory compliance for operational and analytical workloads. Deployable on-premises or in the cloud."
+      },
+      {
+        "product_name": "Java",
+        "description": "Enterprise Java platform with commercial support and subscriptions for building and running business applications. Helps development and operations teams standardize on a supported runtime with security updates and compatibility assurances. Available for organizations of all sizes."
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07"
+  }
+}

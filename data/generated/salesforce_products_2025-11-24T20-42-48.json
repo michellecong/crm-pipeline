@@ -1,0 +1,110 @@
+{
+  "company_name": "Salesforce",
+  "generator_type": "products",
+  "generated_at": "2025-11-24T20:42:48.978447",
+  "result": {
+    "products": [
+      {
+        "product_name": "Sales Cloud",
+        "description": "Complete CRM platform for managing sales pipelines, forecasting revenue, and automating sales processes. Helps sales teams close deals faster with AI-powered insights, workflow automation, and mobile access. Scales from small teams to global enterprises with customizable features and deep integration capabilities.",
+        "source_url": "https://www.salesforce.com/products/sales-cloud"
+      },
+      {
+        "product_name": "Service Cloud",
+        "description": "Customer service platform that unifies support channels, automates case routing, and provides agents with complete customer context. Enables support teams to resolve issues faster across email, phone, chat, and social media. Includes AI-powered chatbots, knowledge base management, and real-time analytics.",
+        "source_url": "https://www.salesforce.com/products/service-cloud"
+      },
+      {
+        "product_name": "Marketing Cloud",
+        "description": "Marketing automation platform for creating personalized campaigns, nurturing leads, and measuring ROI across channels. Helps marketing teams generate qualified leads through email marketing, landing pages, social advertising, and analytics. Integrates with CRM for seamless lead handoff to sales.",
+        "source_url": "https://www.salesforce.com/products/marketing-cloud"
+      },
+      {
+        "product_name": "Commerce Cloud",
+        "description": "E-commerce platform for creating unified shopping experiences across web, mobile, social, and in-store channels. Enables retailers to personalize customer journeys, manage product catalogs, process orders, and optimize conversions. Supports B2C and B2B commerce with AI-powered recommendations.",
+        "source_url": "https://www.salesforce.com/products/commerce-cloud"
+      },
+      {
+        "product_name": "Analytics Cloud (Tableau CRM)",
+        "description": "Business intelligence and analytics platform that transforms data into actionable insights through interactive dashboards and AI-powered predictions. Helps business users explore data, identify trends, and make data-driven decisions without technical expertise. Integrates seamlessly with Salesforce and external data sources.",
+        "source_url": "https://www.salesforce.com/products/analytics-cloud"
+      },
+      {
+        "product_name": "Experience Cloud",
+        "description": "Platform for building branded customer, partner, and employee portals with self-service, collaboration, and content management. Enables organizations to deliver personalized digital experiences, streamline onboarding, and foster community engagement. Supports secure access and integration with core Salesforce apps.",
+        "source_url": "https://www.salesforce.com/products/experience-cloud"
+      },
+      {
+        "product_name": "MuleSoft",
+        "description": "Integration platform that connects applications, data, and devices across cloud and on-premise environments. Enables businesses to automate workflows, unify customer data, and accelerate digital transformation. Offers pre-built connectors, API management, and real-time data synchronization.",
+        "source_url": "https://www.salesforce.com/products/mulesoft"
+      },
+      {
+        "product_name": "Slack",
+        "description": "Collaboration platform for team messaging, file sharing, and workflow automation. Helps organizations streamline communication, reduce email overload, and integrate with business apps. Supports secure channels, video calls, and app integrations for remote and hybrid teams.",
+        "source_url": "https://www.salesforce.com/products/slack"
+      },
+      {
+        "product_name": "Einstein AI",
+        "description": "AI-powered suite for automating sales, service, marketing, and commerce processes. Delivers predictive insights, intelligent recommendations, and automated workflows across Salesforce applications. Helps teams make smarter decisions and improve productivity with embedded machine learning.",
+        "source_url": "https://www.salesforce.com/products/einstein"
+      },
+      {
+        "product_name": "Data Cloud",
+        "description": "Unified customer data platform that consolidates and activates data from multiple sources. Enables businesses to create a single customer view, personalize experiences, and drive targeted campaigns. Supports real-time segmentation and compliance with privacy regulations.",
+        "source_url": "https://www.salesforce.com/products/data-cloud"
+      },
+      {
+        "product_name": "Tableau",
+        "description": "Data visualization and analytics platform for exploring, analyzing, and sharing insights from business data. Empowers teams to create interactive dashboards, uncover trends, and make data-driven decisions. Integrates with Salesforce and other enterprise systems for comprehensive reporting.",
+        "source_url": "https://www.salesforce.com/products/tableau"
+      },
+      {
+        "product_name": "Financial Services Cloud",
+        "description": "CRM platform tailored for banks, insurance, and wealth management firms. Streamlines client onboarding, compliance, and relationship management. Delivers personalized financial advice and supports regulatory requirements with secure data handling.",
+        "source_url": "https://www.salesforce.com/products/financial-services-cloud"
+      },
+      {
+        "product_name": "Health Cloud",
+        "description": "Healthcare CRM platform for managing patient relationships, care coordination, and compliance. Enables providers to deliver personalized care, streamline workflows, and improve patient outcomes. Integrates with electronic health records and other healthcare systems.",
+        "source_url": "https://www.salesforce.com/products/health-cloud"
+      },
+      {
+        "product_name": "Salesforce Platform",
+        "description": "Low-code development platform for building custom business applications and automating processes. Enables organizations to extend Salesforce functionality, integrate with external systems, and create tailored solutions without extensive coding. Supports rapid deployment and scalability.",
+        "source_url": "https://www.salesforce.com/products/platform"
+      },
+      {
+        "product_name": "Salesforce Identity",
+        "description": "Identity and access management solution for secure user authentication and single sign-on. Enables organizations to manage customer and employee identities, control access to applications, and ensure compliance with security standards. Integrates with Salesforce and third-party apps.",
+        "source_url": "https://www.salesforce.com/products/identity"
+      },
+      {
+        "product_name": "Salesforce CPQ",
+        "description": "Configure, price, and quote solution for automating complex sales processes. Helps sales teams generate accurate quotes, manage approvals, and close deals faster. Supports custom pricing, product bundles, and integration with ERP and CRM systems.",
+        "source_url": "https://www.salesforce.com/products/cpq"
+      },
+      {
+        "product_name": "Salesforce Billing",
+        "description": "Subscription and billing management platform for recurring revenue businesses. Automates invoicing, payment processing, and revenue recognition. Supports flexible pricing models, dunning management, and integration with financial systems.",
+        "source_url": "https://www.salesforce.com/products/billing"
+      },
+      {
+        "product_name": "Salesforce Field Service",
+        "description": "Field service management solution for scheduling, dispatching, and managing mobile workforces. Enables organizations to optimize technician routes, improve service delivery, and increase customer satisfaction. Integrates with CRM and IoT for real-time visibility.",
+        "source_url": "https://www.salesforce.com/products/field-service"
+      },
+      {
+        "product_name": "Salesforce Pardot",
+        "description": "B2B marketing automation platform for lead generation, nurturing, and ROI measurement. Helps marketing teams create targeted campaigns, track engagement, and align with sales. Integrates with Salesforce CRM for seamless lead management.",
+        "source_url": "https://www.salesforce.com/products/pardot"
+      },
+      {
+        "product_name": "Salesforce B2B Commerce",
+        "description": "E-commerce solution tailored for B2B companies, supporting complex pricing, catalogs, and account management. Enables businesses to offer self-service ordering, approval workflows, and integration with ERP systems. Improves buyer experience and operational efficiency.",
+        "source_url": "https://www.salesforce.com/products/commerce-cloud/b2b-commerce"
+      }
+    ],
+    "model": "sonar"
+  }
+}

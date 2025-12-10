@@ -1,0 +1,313 @@
+{
+  "company_name": "Asana",
+  "generator_type": "outreach",
+  "generated_at": "2025-11-24T21:23:49.971076",
+  "result": {
+    "sequences": [
+      {
+        "name": "United States Enterprise B2B SaaS - Revenue Leaders Outreach Sequence",
+        "persona_name": "United States Enterprise B2B SaaS - Revenue Leaders",
+        "objective": "Get a 15-min conversation to show how centralized deal/program tracking improves multi-quarter forecast accuracy and playbook execution",
+        "total_touches": 6,
+        "duration_days": 15,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce cross-team visibility gap for multi-quarter deals",
+            "subject_line": "30% better multi-quarter deal visibility",
+            "content_suggestion": "Hi {{first_name}}, noticed {{company}} manages a lot of multi-quarter enterprise deals across Sales, CS and Product. Many revenue leaders lose cross-team visibility on these deals, which skews exec forecasts. Asana Portfolios centralizes deal and program status so teams share one source of truth—customers like {{similar_company}} improved forecast accuracy ~30%. Curious to share a 2‑min overview?",
+            "hints": "Personalize with a recent big deal, product launch or mention of cross-functional program"
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Share case study about automating sales→onboarding handoffs",
+            "subject_line": "How Asana cut onboarding handoffs by 40%",
+            "content_suggestion": "Hi {{first_name}}, saw your work on scaling GTM ops. Sales→CS handoffs often stall onboarding and extend time‑to‑revenue. We helped an enterprise SaaS leader automate handoffs with Asana Workflows—onboarding tasks now auto-create and assign, cutting handoff time ~40%. Happy to connect and share the short case study.",
+            "hints": "Mention a mutual connection or a recent industry event to increase acceptance"
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Deep dive on inconsistent playbook execution across 200–500 reps",
+            "subject_line": "Standardize GTM playbooks across 200–500 reps",
+            "content_suggestion": "Hi {{first_name}}, inconsistent playbook use across large teams lowers quota attainment and increases forecast variance. Asana Work Management enforces playbooks and templates so reps follow the same steps—customers with 200–500 reps reported more consistent execution and faster ramp. Would a 15‑minute review of a standardized playbook template be useful?",
+            "hints": "Reference team size or a public hiring ramp to make it relevant"
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "phone",
+            "timing_days": 9,
+            "objective": "Direct meeting request to discuss centralizing deals and playbooks",
+            "subject_line": null,
+            "content_suggestion": "Hi {{first_name}}, this is [Your Name] from Asana — quick one: revenue leaders I speak with are juggling multi‑quarter deals with limited cross‑team visibility and inconsistent playbooks across 200–500 reps. We’ve helped peers reduce forecast variance and speed onboarding; could I book 15 minutes next week to share a one‑page plan?",
+            "hints": "Call late morning local time; reference a specific pain from prior email (forecast variance or onboarding delays)"
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "linkedin",
+            "timing_days": 12,
+            "objective": "New angle: reduce time-to-revenue by automating handoffs",
+            "subject_line": "Reduce time-to-revenue from deal to onboard",
+            "content_suggestion": "Hi {{first_name}}, following up — one fast win we see is automating sales→onboarding handoffs so revenue recognition isn't delayed by manual tasks. If you're open, I can send a 1‑page example showing the workflow and expected time savings.",
+            "hints": "Offer a short PDF one-pager or workflow diagram to add value"
+          },
+          {
+            "sort_order": 6,
+            "touch_type": "email",
+            "timing_days": 15,
+            "objective": "Breakup with final value offer focused on cross-team deal tracking",
+            "subject_line": "Last try: centralize cross-team deal tracking?",
+            "content_suggestion": "Hi {{first_name}}, wanted to share one final idea: centralizing cross‑team deal tracking (Portfolios) + automated handoffs (Workflows) reduces forecast drift and shortens time‑to‑revenue. If you'd like, I can send a short ROI snapshot for teams like yours — or we'll close the loop here.",
+            "hints": "Keep it brief; offer a single next step (send ROI snapshot / 15‑min call)"
+          }
+        ]
+      },
+      {
+        "name": "Global Mid-Market Marketing Agencies - Campaign Leads Outreach Sequence",
+        "persona_name": "Global Mid-Market Marketing Agencies - Campaign Leads",
+        "objective": "Book a 10–15 minute meeting to show how Asana for Marketing stops missed client deadlines and reduces intake admin",
+        "total_touches": 5,
+        "duration_days": 12,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce missed deadlines from fragmented asset approvals",
+            "subject_line": "Cut review cycles for client creative by 40%",
+            "content_suggestion": "Hi {{first_name}}, noticed your agency runs concurrent client campaigns—many mid‑market agencies miss deadlines because asset approvals live in email and spreadsheets. Asana for Marketing centralizes briefs and approvals so review cycles shrink ~40% and launch dates stick. Interested in a 10‑min alignment call?",
+            "hints": "Reference a recent campaign or client win shown publicly to personalize"
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Build credibility: campaign calendar and resource conflict visibility",
+            "subject_line": "Campaign calendar + resource conflicts solved",
+            "content_suggestion": "Hi {{first_name}}, agency PMs I talk to juggle overlapping campaigns and overbooked creatives. Asana Portfolios gives a single view of active campaigns and resource load so you avoid last‑minute burn. Happy to connect and share an agency playbook.",
+            "hints": "If possible, reference a similar-sized agency as a social proof"
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Deep dive on automating intake & scope-change admin",
+            "subject_line": "Automate intake & scope-change approvals",
+            "content_suggestion": "Hi {{first_name}}, repetitive intake and scope-change admin eats billable hours. Asana Workflows automates intake forms and approval gating so requests route automatically and scope changes trigger cost/time notices—one agency saved ~6 admin hours/week per PM. Would you like the workflow template we use?",
+            "hints": "Offer a tangible asset (workflow template) tailored to agencies"
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "phone",
+            "timing_days": 9,
+            "objective": "Direct meeting request to demonstrate a 10-min workflow",
+            "subject_line": null,
+            "content_suggestion": "Hi {{first_name}}, it’s [Your Name] from Asana — quick check: are missed client deadlines or intake admin top priorities this quarter? I can show a 10‑minute demo of an intake→approval workflow that agencies deploy to cut review cycles. When’s a good time?",
+            "hints": "Call during agency downtimes (mid-afternoon) and reference the template offer"
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "email",
+            "timing_days": 12,
+            "objective": "New angle / breakup: single view of concurrent campaigns",
+            "subject_line": "Quick ROI: fewer late deliverables, happier clients",
+            "content_suggestion": "Hi {{first_name}}, last note—agencies that unify campaign calendars with resource planning report fewer late deliverables and better client NPS. I can send a 1‑page case study of a mid‑market agency that improved on‑time delivery by 25%. Want it?",
+            "hints": "Include the case study as an attachment or one‑click link if they reply"
+          }
+        ]
+      },
+      {
+        "name": "United Kingdom Large Financial Services - Ops Leaders Outreach Sequence",
+        "persona_name": "United Kingdom Large Financial Services - Ops Leaders",
+        "objective": "Schedule a 15-min discussion to show how centralized workflows reduce audit prep, fix reconciliation SLAs, and accelerate regulatory programs",
+        "total_touches": 6,
+        "duration_days": 15,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce audit-heavy processes and compliance overhead",
+            "subject_line": "Reduce audit prep 50% with centralized workflows",
+            "content_suggestion": "Hi {{first_name}}, many UK financial ops teams still prepare audits with email and file folders, which increases compliance cost and risk. Asana for Operations documents workflows and creates audit‑ready trails—clients report up to 50% less prep time for audits. Could I share a quick example of the audit trail view?",
+            "hints": "Reference recent regulatory change or public compliance deadline if available"
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Build credibility: reconcile spreadsheets causing SLA breaches",
+            "subject_line": "SLA breaches from spreadsheet reconciliations?",
+            "content_suggestion": "Hi {{first_name}}, I see many ops teams rely on spreadsheets for reconciliations and hit SLA breaches. Asana Work Management standardizes reconciliation tasks and automates assignments so SLAs recover. Would welcome the chance to connect and share a concise playbook.",
+            "hints": "Mention a known SLA or regulatory target (e.g., T+1/T+2) if applicable"
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Deep dive on standardizing reconciliations to avoid SLA breaches",
+            "subject_line": "Standardize reconciliations to hit SLAs",
+            "content_suggestion": "Hi {{first_name}}, reconciliation work across distributed teams creates handoff gaps and missed SLAs. Standardizing tasks in Asana assigns owners, attachments, and due dates automatically—one bank recovered SLA adherence within one quarter. Open to a 15‑min call to review a template for reconciliations?",
+            "hints": "Attach or offer a reconciliation workflow template for financial ops"
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "phone",
+            "timing_days": 9,
+            "objective": "Direct meeting request to discuss regulatory change coordination",
+            "subject_line": null,
+            "content_suggestion": "Hi {{first_name}}, [Your Name] from Asana — quick question: are regulatory change projects stalling because cross‑functional tasks lack clear owners? We help ops leaders set program timelines and RACI tracking so projects move predictably. Can we do 15 minutes to review a RACI+timeline example?",
+            "hints": "Call mid-morning; reference a concrete regulatory program if known"
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "linkedin",
+            "timing_days": 12,
+            "objective": "Share program-level timeline and RACI capability",
+            "subject_line": "Program-level timelines for regulatory change",
+            "content_suggestion": "Hi {{first_name}}, sharing a short example of program-level timelines and RACI tracking that helps ops leaders coordinate regulatory work across Legal, Ops and IT. Happy to send the one‑page PDF if useful.",
+            "hints": "Offer the PDF proactively and highlight a single measurable outcome (e.g., time saved)"
+          },
+          {
+            "sort_order": 6,
+            "touch_type": "email",
+            "timing_days": 15,
+            "objective": "Breakup with offer to send RACI + timeline template",
+            "subject_line": "Can I send a RACI + timeline template?",
+            "content_suggestion": "Hi {{first_name}}, last note — if regulatory coordination or audit prep is on your roadmap, I can send a RACI+timeline template and a quick note on how a peer regained SLA compliance. If not, I’ll close your thread here.",
+            "hints": "Keep it low-effort: one-click reply requested to receive the template"
+          }
+        ]
+      },
+      {
+        "name": "DACH Healthcare Systems - Administrative Leaders Outreach Sequence",
+        "persona_name": "DACH Healthcare Systems - Administrative Leaders",
+        "objective": "Secure a 15-min call to show how automating intake and centralizing denial workflows reduces wait times and denial resolution",
+        "total_touches": 6,
+        "duration_days": 15,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce fragmented patient intake workflows issue",
+            "subject_line": "Shorten patient intake by automating checklists",
+            "content_suggestion": "Hi {{first_name}}, many DACH healthcare systems have fragmented patient intake processes that delay registration and billing. Asana Workflows automates intake checklists and handoffs from front desk to billing, shortening bill cycles and reducing front‑desk errors. Can I share a short example of an intake checklist we use with clinics?",
+            "hints": "Personalize with clinic size or region (e.g., federal state) if known"
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Share impact on claim denial resolution time",
+            "subject_line": "Cut claim denial resolution time by 30%",
+            "content_suggestion": "Hi {{first_name}}, revenue cycle teams waste time resolving denials because ownership and attachments are scattered. Centralizing denial workflows in Asana assigns owners and stores evidence—clients report ~30% faster resolution. Happy to connect and send a denial‑workflow example.",
+            "hints": "If possible, reference a hospital or clinic size to make it relatable"
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Deep dive on GDPR-compliant audit trails across clinics",
+            "subject_line": "GDPR‑compliant audit trails across clinics",
+            "content_suggestion": "Hi {{first_name}}, proving GDPR‑compliant processes across multiple clinics is time consuming without centralized logs. Asana Portfolios provides centralized program views and audit‑ready task histories so administrators can demonstrate controls and owners quickly. Would you like a 1‑page example of an audit‑ready task history?",
+            "hints": "Offer the example in German if appropriate for the recipient"
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "phone",
+            "timing_days": 9,
+            "objective": "Direct meeting request to discuss intake automation and audit reporting",
+            "subject_line": null,
+            "content_suggestion": "Hallo {{first_name}}, this is [Your Name] from Asana — quick check: are fragmented intake workflows or proving GDPR-compliant processes priorities this year? I can show a 10–15 minute example of an intake automation + audit trail that clinics use. When suits you?",
+            "hints": "Call in local business hours; offer to speak German if you can"
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "linkedin",
+            "timing_days": 12,
+            "objective": "Share operational playbook and template for clinics",
+            "subject_line": "Template: GDPR‑ready operational playbook",
+            "content_suggestion": "Hi {{first_name}}, I can share a short GDPR‑ready operational playbook we provide to regional administrators — it maps owners, controls and audit evidence across clinics. Want the template?",
+            "hints": "Offer to localize the template for their region (Bundesland) as a value add"
+          },
+          {
+            "sort_order": 6,
+            "touch_type": "email",
+            "timing_days": 15,
+            "objective": "Breakup offering a 1-page ops playbook and next steps",
+            "subject_line": "Final: a 1‑page ops playbook for clinics",
+            "content_suggestion": "Hi {{first_name}}, last note — if speeding intake, resolving denials faster, or proving GDPR controls matters, I’ll send a 1‑page ops playbook and a short ROI note showing time saved. Reply with 'Send' and I’ll share it right away.",
+            "hints": "Use a clear single-word reply CTA (e.g., 'Send') to lower friction"
+          }
+        ]
+      },
+      {
+        "name": "North America Mid-Market Retail & Ecom - Marketing Leads Outreach Sequence",
+        "persona_name": "North America Mid-Market Retail & Ecom - Marketing Leads",
+        "objective": "Arrange a 10-min call to demonstrate how unified promo calendars and integrations reduce promo misses and creative/inventory mismatch",
+        "total_touches": 5,
+        "duration_days": 12,
+        "touches": [
+          {
+            "sort_order": 1,
+            "touch_type": "email",
+            "timing_days": 0,
+            "objective": "Introduce missed promo deadlines from disconnected calendars",
+            "subject_line": "Unify promo calendars to hit Black Friday dates",
+            "content_suggestion": "Hi {{first_name}}, promo deadlines slip when campaign calendars and merchandising timelines aren't synchronized. Asana for Marketing unifies promo calendars with merchandising tasks so launches hit target dates—retailers see fewer late promos during peak windows. Interested in a short calendar sync example?",
+            "hints": "Reference upcoming retail season (e.g., back-to-school, Black Friday) as a personalization angle"
+          },
+          {
+            "sort_order": 2,
+            "touch_type": "linkedin",
+            "timing_days": 3,
+            "objective": "Highlight integrations to prevent inventory vs. creative mismatches",
+            "subject_line": "Connect inventory schedules with creative releases",
+            "content_suggestion": "Hi {{first_name}}, e‑commerce teams waste hours reconciling inventory and creative release schedules. Asana integrations connect inventory feeds and CMS release tasks so creative only goes live when inventory is available. Can I send an integration checklist?",
+            "hints": "If company uses a known CMS or inventory system, reference it to show relevance"
+          },
+          {
+            "sort_order": 3,
+            "touch_type": "email",
+            "timing_days": 6,
+            "objective": "Deep dive on reducing promo errors via integrations and workflows",
+            "subject_line": "Reduce promo errors with inventory + CMS integrations",
+            "content_suggestion": "Hi {{first_name}}, reconciling launch schedules manually causes out‑of‑stock promos and wasted spend. Connecting inventory and CMS event triggers into campaign workflows reduces promo errors—one retailer cut promo misses by 20% after linking inventory status to creative release tasks. Want the workflow we use?",
+            "hints": "Offer the specific workflow and mention platform integrations if you know them"
+          },
+          {
+            "sort_order": 4,
+            "touch_type": "phone",
+            "timing_days": 9,
+            "objective": "Direct meeting request to review integration-driven campaign workflow",
+            "subject_line": null,
+            "content_suggestion": "Hi {{first_name}}, [Your Name] from Asana — quick check: are promo timing errors or inventory/creative mismatches creating customer issues? I can walk through a 10‑minute example of an integration‑driven campaign workflow that reduces those misses. When would 10 minutes work?",
+            "hints": "Call during late morning/early afternoon; reference the workflow offer from the previous email"
+          },
+          {
+            "sort_order": 5,
+            "touch_type": "email",
+            "timing_days": 12,
+            "objective": "Breakup with a short case study on fewer promo misses",
+            "subject_line": "Quick case: 20% fewer promo misses",
+            "content_suggestion": "Hi {{first_name}}, final note — I can send a 1‑page case study showing a mid‑market retailer that cut promo misses by 20% after unifying calendars and integrating inventory. Reply 'Case Study' and I’ll send it over.",
+            "hints": "Use a single-word reply CTA to make the next step frictionless"
+          }
+        ]
+      }
+    ],
+    "model": "gpt-5-mini-2025-08-07",
+    "_llm_usage": {
+      "prompt_tokens": 2033,
+      "completion_tokens": 8322,
+      "total_tokens": 10355,
+      "model": "gpt-5-mini-2025-08-07"
+    }
+  }
+}
