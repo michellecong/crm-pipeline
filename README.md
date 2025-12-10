@@ -54,7 +54,7 @@ OPENAI_API_KEY=your_openai_key_here
 
 # Optional: OpenAI Configuration (defaults shown)
 # OPENAI_MODEL=gpt-5-mini
-# OPENAI_TEMPERATURE=0.0
+# OPENAI_TEMPERATURE=1.0
 # OPENAI_MAX_TOKENS=2000
 
 # Perplexity - for web search and product generation
@@ -492,8 +492,7 @@ High-growth SaaS companies with 200-500 sales reps...
 | `/api/v1/search/company` | POST   | Search for company URLs (Google/Perplexity)    |
 | `/api/v1/scrape/company` | POST   | Search and scrape content                      |
 | `/api/v1/scrape/saved`   | GET    | List saved data                                |
-| `/api/v1/pdf/process/`   | POST   | Process PDF and chunk text                     |
-| `/api/v1/crm/parse`      | POST   | Upload and parse CRM CSV file                  |
+| `/api/v1/pdf/process/`   | POST   | Process PDF and extract text                    |
 
 #### LLM Service
 | Endpoint                     | Method | Description                    |
@@ -573,14 +572,6 @@ Generate multi-touch sales outreach sequences for each persona with pain point-v
 
 ## Testing
 
-### Test CRM Service
-```bash
-# Run CRM service tests
-pytest tests/test_crm_service.py -v
-
-# Run with coverage
-pytest tests/test_crm_service.py --cov=services.crm_service --cov-report=html
-```
 
 ### Test LLM Connection (Requires API Key)
 ```bash
@@ -718,7 +709,7 @@ crm-pipeline/
 │   │   ├── search_service.py       # Search (Google/Perplexity)
 │   │   ├── llm_service.py          # LLM text generation (supports OpenAI and Perplexity)
 │   │   ├── generator_service.py    # Generator orchestration
-│   │   ├── crm_service.py          # CRM file parsing & analysis
+│   │   ├── crm_data_loader.py      # CRM CSV file loading & normalization
 │   │   ├── pdf_service.py          # PDF text extraction
 │   │   ├── data_aggregator.py      # Data source aggregation (Web + CRM + PDF)
 │   │   └── export_service.py       # Export format conversion
@@ -730,8 +721,7 @@ crm-pipeline/
 │       ├── outreach_schemas.py     # Outreach sequence schemas
 │       ├── pipeline_schemas.py     # Full pipeline schemas
 │       ├── three_stage_schemas.py  # 3-stage pipeline schemas
-│       ├── two_stage_schemas.py    # 2-stage pipeline schemas
-│       └── crm_schemas.py          # CRM data schemas
+│       └── two_stage_schemas.py    # 2-stage pipeline schemas
 ├── crm-data/                        # CRM CSV files (user-created, not in git)
 ├── pdf-data/                        # PDF documents (user-created, not in git)
 ├── data/                            # Auto-created by the system
@@ -740,7 +730,6 @@ crm-pipeline/
 ├── tests/                           # Tests
 │   ├── fixtures/
 │   │   └── mock_crm_data.csv       # Sample CRM data for testing
-│   ├── test_crm_service.py         # CRM service tests
 │   ├── test_outreach.py            # Outreach generation tests
 │   ├── test_product_generator_perplexity.py  # Product generator with Perplexity tests
 │   └── conftest.py                 # Shared test fixtures

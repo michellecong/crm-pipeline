@@ -1,6 +1,7 @@
 """
 CRM Data Loader - Handles multiple CSV files with different structures
-智能处理不同CRM系统导出的多个CSV文件，自动识别、映射和合并数据
+Intelligently processes multiple CSV files exported from different CRM systems,
+automatically identifying, mapping, and merging data
 """
 import pandas as pd
 import glob
